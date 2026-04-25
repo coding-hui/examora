@@ -1,0 +1,12 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Examora icon">
+  <title>Examora Icon</title>
+  <rect width="512" height="512" rx="96" fill="white"/>
+  <!-- Dark geometric open frame -->
+  <path d="M132 144H292V200H188V324H292V380H132V144Z" fill="#151C24"/>
+  <path d="M188 200H292V252H188V200Z" fill="white"/>
+  <path d="M188 272H292V324H188V272Z" fill="white"/>
+  <!-- Blue pixel burst -->
+  <rect x="304" y="132" width="48" height="48" rx="4" fill="#2563EB"/>
+  <rect x="360" y="188" width="40" height="40" rx="4" fill="#2563EB"/>
+  <rect x="304" y="244" width="32" height="32" rx="4" fill="#2563EB"/>
+</svg>
