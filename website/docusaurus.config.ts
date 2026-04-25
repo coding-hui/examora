@@ -6,7 +6,7 @@ import type { Config } from "@docusaurus/types";
 const config: Config = {
   title: "Examora",
   tagline: "Online examination platform documentation",
-  favicon: "img/examora.ico",
+  favicon: "img/favicon.ico",
   url: "https://coding-hui.github.io",
   baseUrl: "/examora/",
   organizationName: "examora",
