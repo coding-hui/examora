@@ -12,13 +12,3 @@
   --ifm-color-primary-lightest: #ffb366;
   --ifm-code-font-size: 95%;
 }
-
-[data-theme="dark"] {
-  --ifm-color-primary: #ff9a1a;
-  --ifm-color-primary-dark: #e58a00;
-  --ifm-color-primary-darker: #cc7b00;
-  --ifm-color-primary-darkest: #a06000;
-  --ifm-color-primary-light: #ffb366;
-  --ifm-color-primary-lighter: #ffc078;
-  --ifm-color-primary-lightest: #ffd199;
-}

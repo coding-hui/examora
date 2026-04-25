@@ -43,7 +43,8 @@ const config: Config = {
   themeConfig: {
     image: "img/docusaurus-social-card.jpg",
     colorMode: {
-      respectPrefersColorScheme: true,
+      defaultMode: "light",
+      disableSwitch: true,
     },
     navbar: {
       title: "Examora",
@@ -74,7 +75,7 @@ const config: Config = {
       ],
     },
     footer: {
-      style: "dark",
+      style: "light",
       copyright: `© ${new Date().getFullYear()} Examora`,
     },
     prism: {
