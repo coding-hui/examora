@@ -6,7 +6,7 @@ import type { Config } from "@docusaurus/types";
 const config: Config = {
   title: "Examora",
   tagline: "Online examination platform documentation",
-  favicon: "img/favicon.ico",
+  favicon: "img/examora.ico",
   url: "https://examora.dev",
   baseUrl: "/examora/",
   organizationName: "examora",
@@ -41,13 +41,17 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: "img/docusaurus-social-card.jpg",
+    image: "img/examora.png",
     colorMode: {
       defaultMode: "light",
       disableSwitch: true,
     },
     navbar: {
       title: "Examora",
+      logo: {
+        src: "img/examora.png",
+        alt: "Examora",
+      },
       items: [
         {
           to: "/examora/docs",
@@ -75,8 +79,13 @@ const config: Config = {
       ],
     },
     footer: {
-      style: "light",
       copyright: `© ${new Date().getFullYear()} Examora`,
+      links: [
+        {
+          label: "GitHub",
+          href: "https://github.com/coding-hui/examora",
+        },
+      ],
     },
     prism: {
       theme: prismThemes.github,

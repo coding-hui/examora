@@ -2,12 +2,49 @@ import Link from "@docusaurus/Link";
 import Layout from "@theme/Layout";
 import styles from "./index.module.css";
 
-const installSteps = [
-  { cmd: "git clone git@github.com:coding-hui/examora.git", desc: "// Clone the repository" },
-  { cmd: "make deps", desc: "// Install frontend & Rust dependencies" },
-  { cmd: "make infra-up", desc: "// Start PostgreSQL & Redis via Docker" },
-  { cmd: "make api & make worker", desc: "// Launch API server & judge worker" },
-  { cmd: "pnpm dev:admin", desc: "// Open admin console at localhost:5173" },
+const capabilities = [
+  {
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8M12 17v4"/>
+      </svg>
+    ),
+    title: "Online Exams",
+    desc: "Browser-based exam delivery with real-time session sync and autosave drafts.",
+  },
+  {
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6"/>
+        <polyline points="8 6 2 12 8 18"/>
+      </svg>
+    ),
+    title: "Programming Judge",
+    desc: "Isolated sandbox execution with parallel test cases, time/memory limits, and detailed feedback.",
+  },
+  {
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="6" width="20" height="12" rx="2"/>
+        <path d=" " stroke="none"/>
+        <circle cx="8" cy="12" r="2"/>
+        <path d="M16 12h4"/>
+      </svg>
+    ),
+    title: "Secure Desktop Client",
+    desc: "Local-first candidate experience. State stays on device until explicit submission.",
+  },
+  {
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 20h9"/>
+        <path d="M16.5 3.5a2.121 2.121 0 0133 3L6 20l-4 1 1-4L16.5 3.5z"/>
+      </svg>
+    ),
+    title: "Admin Console",
+    desc: "Full authoring workflow: questions, papers, snapshots, and scoring — all in one place.",
+  },
 ];
 
 const links = [
@@ -40,8 +77,7 @@ function JudgeStatusIcon({ status }: { status: string }) {
     return (
       <span className={`${styles.caseStatus} ${styles.pass}`}>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <circle cx="5" cy="5" r="4.5" fill="#34d399" opacity="0.2"/>
-          <path d="M3 5l1.5 1.5L7 3.5" stroke="#34d399" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 5l2 2 4-4" stroke="#34d399" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
         pass
       </span>
@@ -51,8 +87,7 @@ function JudgeStatusIcon({ status }: { status: string }) {
     return (
       <span className={`${styles.caseStatus} ${styles.fail}`}>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <circle cx="5" cy="5" r="4.5" fill="#f87171" opacity="0.2"/>
-          <path d="M3.5 3.5l3 3M6.5 3.5l-3 3" stroke="#f87171" strokeWidth="1.2" strokeLinecap="round"/>
+          <path d="M3 3l4 4M7 3l-4 4" stroke="#f87171" strokeWidth="1.2" strokeLinecap="round"/>
         </svg>
         fail
       </span>
@@ -61,7 +96,6 @@ function JudgeStatusIcon({ status }: { status: string }) {
   return (
     <span className={`${styles.caseStatus} ${styles.pending}`}>
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-        <circle cx="5" cy="5" r="4.5" fill="#fbbf24" opacity="0.2"/>
         <circle cx="5" cy="5" r="2" fill="#fbbf24"/>
       </svg>
       pending
@@ -77,13 +111,9 @@ export default function Home() {
         <section className={styles.hero}>
           <div className={styles.heroInner}>
             <div className={styles.heroCopy}>
-              <div className={styles.heroBadge}>
-                <span className={styles.heroBadgeDot} />
-                Online examination platform
-              </div>
               <h1 className={styles.heroTitle}>Examora</h1>
               <p className={styles.heroLead}>
-                Desktop-first exam delivery with isolated judge runtime and snapshot-based scoring.
+                Online examination platform with secure desktop delivery, isolated programming judge, and snapshot-based scoring.
               </p>
               <div className={styles.heroActions}>
                 <Link className="button button--primary button--lg" to="/examora/docs/getting-started">
@@ -137,28 +167,19 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ---- Quick Install ---- */}
-        <section className={styles.installSection}>
-          <div className={styles.installSectionInner}>
-            <p className={styles.installLabel}>Quick Install</p>
-            <div className={styles.installTerminal}>
-              <div className={styles.installTerminalBar}>
-                <div className={styles.installTerminalDots}>
-                  <span className={styles.installTerminalDot} />
-                  <span className={styles.installTerminalDot} />
-                  <span className={styles.installTerminalDot} />
+        {/* ---- Why Examora ---- */}
+        <section className={styles.whySection}>
+          <div className={styles.sectionInner}>
+            <p className={styles.sectionLabel}>Why Examora</p>
+            <h2 className={styles.sectionTitle}>Built for modern online exams</h2>
+            <div className={styles.capGrid}>
+              {capabilities.map((cap) => (
+                <div key={cap.title} className={styles.capCard}>
+                  <div className={styles.capIcon}>{cap.icon}</div>
+                  <h3 className={styles.capTitle}>{cap.title}</h3>
+                  <p className={styles.capDesc}>{cap.desc}</p>
                 </div>
-                <span className={styles.installTerminalTitle}>examora ~ setup</span>
-              </div>
-              <div className={styles.installTerminalBody}>
-                {installSteps.map((step, i) => (
-                  <div key={step.cmd} className={styles.installLine}>
-                    <span className={styles.installNum}>{String(i + 1).padStart(2, "0")}</span>
-                    <span className={styles.installCmd}>{step.cmd}</span>
-                    <span className={styles.installComment}>{step.desc}</span>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </section>
@@ -166,8 +187,8 @@ export default function Home() {
         {/* ---- Exam Lifecycle ---- */}
         <section className={styles.lifecycleSection}>
           <div className={styles.lifecycleInner}>
-            <p className={styles.lifecycleLabel}>Exam Lifecycle</p>
-            <h2 className={styles.lifecycleTitle}>From authoring to scoring</h2>
+            <p className={styles.sectionLabel}>Exam Lifecycle</p>
+            <h2 className={styles.sectionTitle}>From authoring to scoring</h2>
             <div className={styles.lifecycleGrid}>
               {flowSteps.map((step, i) => (
                 <div key={step.num} className={styles.lifecycleCard}>
@@ -183,8 +204,8 @@ export default function Home() {
         {/* ---- Architecture ---- */}
         <section className={styles.archSection}>
           <div className={styles.archInner}>
-            <p className={styles.archLabel}>Architecture</p>
-            <h2 className={styles.archTitle}>System overview</h2>
+            <p className={styles.sectionLabel}>Architecture</p>
+            <h2 className={styles.sectionTitle}>System overview</h2>
             <div className={styles.archImg}>
               <img
                 src="/examora/img/system-architecture-overview.svg"
@@ -197,7 +218,7 @@ export default function Home() {
         {/* ---- Documentation ---- */}
         <section className={styles.docSection}>
           <div className={styles.docInner}>
-            <h2 className={styles.docTitle}>Documentation</h2>
+            <h2 className={styles.sectionTitle}>Documentation</h2>
             <div className={styles.docGrid}>
               {links.map((link) => (
                 <Link key={link.to} className={styles.docCard} to={link.to}>
