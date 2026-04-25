@@ -27,7 +27,7 @@ MVP v1 is intentionally narrow:
 
 ## Architecture
 
-![Examora Architecture](docs/architecture.png)
+![Examora Architecture](website/static/img/system-architecture-overview.png)
 
 The system follows a four-layer logical architecture:
 
