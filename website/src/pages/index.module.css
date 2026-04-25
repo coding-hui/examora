@@ -6,7 +6,7 @@
 .hero {
   padding: 5rem 0 4rem;
   text-align: center;
-  background: linear-gradient(180deg, #f7f8fa 0%, #ffffff 100%);
+  background: #f7f8fa;
 }
 
 .heroInner {
@@ -58,50 +58,179 @@
   color: #5c5c6e;
 }
 
-.featureSection {
-  padding: 3rem 0;
-}
-
 .sectionInner {
   width: min(960px, calc(100% - 2rem));
   margin: 0 auto;
 }
 
-.featureGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.5rem;
-}
-
-.featureCard {
-  padding: 2rem 2rem;
-  border-radius: 20px;
-  border: 1px solid #e8e8ee;
+.techSection {
+  padding: 3rem 0;
   background: #ffffff;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.featureCard:hover {
-  border-color: #c5c5d0;
+.techSectionLabel {
+  margin: 0 0 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8c8ca0;
 }
 
-.featureTitle {
-  margin: 0;
-  font-size: 1.1rem;
+.techTerminal {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #2a2a3a;
+  background: #1a1a2e;
+  max-width: 960px;
+}
+
+.terminalBar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
+  background: #111118;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.terminalDot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #3a3a4a;
+}
+
+.terminalDot:first-child { background: #ff5f57; }
+.terminalDot:nth-child(2) { background: #ffbd2e; }
+.terminalDot:nth-child(3) { background: #28c840; }
+
+.terminalTitle {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: #6a6a8a;
+}
+
+.terminalBody {
+  padding: 1.25rem 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.terminalLine {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.875rem;
+}
+
+.terminalNum {
+  color: #4a4a6a;
+  min-width: 1.5rem;
+}
+
+.terminalCmd {
+  color: #e2e8f0;
+  flex: 1;
+}
+
+.terminalComment {
+  color: #6a6a8a;
+}
+
+.flowSection {
+  padding: 3rem 0;
+  background: #f7f8fa;
+}
+
+.sectionLabel {
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8c8ca0;
+}
+
+.flowSectionTitle,
+.archSectionTitle {
+  margin: 0 0 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #1a1a2e;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
 }
 
-.featureDesc {
-  margin: 0.75rem 0 0;
-  font-size: 0.95rem;
-  line-height: 1.65;
-  color: #5c5c6e;
+.flowTrack {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  max-width: 960px;
+}
+
+.flowStep {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.flowNum {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #b8b8c4;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.flowContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.flowLabel {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.flowDesc {
+  font-size: 0.8rem;
+  color: #8c8ca0;
+  line-height: 1.4;
+}
+
+.flowArrow {
+  color: #c5c5d0;
+  font-size: 1.25rem;
+  margin: 0 0.75rem;
+  flex-shrink: 0;
+}
+
+.archSection {
+  padding: 3rem 0;
+  background: #ffffff;
+}
+
+.archImg {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.archImg img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .linkSection {
-  padding: 2rem 0 5rem;
+  padding: 3rem 0 5rem;
+  background: #f7f8fa;
 }
 
 .linkSectionTitle {
@@ -159,12 +288,21 @@
     align-items: stretch;
   }
 
-  .featureGrid,
-  .linkGrid {
+  .linkGrid,
+  .techGrid {
     grid-template-columns: 1fr;
   }
 
-  .featureCard {
-    padding: 1.5rem;
+  .flowTrack {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .flowArrow {
+    display: none;
+  }
+
+  .flowNum {
+    font-size: 1.1rem;
   }
 }

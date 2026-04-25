@@ -2,19 +2,12 @@ import Link from "@docusaurus/Link";
 import Layout from "@theme/Layout";
 import styles from "./index.module.css";
 
-const features = [
-  {
-    title: "Desktop exam client",
-    desc: "Candidates take exams in a controlled desktop environment with local state and autosave.",
-  },
-  {
-    title: "Isolated judge runtime",
-    desc: "Code submissions run in an isolated sandbox with parallel test case execution.",
-  },
-  {
-    title: "Snapshot-based scoring",
-    desc: "Published exams are frozen as snapshots. All scoring reads from immutable snapshots.",
-  },
+const installSteps = [
+  { cmd: "git clone git@github.com:coding-hui/examora.git", desc: "Clone the repository" },
+  { cmd: "make deps", desc: "Install frontend & Rust dependencies" },
+  { cmd: "make infra-up", desc: "Start PostgreSQL & Redis via Docker" },
+  { cmd: "make api & make worker", desc: "Launch API server & judge worker" },
+  { cmd: "pnpm dev:admin", desc: "Open admin console at localhost:5173" },
 ];
 
 const links = [
@@ -24,6 +17,14 @@ const links = [
   { title: "Authentication", to: "/examora/docs/concepts/authentication", desc: "Logto SSO and RBAC" },
   { title: "Exam Lifecycle", to: "/examora/docs/concepts/exam-lifecycle", desc: "From authoring to scoring" },
   { title: "Judge Runtime", to: "/examora/docs/reference/judge-runtime", desc: "Worker and sandbox design" },
+];
+
+const flowSteps = [
+  { label: "Author", desc: "Create questions and papers in the admin console" },
+  { label: "Publish", desc: "Freeze source into immutable paper snapshots" },
+  { label: "Deliver", desc: "Candidates take exams via the desktop client" },
+  { label: "Judge", desc: "Worker runs code submissions in the sandbox" },
+  { label: "Score", desc: "Results computed from snapshot data" },
 ];
 
 export default function Home() {
@@ -47,15 +48,54 @@ export default function Home() {
           </div>
         </section>
 
-        <section className={styles.featureSection}>
+        <section className={styles.techSection}>
           <div className={styles.sectionInner}>
-            <div className={styles.featureGrid}>
-              {features.map((f) => (
-                <article key={f.title} className={styles.featureCard}>
-                  <h3 className={styles.featureTitle}>{f.title}</h3>
-                  <p className={styles.featureDesc}>{f.desc}</p>
-                </article>
+            <p className={styles.techSectionLabel}>Quick Install</p>
+            <div className={styles.techTerminal}>
+              <div className={styles.terminalBar}>
+                <span className={styles.terminalDot} />
+                <span className={styles.terminalDot} />
+                <span className={styles.terminalDot} />
+                <span className={styles.terminalTitle}>examora ~ setup</span>
+              </div>
+              <div className={styles.terminalBody}>
+                {installSteps.map((step, i) => (
+                  <div key={step.cmd} className={styles.terminalLine}>
+                    <span className={styles.terminalNum}>{String(i + 1).padStart(2, "0")}</span>
+                    <span className={styles.terminalCmd}>{step.cmd}</span>
+                    <span className={styles.terminalComment}>// {step.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.flowSection}>
+          <div className={styles.sectionInner}>
+            <p className={styles.sectionLabel}>Exam Lifecycle</p>
+            <h2 className={styles.flowSectionTitle}>From authoring to scoring</h2>
+            <div className={styles.flowTrack}>
+              {flowSteps.map((step, i) => (
+                <div key={step.label} className={styles.flowStep}>
+                  <div className={styles.flowNum}>{String(i + 1).padStart(2, "0")}</div>
+                  <div className={styles.flowContent}>
+                    <span className={styles.flowLabel}>{step.label}</span>
+                    <span className={styles.flowDesc}>{step.desc}</span>
+                  </div>
+                  {i < flowSteps.length - 1 && <div className={styles.flowArrow}>→</div>}
+                </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.archSection}>
+          <div className={styles.sectionInner}>
+            <p className={styles.sectionLabel}>Architecture</p>
+            <h2 className={styles.archSectionTitle}>System overview</h2>
+            <div className={styles.archImg}>
+              <img src="/examora/img/system-architecture-overview.svg" alt="Examora system architecture" />
             </div>
           </div>
         </section>
