@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Examora",
+  "version": "0.1.0",
+  "identifier": "com.examora.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5174"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Examora",
+        "width": 1440,
+        "height": 900,
+        "resizable": false
+      }
+    ]
+  },
+  "bundle": {
+    "active": false
+  }
+}

@@ -1,0 +1,55 @@
+use axum::{extract::State, response::Json, routing::get, Router};
+use chrono::{DateTime, Utc};
+use serde::Serialize;
+use std::{net::SocketAddr, sync::Arc};
+use tower_http::trace::TraceLayer;
+use tracing::info;
+
+#[derive(Clone)]
+struct AppState {
+    service_name: &'static str,
+    started_at: DateTime<Utc>,
+}
+
+#[derive(Serialize)]
+struct HealthResponse {
+    service: &'static str,
+    status: &'static str,
+    started_at: DateTime<Utc>,
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            std::env::var("RUST_LOG").unwrap_or_else(|_| "examora_api=debug,tower_http=info".into()),
+        )
+        .init();
+
+    let state = Arc::new(AppState {
+        service_name: "examora-api",
+        started_at: Utc::now(),
+    });
+
+    let app = Router::new()
+        .route("/health", get(health))
+        .route("/api/health", get(health))
+        .with_state(state)
+        .layer(TraceLayer::new_for_http());
+
+    let addr: SocketAddr = "0.0.0.0:8080".parse()?;
+    info!("starting examora-api on {addr}");
+
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+async fn health(State(state): State<Arc<AppState>>) -> Json<HealthResponse> {
+    Json(HealthResponse {
+        service: state.service_name,
+        status: "ok",
+        started_at: state.started_at,
+    })
+}
