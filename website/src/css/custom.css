@@ -11,4 +11,37 @@
   --ifm-color-primary-lighter: #ffa333;
   --ifm-color-primary-lightest: #ffb366;
   --ifm-code-font-size: 95%;
+
+  /* Aurora palette */
+  --aurora-warm: #fff8f2;
+  --aurora-cool: #f0f2ff;
+  --aurora-blue: #eef2ff;
+  --aurora-gray: #f8f9fc;
+
+  /* Surface */
+  --surface-glass: rgba(255, 255, 255, 0.75);
+  --surface-glass-border: rgba(255, 255, 255, 0.6);
+
+  /* Dark accent */
+  --dark-bg: #13131f;
+  --dark-surface: #1e1e2e;
+  --dark-border: #2a2a3e;
+  --dark-text: #e2e4f0;
+  --dark-muted: #6b6b8a;
+
+  /* Judge result colors */
+  --pass: #34d399;
+  --fail: #f87171;
+  --pending: #fbbf24;
+
+  /* Tokens */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-glass: 0 8px 32px rgba(100, 100, 180, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 4px 16px rgba(80, 80, 160, 0.08);
+
+  /* Grid texture */
+  --grid-pattern: radial-gradient(circle, rgba(150, 150, 200, 0.1) 1px, transparent 1px);
+  --grid-size: 28px;
 }
