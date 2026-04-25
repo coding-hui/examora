@@ -35,10 +35,9 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    let logto_endpoint = std::env::var("LOGTO_ENDPOINT")
-        .unwrap_or_else(|_| "https://auth.micromoving.net/".into());
-    let logto_app_id = std::env::var("LOGTO_APP_ID")
-        .unwrap_or_else(|_| "<YOUR_APP_ID>".into());
+    let logto_endpoint =
+        std::env::var("LOGTO_ENDPOINT").unwrap_or_else(|_| "https://auth.micromoving.net/".into());
+    let logto_app_id = std::env::var("LOGTO_APP_ID").unwrap_or_else(|_| "<YOUR_APP_ID>".into());
     let logto_jwks_uri = format!("{}/oidc/jwks", logto_endpoint.trim_end_matches('/'));
 
     let state = Arc::new(AppState {
