@@ -4,6 +4,8 @@ packages:
   - "website"
 allowBuilds:
   core-js: false
+  core-js-pure: true
+  es5-ext: true
   esbuild: false
 
 overrides:

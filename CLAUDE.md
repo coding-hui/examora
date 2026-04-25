@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 pnpm install          # install dependencies
 pnpm dev:admin        # admin-web dev server on :5173
-pnpm dev:desktop      # exam-desktop dev server on :5174
+pnpm dev:desktop      # desktop dev server on :5174
 pnpm -r build         # build all workspace packages
 pnpm -r typecheck     # type-check all workspace packages
 ```
@@ -79,3 +79,12 @@ Submission statuses: `PENDING → JUDGING → COMPILING → RUNNING → ACCEPTED
 - `website/docs/reference/api/` — API contract reference
 - `website/docs/reference/database/` — Database model documentation (schema planned for Phase 1)
 - `website/docs/reference/judge-runtime/` — Sandbox execution design
+
+## Authentication
+
+**Logto** is used as the authentication provider:
+- Auth domain: `https://auth.micromoving.net/`
+- App ID: configured via `LOGTO_APP_ID` environment variable (see `.env.example`)
+- Frontend uses `@logto/vue`
+- Backend validates Logto-issued Bearer tokens using JWKS (`{LOGTO_ENDPOINT}/oidc/jwks`)
+- Business roles are stored in Examora data, not in the frontend session

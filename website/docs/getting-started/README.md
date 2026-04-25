@@ -68,6 +68,6 @@ examora/
 
 ## Authentication Direction
 
-- Frontends use `@logto/vue`
-- API validates Logto access tokens
+- Frontends use `@logto/vue` with Logto at `https://auth.micromoving.net/`
+- API validates Logto access tokens via JWKS (`{LOGTO_ENDPOINT}/oidc/jwks`)
 - Business roles stay in Examora data, not in the frontend session
