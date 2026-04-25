@@ -7,7 +7,7 @@ const config: Config = {
   title: "Examora",
   tagline: "Online examination platform documentation",
   favicon: "img/examora.ico",
-  url: "https://examora.dev",
+  url: "https://coding-hui.github.io/examora",
   baseUrl: "/examora/",
   organizationName: "examora",
   projectName: "examora",

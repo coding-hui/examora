@@ -2,7 +2,7 @@
 
 Examora (`极考`) is an online examination platform for multi-subject exams, programming exams, and desktop-secured exam scenarios.
 
-**Documentation website**: https://examora.dev/examora
+**Documentation website**: https://coding-hui.github.io/examora/
 
 This repository now contains the MVP v1 monorepo foundation:
 
