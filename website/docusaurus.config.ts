@@ -8,7 +8,7 @@ const config: Config = {
   tagline: "Online examination platform documentation",
   favicon: "img/favicon.ico",
   url: "https://examora.dev",
-  baseUrl: "/",
+  baseUrl: "/examora/",
   organizationName: "examora",
   projectName: "examora",
   onBrokenLinks: "throw",
@@ -49,22 +49,22 @@ const config: Config = {
       title: "Examora",
       items: [
         {
-          to: "/docs",
+          to: "/examora/docs",
           position: "left",
           label: "Docs",
-          activeBaseRegex: "^/docs/?$|^/docs/concepts(?:/|$)",
+          activeBaseRegex: "^/examora/docs/?$|^/examora/docs/concepts(?:/|$)",
         },
         {
-          to: "/docs/getting-started",
+          to: "/examora/docs/getting-started",
           position: "left",
           label: "Quick Starts",
-          activeBaseRegex: "^/docs/getting-started(?:/|$)",
+          activeBaseRegex: "^/examora/docs/getting-started(?:/|$)",
         },
         {
-          to: "/docs/reference/api",
+          to: "/examora/docs/reference/api",
           position: "left",
           label: "APIs",
-          activeBaseRegex: "^/docs/reference(?:/|$)",
+          activeBaseRegex: "^/examora/docs/reference(?:/|$)",
         },
         {
           href: "https://github.com/coding-hui/examora",
