@@ -72,6 +72,12 @@ const config: Config = {
           activeBaseRegex: "^/examora/docs/reference(?:/|$)",
         },
         {
+          to: "/examora/docs/planning/roadmap",
+          position: "left",
+          label: "Planning",
+          activeBaseRegex: "^/examora/docs/planning(?:/|$)",
+        },
+        {
           href: "https://github.com/coding-hui/examora",
           position: "right",
           label: "GitHub",

@@ -1,4 +1,4 @@
-.PHONY: help deps infra-up infra-down cargo-check api worker schema
+.PHONY: help deps infra-up infra-down cargo-check api worker
 
 help:
 	@echo "Available targets:"
@@ -8,7 +8,6 @@ help:
 	@echo "  make cargo-check - run cargo check"
 	@echo "  make api         - run the API service"
 	@echo "  make worker      - run the judge worker"
-	@echo "  make schema      - print schema file path"
 
 deps:
 	pnpm install
@@ -27,6 +26,3 @@ api:
 
 worker:
 	cargo run -p examora-judge-worker
-
-schema:
-	@echo docs/schema.sql

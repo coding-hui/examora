@@ -49,7 +49,7 @@ Examora is a monorepo with three logical layers:
 
 **DataLayer**
 - PostgreSQL 16 on `:5432`, Redis 7 on `:6379` (from `deploy/docker-compose.yml`)
-- MinIO planned for file storage (not yet in docker-compose)
+- MinIO for file storage — **deferred** (not in docker-compose, not required for MVP)
 
 **Shared packages** (`packages/`)
 - `@examora/types` — TypeScript types split by role boundary (admin vs. candidate). All candidate-facing types exclude answers and hidden test cases.
@@ -74,8 +74,8 @@ Submission statuses: `PENDING → JUDGING → COMPILING → RUNNING → ACCEPTED
 
 ## Key Files
 
-- `docs/getting-started/` — Setup and development guide
-- `docs/architecture/` — System architecture and components
-- `docs/api/` — API contract reference
-- `docs/database/schema.sql` — PostgreSQL schema (16 tables)
-- `docs/judge/` — Sandbox execution design
+- `website/docs/getting-started/` — Setup and development guide
+- `website/docs/concepts/architecture/` — System architecture and components
+- `website/docs/reference/api/` — API contract reference
+- `website/docs/reference/database/` — Database model documentation (schema planned for Phase 1)
+- `website/docs/reference/judge-runtime/` — Sandbox execution design

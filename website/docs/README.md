@@ -15,6 +15,7 @@ Examora is a desktop-first online examination platform for multi-subject exams, 
 - [Architecture](./concepts/architecture/) for service boundaries and exam snapshot rules
 - [Authentication](./concepts/authentication/) for Logto integration and backend RBAC
 - [Exam Lifecycle](./concepts/exam-lifecycle/) for the create-publish-take-submit loop
+- [Roadmap](./planning/roadmap/) for staged development priorities
 - [API Reference](./reference/api/) for admin/client routes and auth expectations
 - [Database](./reference/database/) for the core table model
 - [Judge Runtime](./reference/judge-runtime/) for programming submission and sandbox flow

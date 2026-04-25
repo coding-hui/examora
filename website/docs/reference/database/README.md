@@ -23,4 +23,4 @@ The data model separates editable source content from immutable delivery content
 
 ## Authoritative Schema
 
-The bootstrap SQL schema currently lives in the repository root at `docs/schema.sql`.
+The bootstrap SQL schema will be created in Phase 1 (Database Schema and Migrations). The schema file will live at `docs/schema.sql` in the repository root.

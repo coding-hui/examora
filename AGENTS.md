@@ -9,12 +9,15 @@ This repository is a monorepo for the Examora MVP.
 - `services/api`: Rust Axum API service
 - `services/judge-worker`: async judge worker
 - `services/sandbox-runner`: sandbox execution abstraction
-- `packages/shared-types`: shared TypeScript contracts
-- `packages/api-client`: frontend API client
-- `docs/`: architecture, API, database, and sandbox specs
+- `packages/types`: shared TypeScript contracts
+- `packages/client`: frontend API client
+- `website/`: public documentation website
+- `.tech/modules/`: internal module-based planning and technical notes
 - `deploy/`: local infra bootstrap such as `docker-compose.yml`
 
-Keep business contracts aligned with `docs/` and prefer adding shared types in `packages/shared-types` instead of duplicating DTOs in apps.
+Keep public-facing roadmap content in `website/docs/planning/roadmap/README.md`.
+Keep detailed internal planning and technical decomposition in `.tech/modules/`, organized by module rather than by backlog/iteration/role views.
+Prefer adding shared types in `packages/types` instead of duplicating DTOs in apps.
 
 ## Build, Test, and Development Commands
 

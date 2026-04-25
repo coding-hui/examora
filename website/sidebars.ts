@@ -25,6 +25,14 @@ const sidebars = {
     },
     {
       type: "category",
+      label: "Planning",
+      collapsed: false,
+      items: [
+        "planning/roadmap/README",
+      ],
+    },
+    {
+      type: "category",
       label: "Reference",
       collapsed: false,
       items: [
