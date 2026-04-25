@@ -1,10 +1,10 @@
 {
-  "name": "@examora/api-client",
+  "name": "@examora/client",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@examora/shared-types": "workspace:*"
+    "@examora/types": "workspace:*"
   },
   "exports": {
     ".": "./src/index.ts"

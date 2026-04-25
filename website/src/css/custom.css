@@ -1,0 +1,24 @@
+/**
+ * Any CSS included here will be global.
+ */
+
+:root {
+  --ifm-color-primary: #e58a00;
+  --ifm-color-primary-dark: #cc7b00;
+  --ifm-color-primary-darker: #c07300;
+  --ifm-color-primary-darkest: #a06000;
+  --ifm-color-primary-light: #ff9a1a;
+  --ifm-color-primary-lighter: #ffa333;
+  --ifm-color-primary-lightest: #ffb366;
+  --ifm-code-font-size: 95%;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #ff9a1a;
+  --ifm-color-primary-dark: #e58a00;
+  --ifm-color-primary-darker: #cc7b00;
+  --ifm-color-primary-darkest: #a06000;
+  --ifm-color-primary-light: #ffb366;
+  --ifm-color-primary-lighter: #ffc078;
+  --ifm-color-primary-lightest: #ffd199;
+}

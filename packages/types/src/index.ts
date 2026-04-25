@@ -32,19 +32,21 @@ export type SubmissionStatus =
   | "OUTPUT_LIMIT_EXCEEDED"
   | "SYSTEM_ERROR";
 
-export interface AdminQuestionDto {
+/** Admin-facing question — includes scoring answer (never send to candidate) */
+export interface AdminQuestion {
   id: number;
   subjectId: number;
   type: QuestionType;
   title: string;
   content: string;
   score: number;
-  configJson: Record<string, unknown>;
-  answerJson: Record<string, unknown> | null;
+  config: Record<string, unknown>;
+  answer: Record<string, unknown> | null;
   status: string;
 }
 
-export interface CandidateQuestionSnapshotDto {
+/** Candidate-facing question snapshot — excludes answer and hidden test cases */
+export interface QuestionSnapshot {
   questionSnapshotId: number;
   questionId: number;
   type: QuestionType;
@@ -54,12 +56,13 @@ export interface CandidateQuestionSnapshotDto {
   config: Record<string, unknown>;
 }
 
-export interface CandidateExamPaperDto {
+/** Candidate-facing exam paper */
+export interface ExamPaper {
   sessionId: number;
   exam: {
     id: number;
     title: string;
     remainingSeconds: number;
   };
-  questions: CandidateQuestionSnapshotDto[];
+  questions: QuestionSnapshot[];
 }

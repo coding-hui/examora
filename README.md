@@ -11,7 +11,7 @@ This repository now contains the MVP v1 monorepo foundation:
 - `services/sandbox-runner`: sandbox execution abstraction
 - `packages/shared-types`: shared TypeScript contracts split by admin/client boundaries
 - `packages/api-client`: frontend API client placeholder
-- `docs/`: MVP v1 technical specs
+- `docs/` — MVP v1 technical specs
 - `deploy/`: local infrastructure bootstrap
 
 ## MVP Scope
@@ -24,6 +24,21 @@ MVP v1 is intentionally narrow:
 - Programming questions support draft saving and formal submissions
 - Judge flow is mocked first and upgraded to real `isolate` execution later
 - Desktop anti-cheat support is audit-oriented, not enforcement-oriented
+
+## Architecture
+
+![Examora Architecture](docs/architecture.png)
+
+The system follows a four-layer logical architecture:
+
+| Layer | Components | Responsibility |
+|-------|------------|----------------|
+| **ClientSide** | examora-admin, examora-desktop | Admin console & desktop exam client |
+| **ServiceLayer** | examora-api | Business logic, request orchestration |
+| **JudgeLayer** | judge-worker, isolate/nsjail | Code execution & evaluation in sandbox |
+| **DataLayer** | PostgreSQL, Redis/MQ, MinIO | Data persistence, caching, task queue, file storage |
+
+**Workflow**: Client → API → (PostgreSQL/MinIO write) → MQ task → judge-worker → isolate/nsjail → result write → Client view
 
 ## Repository Layout
 
@@ -53,13 +68,14 @@ examora/
 
 - Rust stable toolchain
 - Node.js 20+
-- pnpm 9+
+- Corepack-enabled `pnpm@10.33.0`
 - Docker / Docker Compose
 
 ### Development bootstrap
 
 ```bash
 cp .env.example .env
+corepack install
 pnpm install
 cargo check
 docker compose -f deploy/docker-compose.yml up -d
