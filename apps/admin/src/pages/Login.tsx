@@ -1,7 +1,6 @@
-import LogtoClient from '@logto/browser';
 import { Spin } from 'antd';
 import { useEffect, useState } from 'react';
-import { createLogtoConfig } from '@/auth/LogtoProvider';
+import { getLogtoClient } from '@/auth/token';
 
 const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -9,33 +8,36 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     const handleAuth = async () => {
-      const config = createLogtoConfig();
-      if (!config) {
+      const client = getLogtoClient();
+      if (!client) {
         setError('Logto not configured');
         setIsLoading(false);
         return;
       }
 
-      const client = new LogtoClient(config);
-      const url = new URL(window.location.href);
+      // Check if already authenticated — avoid infinite redirect loop
+      const isAuth = await client.isAuthenticated();
+      if (isAuth) {
+        window.location.href = '/';
+        return;
+      }
 
-      // Check if this is a callback (has code or error in URL)
+      const url = new URL(window.location.href);
       const code = url.searchParams.get('code');
       const errorParam = url.searchParams.get('error');
 
       if (errorParam) {
         setError(
-          `Authentication·failed:·${url.searchParams.get('error_description')}`,
+          `Authentication failed: ${url.searchParams.get('error_description')}`,
         );
         setIsLoading(false);
         return;
       }
 
       if (code) {
-        // This is the callback - handle sign in
         try {
           await client.handleSignInCallback(window.location.href);
-          // Redirect to home after successful sign in
+          // Token is fetched from LogtoClient directly by getAccessToken() — no localStorage needed
           window.location.href = '/';
         } catch (err) {
           console.error('Sign in callback error:', err);

@@ -41,6 +41,9 @@ apps/*/src-tauri/target/
 .cache/
 .tmp/
 tmp/
+/api
+/worker
+/sandbox
 
 # Local runtime data
 app_data/

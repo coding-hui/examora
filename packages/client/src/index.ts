@@ -3,7 +3,7 @@ import type {
   ExamSessionStatus,
   QuestionSnapshot,
   SubmissionStatus,
-} from "@examora/types";
+} from '@examora/types';
 
 export interface ApiClientOptions {
   baseUrl: string;
@@ -13,29 +13,41 @@ export interface ApiClientOptions {
 export class ApiClient {
   constructor(private readonly options: ApiClientOptions) {}
 
-  private async request<T>(
-    path: string,
-    init: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const { baseUrl, accessToken } = this.options;
 
     const headers = new Headers(init.headers);
     if (accessToken) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
+      headers.set('Authorization', `Bearer ${accessToken}`);
     }
-    headers.set("Content-Type", "application/json");
+    headers.set('Content-Type', 'application/json');
 
     const response = await fetch(`${baseUrl}${path}`, {
       ...init,
       headers,
     });
 
+    const payload = await response.json().catch(() => null);
+
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: response.statusText }));
-      throw new Error(error.error || `HTTP ${response.status}`);
+      throw new Error(
+        payload?.message || payload?.error || `HTTP ${response.status}`,
+      );
     }
 
-    return response.json();
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'code' in payload &&
+      'data' in payload
+    ) {
+      if (payload.code !== 0) {
+        throw new Error(payload.message || `API error ${payload.code}`);
+      }
+      return payload.data as T;
+    }
+
+    return payload as T;
   }
 
   async get<T>(path: string): Promise<T> {
@@ -44,21 +56,21 @@ export class ApiClient {
 
   async post<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify(body),
     });
   }
 
   async put<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify(body),
     });
   }
 
   async delete<T>(path: string): Promise<T> {
     return this.request<T>(path, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   }
 
@@ -71,8 +83,16 @@ export class ApiClient {
   }
 
   // Auth
-  async authMe(): Promise<{ user_id: string; role: string }> {
-    return this.get<{ user_id: string; role: string }>("/api/auth/me");
+  async authMe(): Promise<{
+    user_id: number;
+    external_subject: string;
+    display_name: string | null;
+    email?: string | null;
+    role: string | null;
+    role_code: string | null;
+    status: string;
+  }> {
+    return this.get('/api/auth/me');
   }
 }
 

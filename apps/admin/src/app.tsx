@@ -1,12 +1,11 @@
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
-import LogtoClient from '@logto/browser';
-import { LogtoProvider } from '@logto/react';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import React from 'react';
-import { createLogtoConfig } from '@/auth/LogtoProvider';
+import { LogtoAuthProvider } from '@/auth/LogtoProvider';
+import { getAccessToken, getLogtoClient } from '@/auth/token';
 import {
   AvatarDropdown,
   AvatarName,
@@ -14,56 +13,56 @@ import {
   Question,
   SelectLang,
 } from '@/components';
-import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './request';
 
 // Initialize dayjs plugins globally
 dayjs.extend(relativeTime);
 
 const isDev = process.env.NODE_ENV === 'development';
-const isDevOrTest = isDev || process.env.CI;
 const loginPath = '/login';
-
-let logtoClient: LogtoClient | null = null;
-
-const getLogtoClient = () => {
-  const config = createLogtoConfig();
-  if (!config) return null;
-  if (!logtoClient) {
-    logtoClient = new LogtoClient(config);
-  }
-  return logtoClient;
-};
 
 /**
  * @see https://umijs.org/docs/api/runtime-config#getinitialstate
  * */
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
-  currentUser?: API.CurrentUser;
+  currentUser?: API.CurrentUser | null;
+  forbidden?: boolean;
   loading?: boolean;
-  fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
-  isAuthenticated?: boolean;
+  fetchUserInfo?: () => Promise<API.CurrentUser | undefined | null>;
 }> {
   const fetchUserInfo = async () => {
     const client = getLogtoClient();
-    if (!client) return undefined;
+    if (!client) return null;
 
     try {
-      const claims = await client.getIdTokenClaims();
-      if (claims) {
-        return {
-          name: claims.name || claims.username || claims.sub,
-          avatar: claims.picture,
-          email: claims.email,
-          phone: claims.phone_number,
-          userId: claims.sub,
-        } as API.CurrentUser;
+      const token = await getAccessToken();
+      if (!token) return null;
+
+      const res = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.status === 401) {
+        return null;
+      }
+
+      if (res.status === 403) {
+        return undefined; // indicates forbidden
+      }
+
+      if (res.ok) {
+        const userProfile = (await res.json()) as API.CurrentUser;
+        localStorage.setItem(
+          'examora_user_profile',
+          JSON.stringify(userProfile),
+        );
+        return userProfile;
       }
     } catch (_error) {
-      console.error('Failed to fetch user info from Logto:', _error);
+      console.error('Failed to fetch user info:', _error);
     }
-    return undefined;
+    return null;
   };
 
   const checkAuth = async () => {
@@ -72,36 +71,42 @@ export async function getInitialState(): Promise<{
     return client.isAuthenticated();
   };
 
-  // 如果不是登录页面，执行
   const { location } = history;
-  if (![loginPath].includes(location.pathname)) {
+  if (location.pathname !== loginPath) {
     const isAuthenticated = await checkAuth();
     if (!isAuthenticated) {
       history.push(loginPath);
+      return {};
+    }
+
+    const token = await getAccessToken();
+    if (!token) {
+      history.push(loginPath);
+      return {};
+    }
+
+    const userProfile = await fetchUserInfo();
+
+    if (userProfile === undefined) {
+      // 403: 用户已登录但无后台权限或未激活，不重定向到登录页
       return {
         fetchUserInfo,
-        settings: defaultSettings as Partial<LayoutSettings>,
+        currentUser: null,
+        forbidden: true,
       };
     }
-    const currentUser = await fetchUserInfo();
+
     return {
       fetchUserInfo,
-      currentUser,
-      isAuthenticated,
-      settings: defaultSettings as Partial<LayoutSettings>,
+      currentUser: userProfile,
     };
   }
-  return {
-    fetchUserInfo,
-    settings: defaultSettings as Partial<LayoutSettings>,
-  };
+
+  return {};
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
-export const layout: RunTimeLayoutConfig = ({
-  initialState,
-  setInitialState,
-}) => {
+export const layout: RunTimeLayoutConfig = ({ initialState }) => {
   return {
     actionsRender: () => [
       <Question key="doc" />,
@@ -118,24 +123,23 @@ export const layout: RunTimeLayoutConfig = ({
       return dom;
     },
     avatarProps: {
-      src: initialState?.currentUser?.avatar,
       title: <AvatarName />,
       render: (_, avatarChildren) => (
         <AvatarDropdown>{avatarChildren}</AvatarDropdown>
       ),
     },
     waterMarkProps: {
-      content: initialState?.currentUser?.name,
+      content: initialState?.currentUser?.display_name,
     },
     footerRender: () => <Footer />,
     onPageChange: () => {
       const { location } = history;
-      // 如果没有登录，重定向到登录页（会跳转到 Logto）
-      if (
-        !initialState?.isAuthenticated &&
-        !initialState?.currentUser &&
-        location.pathname !== loginPath
-      ) {
+      // 如果 forbidden 显示无权限页面，不重定向
+      if (initialState?.forbidden) {
+        return;
+      }
+      // 如果没有登录，重定向到登录页
+      if (!initialState?.currentUser && location.pathname !== loginPath) {
         history.push(loginPath);
       }
     },
@@ -160,17 +164,16 @@ export const layout: RunTimeLayoutConfig = ({
       },
     ],
     menuHeaderRender: undefined,
-    // 自定义 403 页面
-    // unAccessible: <div>unAccessible</div>,
-    // 增加一个 loading 的状态
+    // 无权限页面
+    unAccessible: (
+      <div style={{ padding: '100px 0', textAlign: 'center' }}>
+        <h2>无权访问后台</h2>
+        <p>您的账户尚未激活或没有后台访问权限。</p>
+        <p>请联系管理员开通权限。</p>
+      </div>
+    ),
     childrenRender: (children) => {
-      // if (initialState?.loading) return <PageLoading />;
-      const logtoConfig = createLogtoConfig();
-      return (
-        <LogtoProvider config={logtoConfig ?? { appId: '', endpoint: '' }}>
-          {children}
-        </LogtoProvider>
-      );
+      return <LogtoAuthProvider>{children}</LogtoAuthProvider>;
     },
     ...initialState?.settings,
   };

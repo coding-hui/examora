@@ -8,9 +8,9 @@ This repository now contains the MVP v1 monorepo foundation:
 
 - `apps/admin-web`: Vue 3 administrator console
 - `apps/exam-desktop`: Tauri 2 + Vue 3 desktop exam client
-- `services/api`: Rust Axum API service
-- `services/judge-worker`: Rust judge task worker
-- `services/sandbox-runner`: sandbox execution abstraction
+- `cmd/api`: Go Gin API service
+- `cmd/worker`: Go Asynq judge task worker
+- `cmd/sandbox`: Go sandbox runner service
 - `packages/shared-types`: shared TypeScript contracts split by admin/client boundaries
 - `packages/api-client`: frontend API client placeholder
 - `docs/` — MVP v1 technical specs
@@ -37,7 +37,7 @@ The system follows a four-layer logical architecture:
 |-------|------------|----------------|
 | **ClientSide** | examora-admin, examora-desktop | Admin console & desktop exam client |
 | **ServiceLayer** | examora-api | Business logic, request orchestration |
-| **JudgeLayer** | judge-worker, isolate/nsjail | Code execution & evaluation in sandbox |
+| **JudgeLayer** | examora-worker, examora-sandbox | Code execution & evaluation in sandbox |
 | **DataLayer** | PostgreSQL, Redis/MQ, MinIO | Data persistence, caching, task queue, file storage |
 
 **Workflow**: Client → API → (PostgreSQL/MinIO write) → MQ task → judge-worker → isolate/nsjail → result write → Client view
@@ -49,10 +49,11 @@ examora/
 ├── apps/
 │   ├── admin-web/
 │   └── exam-desktop/
-├── services/
+├── cmd/
 │   ├── api/
-│   ├── judge-worker/
-│   └── sandbox-runner/
+│   ├── worker/
+│   └── sandbox/
+├── internal/
 ├── packages/
 │   ├── api-client/
 │   ├── shared-types/
@@ -68,7 +69,8 @@ examora/
 
 ### Prerequisites
 
-- Rust stable toolchain
+- Go 1.24+
+- Rust stable toolchain for the Tauri desktop shell
 - Node.js 20+
 - Corepack-enabled `pnpm@10.33.0`
 - Docker / Docker Compose
@@ -79,15 +81,16 @@ examora/
 cp .env.example .env
 corepack install
 pnpm install
-cargo check
+go test ./...
 docker compose -f deploy/docker-compose.yml up -d
 ```
 
 ### Start services
 
 ```bash
-cargo run -p examora-api
-cargo run -p examora-judge-worker
+go run ./cmd/api
+go run ./cmd/worker
+go run ./cmd/sandbox
 ```
 
 Frontend apps are scaffolded and can be expanded with the usual Vite commands.
@@ -96,7 +99,7 @@ You can also use the root `Makefile` for common tasks:
 
 ```bash
 make infra-up
-make cargo-check
+make go-check
 make api
 ```
 

@@ -1,6 +1,7 @@
-﻿import type { RequestOptions } from '@@/plugin-request/request';
+import type { RequestOptions } from '@@/plugin-request/request';
 import type { RequestConfig } from '@umijs/max';
 import { message, notification } from 'antd';
+import { getAccessToken } from '@/auth/token';
 
 // 错误处理方案： 错误类型
 enum ErrorShowType {
@@ -28,7 +29,7 @@ export const errorConfig: RequestConfig = {
   // 错误处理： umi@3 的错误处理方案。
   errorConfig: {
     // 错误抛出
-    errorThrower: (res) => {
+    errorThrower: (res: unknown) => {
       const { success, data, errorCode, errorMessage, showType } =
         res as unknown as ResponseStructure;
       if (!success) {
@@ -63,7 +64,7 @@ export const errorConfig: RequestConfig = {
               });
               break;
             case ErrorShowType.REDIRECT:
-              window.location.href = '/user/login';
+              window.location.href = '/login';
               break;
             default:
               message.error(errorMessage);
@@ -87,7 +88,14 @@ export const errorConfig: RequestConfig = {
 
   // 请求拦截器
   requestInterceptors: [
-    (config: RequestOptions) => {
+    async (config: RequestOptions) => {
+      const token = await getAccessToken();
+      if (token) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${token}`,
+        };
+      }
       return config;
     },
   ],

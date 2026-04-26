@@ -4,19 +4,21 @@
 
 This repository is a monorepo for the Examora MVP.
 
-- `apps/admin-web`: Vue 3 admin console
-- `apps/exam-desktop`: Tauri 2 + Vue 3 desktop client
+- `apps/admin`: admin console
+- `apps/desktop`: Tauri + frontend desktop client
 - `services/api`: Rust Axum API service
 - `services/judge-worker`: async judge worker
 - `services/sandbox-runner`: sandbox execution abstraction
 - `packages/types`: shared TypeScript contracts
 - `packages/client`: frontend API client
+- `packages/utils`: shared utilities
 - `website/`: public documentation website
-- `.tech/modules/`: internal module-based planning and technical notes
+- `.tech/`: internal module-based planning and technical notes
 - `deploy/`: local infra bootstrap such as `docker-compose.yml`
 
 Keep public-facing roadmap content in `website/docs/planning/roadmap/README.md`.
-Keep detailed internal planning and technical decomposition in `.tech/modules/`, organized by module rather than by backlog/iteration/role views.
+Keep detailed internal planning and technical decomposition in `.tech/`, organized by numbered module documents such as `01-foundation.md` and `02-auth-and-access.md`.
+Authentication is based on Logto; keep auth design aligned with `.tech/02-auth-and-access.md`.
 Prefer adding shared types in `packages/types` instead of duplicating DTOs in apps.
 
 ## Build, Test, and Development Commands
@@ -27,6 +29,8 @@ Prefer adding shared types in `packages/types` instead of duplicating DTOs in ap
 - `make api`: run the API on port `8080`
 - `make worker`: run the judge worker
 - `cargo run -p examora-api`: direct API startup without `make`
+- `pnpm --dir website build`: build the public docs site
+- `pnpm --dir website start`: run the public docs site locally
 
 Example bootstrap:
 
@@ -49,7 +53,7 @@ make cargo-check
 Testing is not fully wired yet. Add tests with new behavior:
 
 - Rust: unit tests next to modules, integration tests under `services/*/tests`
-- Frontend: co-locate tests as `*.spec.ts` or `*.test.ts`
+- Frontend: co-locate tests as `*.spec.ts` or `*.test.ts`; `apps/admin/tests` already exists as an app-level test location
 
 Run at minimum `cargo check` before submitting changes. Add focused tests when touching scoring, snapshots, auth, or judge flow.
 

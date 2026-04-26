@@ -13,11 +13,13 @@ pnpm -r build         # build all workspace packages
 pnpm -r typecheck     # type-check all workspace packages
 ```
 
-### Rust (Cargo workspace)
+### Go (cmd workspace)
 ```bash
-cargo check           # type-check all Rust crates
-cargo run -p examora-api           # run API service
-cargo run -p examora-judge-worker   # run judge worker
+go build ./...         # build all Go packages
+go test ./...          # run all tests
+go run ./cmd/api       # run API server
+go run ./cmd/worker    # run judge worker
+go run ./cmd/sandbox   # run sandbox runner
 ```
 
 ### Infrastructure (Docker)
@@ -28,10 +30,9 @@ make infra-down       # docker compose down
 
 ### Combined / root
 ```bash
-make deps             # pnpm install
-make cargo-check      # cargo check
-make api              # cargo run -p examora-api
-make worker           # cargo run -p examora-judge-worker
+make deps             # pnpm install + go mod download
+make api              # go run ./cmd/api
+make worker           # go run ./cmd/worker
 ```
 
 ## Architecture
@@ -43,9 +44,20 @@ Examora is a monorepo with three logical layers:
 - `apps/exam-desktop` — Tauri 2 + Vue 3 desktop exam client (uses `@examora/client`)
 
 **ServiceLayer**
-- `services/api` — Rust Axum API server (skeleton; only health endpoint exists; binds `:8080`)
-- `services/judge-worker` — Rust async worker consuming from Redis Stream (currently mock; exits on start)
-- `services/sandbox-runner` — Rust library crate; `run_job()` stub returns `Unimplemented`
+- `cmd/api` — Go Gin API server (binds `:8080`)
+- `cmd/worker` — Go async worker using Asynq + Redis Stream
+- `cmd/sandbox` — Go sandbox runner (isolated execution environment)
+
+**Internal packages** (`internal/`)
+- `auth` — JWT/JWKS authentication
+- `exam` — Exam management
+- `judge` — Judge orchestration
+- `paper` — Paper/snapshot management
+- `question` — Question bank
+- `submission` — Submission handling
+- `user` — User management
+- `platform` — Platform settings
+- `client` — Candidate-facing API client
 
 **DataLayer**
 - PostgreSQL 16 on `:5432`, Redis 7 on `:6379` (from `deploy/docker-compose.yml`)
@@ -79,6 +91,36 @@ Submission statuses: `PENDING → JUDGING → COMPILING → RUNNING → ACCEPTED
 - `website/docs/reference/api/` — API contract reference
 - `website/docs/reference/database/` — Database model documentation (schema planned for Phase 1)
 - `website/docs/reference/judge-runtime/` — Sandbox execution design
+
+## Coding Style
+
+- TS/Vue: 2 spaces; Go (gofmt): tabs
+- TS variables/functions: `camelCase`; Vue components and Go types: `PascalCase`; Go functions/packages: `snake_case`
+- Keep admin DTOs and candidate DTOs separate; do not reuse one question shape for both roles
+
+## Testing Guidelines
+
+Add tests with new behavior:
+- Go: unit tests next to modules (`*_test.go`), integration tests under `tests/`
+- Frontend: co-locate tests as `*.spec.ts` or `*.test.ts`; `apps/admin/tests` exists as app-level test location
+- Run at minimum `go build ./...` before submitting changes
+- Add focused tests when touching scoring, snapshots, auth, or judge flow
+
+## Design Constraints
+
+- Candidate-facing DTOs must never expose `answer_json` or hidden test cases
+- Published exams are frozen through snapshots; scoring reads from snapshots, never source
+- Programming drafts live in `answers` table; formal judge attempts live in `submissions` + `judge_tasks`
+- `worker` may access business infrastructure; `sandbox` must not access PostgreSQL, Redis, or credentials
+
+## Planning & Documentation
+
+- Internal technical planning: `.tech/01-foundation.md`, `.tech/02-auth-and-access.md`, etc.
+- Public roadmap: `website/docs/planning/roadmap/README.md`
+- Architecture docs: `website/docs/concepts/architecture/`
+- API reference: `website/docs/reference/api/`
+- Database schema: `website/docs/reference/database/`
+- Judge runtime: `website/docs/reference/judge-runtime/`
 
 ## Authentication
 

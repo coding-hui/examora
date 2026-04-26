@@ -21,7 +21,11 @@ export type GlobalHeaderRightProps = {
 export const AvatarName = () => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  return <span className="anticon">{currentUser?.name}</span>;
+  return (
+    <span className="anticon">
+      {currentUser?.display_name || currentUser?.external_subject}
+    </span>
+  );
 };
 
 const useStyles = createStyles(({ token }) => {
@@ -46,16 +50,15 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   menu,
   children,
 }) => {
-  /**
-   * 退出登录，并且将当前的 url 保存
-   */
   const loginOut = async () => {
     const config = createLogtoConfig();
+    // Clear token storage
+    localStorage.removeItem('examora_access_token');
+    localStorage.removeItem('examora_user_profile');
     if (config) {
       const client = new LogtoClient(config);
       await client.signOut(window.location.origin);
     } else {
-      // Fallback if Logto not configured
       history.push('/login');
     }
   };
@@ -67,7 +70,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
     const { key } = event;
     if (key === 'logout') {
       flushSync(() => {
-        setInitialState((s) => ({ ...s, currentUser: undefined }));
+        setInitialState((s: any) => ({ ...s, currentUser: undefined }));
       });
       loginOut();
       return;
@@ -93,7 +96,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
 
   const { currentUser } = initialState;
 
-  if (!currentUser?.name) {
+  if (!currentUser?.display_name && !currentUser?.external_subject) {
     return loading;
   }
 

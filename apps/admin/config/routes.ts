@@ -9,14 +9,15 @@ export default [
     component: './Login',
   },
   {
+    path: '/',
+    redirect: '/welcome',
+  },
+  {
     path: '/welcome',
     name: 'welcome',
     icon: 'smile',
     component: './Welcome',
-  },
-  {
-    path: '/',
-    redirect: '/welcome',
+    access: 'canAdmin',
   },
   {
     component: '404',
