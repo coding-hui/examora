@@ -1,4 +1,21 @@
 export default {
   'pages.404.subTitle': 'Sorry, the page you visited does not exist.',
   'pages.404.buttonText': 'Back to Home',
+  'pages.admin.subPage.title': 'Admin-only page',
+  'pages.admin.description':
+    'You have admin access to the exam management system.',
+  'pages.welcome.title': 'Examora Exam System',
+  'pages.welcome.subtitle': 'Welcome to the online exam management platform',
+  'pages.welcome.stats.students': 'Students',
+  'pages.welcome.stats.exams': 'Exams',
+  'pages.welcome.stats.papers': 'Papers',
+  'pages.welcome.stats.questions': 'Questions',
+  'pages.welcome.quickAccess': 'Quick Access',
+  'pages.welcome.links.userManage': 'User Management',
+  'pages.welcome.links.userManage.desc': 'Manage student and teacher accounts',
+  'pages.welcome.links.examManage': 'Exam Management',
+  'pages.welcome.links.examManage.desc': 'Create and manage exams',
+  'pages.welcome.links.paperManage': 'Paper Management',
+  'pages.welcome.links.paperManage.desc': 'Manage papers and questions',
+  'pages.welcome.alertMessage': 'Welcome to Examora exam management system.',
 };

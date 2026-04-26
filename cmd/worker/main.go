@@ -1,10 +1,28 @@
+// main provides the worker server entrypoint.
 package main
 
-import "github.com/coding-hui/examora/internal/bootstrap"
+import (
+	"context"
+	"os/signal"
+	"syscall"
+
+	"github.com/coding-hui/examora/internal/infra/config"
+	"github.com/coding-hui/examora/internal/server"
+)
 
 func main() {
-	app := bootstrap.NewWorkerApp()
-	if err := app.Run(); err != nil {
+	cfg := config.Load()
+	c, err := server.NewContainer(cfg)
+	if err != nil {
 		panic(err)
+	}
+
+	workerServer := server.NewWorkerServer(c)
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	if err := workerServer.Run(ctx); err != nil {
+		c.Logger.Error("worker server error", "error", err)
 	}
 }

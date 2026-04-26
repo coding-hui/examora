@@ -20,6 +20,13 @@ export default [
     access: 'canAdmin',
   },
   {
+    path: '/admin',
+    name: 'admin',
+    icon: 'user',
+    component: './Admin',
+    access: 'canAdmin',
+  },
+  {
     component: '404',
     layout: false,
     path: './*',

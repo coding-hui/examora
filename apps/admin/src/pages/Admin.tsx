@@ -1,7 +1,7 @@
-import { HeartTwoTone, SmileTwoTone } from '@ant-design/icons';
+import { CheckCircleTwoTone } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import { Alert, Card, Typography } from 'antd';
+import { Card, Result, Typography } from 'antd';
 import React from 'react';
 
 const Admin: React.FC = () => {
@@ -14,36 +14,23 @@ const Admin: React.FC = () => {
       })}
     >
       <Card>
-        <Alert
+        <Result
+          icon={<CheckCircleTwoTone twoToneColor="#52c41a" />}
           title={intl.formatMessage({
-            id: 'pages.welcome.alertMessage',
-            defaultMessage:
-              'Faster and stronger heavy-duty components have been released.',
+            id: 'pages.admin.subPage.title',
           })}
-          type="success"
-          showIcon
-          banner
-          style={{
-            margin: -12,
-            marginBottom: 48,
-          }}
+          subTitle={intl.formatMessage({
+            id: 'pages.welcome.alertMessage',
+          })}
         />
-        <Typography.Title level={2} style={{ textAlign: 'center' }}>
-          <SmileTwoTone /> Ant Design Pro{' '}
-          <HeartTwoTone twoToneColor="#eb2f96" /> You
-        </Typography.Title>
+        <Typography.Paragraph>
+          {intl.formatMessage({
+            id: 'pages.admin.description',
+            defaultMessage:
+              'You have admin access to the exam management system.',
+          })}
+        </Typography.Paragraph>
       </Card>
-      <p style={{ textAlign: 'center', marginTop: 24 }}>
-        Want to add more pages? Please refer to{' '}
-        <a
-          href="https://pro.ant.design/docs/block-cn"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          use block
-        </a>
-        。
-      </p>
     </PageContainer>
   );
 };

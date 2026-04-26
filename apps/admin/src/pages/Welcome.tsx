@@ -1,79 +1,172 @@
+import {
+  BookOutlined,
+  FileTextOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
+import { useIntl } from '@umijs/max';
+import { Card, Col, Row, Statistic, Typography } from 'antd';
 import React from 'react';
 
-interface InfoCardProps {
+interface QuickLinkProps {
   title: string;
-  index: number;
-  desc: string;
+  icon: React.ReactNode;
   href: string;
+  description: string;
 }
 
-const InfoCard: React.FC<InfoCardProps> = ({ title, index, desc, href }) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noreferrer"
-    className="block h-full rounded-lg border border-solid border-gray-200 p-5 transition-shadow hover:shadow-md dark:border-gray-700"
-  >
-    <div className="flex items-start gap-4">
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-[#1677ff] text-2xl font-bold text-white">
-        {index}
+const QuickLink: React.FC<QuickLinkProps> = ({
+  title,
+  icon,
+  href,
+  description,
+}) => (
+  <Card hoverable className="h-full">
+    <a href={href} target="_blank" rel="noreferrer" className="block">
+      <div className="flex items-start gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-2xl text-white">
+          {icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h4 className="mb-1 mt-0 text-base font-semibold">{title}</h4>
+          <p className="mb-0 text-sm text-gray-500">{description}</p>
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <h4 className="mb-2 mt-0 text-base font-semibold">{title}</h4>
-        <p className="mb-0 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
-          {desc}
-        </p>
-      </div>
-    </div>
-  </a>
+    </a>
+  </Card>
 );
 
-const Welcome: React.FC = () => (
-  <PageContainer>
-    <div className="rounded-lg border border-solid border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-[#141414]">
-      <div className="mb-10 text-center">
-        <h2 className="mb-4 text-2xl font-semibold">欢迎使用 Ant Design Pro</h2>
-        <p className="mx-auto max-w-[600px] text-base text-gray-500 dark:text-gray-400">
-          Ant Design Pro 是一个整合了 umi，Ant Design 和
-          ProComponents的脚手架方案。致力于在设计规范和基础组件的基础上，继续向上构建，提炼出典型模板/业务组件/配套设计资源，进一步提升企业级中后台产品设计研发过程中的『用户』和『设计者』的体验。
-        </p>
-      </div>
+const Welcome: React.FC = () => {
+  const intl = useIntl();
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <InfoCard
-          index={1}
-          href="https://umijs.org/docs/introduce/introduce"
-          title="了解 umi"
-          desc="umi 是一个可扩展的企业级前端应用框架,umi 以路由为基础的，同时支持配置式路由和约定式路由，保证路由的功能完备，并以此进行功能扩展。"
-        />
-        <InfoCard
-          index={2}
-          title="了解 ant design"
-          href="https://ant.design"
-          desc="antd 是基于 Ant Design 设计体系的 React UI 组件库，主要用于研发企业级中后台产品。"
-        />
-        <InfoCard
-          index={3}
-          title="了解 Pro Components"
-          href="https://procomponents.ant.design"
-          desc="ProComponents 是一个基于 Ant Design 做了更高抽象的模板组件，以 一个组件就是一个页面为开发理念，为中后台开发带来更好的体验。"
-        />
-      </div>
+  return (
+    <PageContainer>
+      <div className="rounded-lg border border-solid border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-[#141414]">
+        <div className="mb-8 text-center">
+          <Typography.Title level={2} className="mb-2">
+            {intl.formatMessage({
+              id: 'pages.welcome.title',
+              defaultMessage: 'Examora 考试管理系统',
+            })}
+          </Typography.Title>
+          <Typography.Paragraph type="secondary">
+            {intl.formatMessage({
+              id: 'pages.welcome.subtitle',
+              defaultMessage: '欢迎使用在线考试管理平台',
+            })}
+          </Typography.Paragraph>
+        </div>
 
-      <div className="mt-10 border-t border-gray-100 pt-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-        更多文档请访问：{' '}
-        <a
-          href="https://pro.ant.design"
-          target="_blank"
-          rel="noreferrer"
-          className="text-[#1677ff] hover:text-[#4096ff]"
-        >
-          Pro 官方文档
-        </a>
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={24} sm={12} md={6}>
+            <Card>
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.welcome.stats.students',
+                  defaultMessage: '考生数量',
+                })}
+                value={0}
+                prefix={<UserOutlined />}
+                suffix="人"
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card>
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.welcome.stats.exams',
+                  defaultMessage: '考试数量',
+                })}
+                value={0}
+                prefix={<FileTextOutlined />}
+                suffix="场"
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card>
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.welcome.stats.papers',
+                  defaultMessage: '试卷数量',
+                })}
+                value={0}
+                prefix={<BookOutlined />}
+                suffix="份"
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card>
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.welcome.stats.questions',
+                  defaultMessage: '题目数量',
+                })}
+                value={0}
+                prefix={<TeamOutlined />}
+                suffix="道"
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        <Typography.Title level={4} className="mb-4">
+          {intl.formatMessage({
+            id: 'pages.welcome.quickAccess',
+            defaultMessage: '快捷入口',
+          })}
+        </Typography.Title>
+
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={8}>
+            <QuickLink
+              title={intl.formatMessage({
+                id: 'pages.welcome.links.userManage',
+                defaultMessage: '用户管理',
+              })}
+              icon={<UserOutlined />}
+              href="/admin"
+              description={intl.formatMessage({
+                id: 'pages.welcome.links.userManage.desc',
+                defaultMessage: '管理考生和教师账户',
+              })}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <QuickLink
+              title={intl.formatMessage({
+                id: 'pages.welcome.links.examManage',
+                defaultMessage: '考试管理',
+              })}
+              icon={<FileTextOutlined />}
+              href="/admin"
+              description={intl.formatMessage({
+                id: 'pages.welcome.links.examManage.desc',
+                defaultMessage: '创建和管理考试',
+              })}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <QuickLink
+              title={intl.formatMessage({
+                id: 'pages.welcome.links.paperManage',
+                defaultMessage: '试卷管理',
+              })}
+              icon={<BookOutlined />}
+              href="/admin"
+              description={intl.formatMessage({
+                id: 'pages.welcome.links.paperManage.desc',
+                defaultMessage: '管理试卷和题目',
+              })}
+            />
+          </Col>
+        </Row>
       </div>
-    </div>
-  </PageContainer>
-);
+    </PageContainer>
+  );
+};
 
 export default Welcome;

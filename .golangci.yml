@@ -1,0 +1,67 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - ineffassign
+    - unused
+    - misspell
+    - whitespace
+    - dupword
+    - gocritic
+    - bodyclose
+    - nilerr
+    - durationcheck
+    - errorlint
+    - copyloopvar
+    - rowserrcheck
+    - sqlclosecheck
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: false
+    exclude-functions:
+      - (*github.com/gin-gonic/gin.Context).Error
+      - (github.com/gin-gonic/gin.ResponseWriter).Write
+      - fmt.Fprint
+      - fmt.Fprintf
+      - fmt.Fprintln
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - hugeParam
+      - commentedOutCode
+      - whyNoLint
+
+  staticcheck:
+    checks:
+      - all
+
+  misspell:
+    locale: US
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    gofmt:
+      simplify: true
+
+    goimports:
+      local-prefixes:
+        - github.com/coding-hui/examora

@@ -1,11 +1,16 @@
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
-import { history, Link } from '@umijs/max';
+import { history, Link, request } from '@umijs/max';
+import { Button, Result } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import React from 'react';
-import { LogtoAuthProvider } from '@/auth/LogtoProvider';
-import { getAccessToken, getLogtoClient } from '@/auth/token';
+import type { AuthMeData } from '@/auth/token';
+import {
+  clearAuthStorage,
+  getAccessToken,
+  setLocalProfile,
+} from '@/auth/token';
 import {
   AvatarDropdown,
   AvatarName,
@@ -21,74 +26,67 @@ dayjs.extend(relativeTime);
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/login';
 
-/**
- * @see https://umijs.org/docs/api/runtime-config#getinitialstate
- * */
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
-  currentUser?: API.CurrentUser | null;
+  currentUser?: AuthMeData | null;
   forbidden?: boolean;
   loading?: boolean;
-  fetchUserInfo?: () => Promise<API.CurrentUser | undefined | null>;
+  fetchUserInfo?: () => Promise<AuthMeData | undefined | null>;
 }> {
-  const fetchUserInfo = async () => {
-    const client = getLogtoClient();
-    if (!client) return null;
+  const fetchUserInfo = async (): Promise<AuthMeData | null> => {
+    const token = getAccessToken();
+    if (!token) return null;
 
     try {
-      const token = await getAccessToken();
-      if (!token) return null;
-
-      const res = await fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await request<AuthMeData>('/api/auth/me', {
+        method: 'GET',
       });
+      if (response) {
+        setLocalProfile(response);
+      }
+      return response;
+    } catch (_error: any) {
+      const httpStatus = _error?.response?.status;
+      const errorCode = _error?.info?.errorCode;
 
-      if (res.status === 401) {
+      // 403 Forbidden - user lacks admin role
+      if (httpStatus === 403 || errorCode === 40300) {
+        console.warn('User does not have admin access (403)');
         return null;
       }
 
-      if (res.status === 403) {
-        return undefined; // indicates forbidden
-      }
-
-      if (res.ok) {
-        const userProfile = (await res.json()) as API.CurrentUser;
-        localStorage.setItem(
-          'examora_user_profile',
-          JSON.stringify(userProfile),
-        );
-        return userProfile;
-      }
-    } catch (_error) {
-      console.error('Failed to fetch user info:', _error);
+      // For 401 and all other errors, re-throw to let caller handle
+      throw _error;
     }
-    return null;
   };
 
-  const checkAuth = async () => {
-    const client = getLogtoClient();
-    if (!client) return false;
-    return client.isAuthenticated();
+  const checkAuth = () => {
+    const token = getAccessToken();
+    return !!token;
   };
 
   const { location } = history;
   if (location.pathname !== loginPath) {
-    const isAuthenticated = await checkAuth();
+    const isAuthenticated = checkAuth();
     if (!isAuthenticated) {
       history.push(loginPath);
       return {};
     }
 
-    const token = await getAccessToken();
-    if (!token) {
-      history.push(loginPath);
-      return {};
+    let userProfile: AuthMeData | null = null;
+    let isForbidden = false;
+
+    try {
+      userProfile = await fetchUserInfo();
+      // If null, user lacks admin role (403)
+      isForbidden = userProfile === null;
+    } catch (_error: any) {
+      console.error('Failed to fetch user info:', _error);
+      isForbidden = false;
     }
 
-    const userProfile = await fetchUserInfo();
-
-    if (userProfile === undefined) {
-      // 403: 用户已登录但无后台权限或未激活，不重定向到登录页
+    // User lacks admin role - show forbidden page
+    if (isForbidden) {
       return {
         fetchUserInfo,
         currentUser: null,
@@ -99,6 +97,7 @@ export async function getInitialState(): Promise<{
     return {
       fetchUserInfo,
       currentUser: userProfile,
+      forbidden: false,
     };
   }
 
@@ -145,7 +144,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     },
     bgLayoutImgList: [
       {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNny4sAAAAAAAAAAAAAFl94AQBr',
+        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNky4sAAAAAAAAAAAAAFl94AQBr',
         left: 85,
         bottom: 100,
         height: '303px',
@@ -165,16 +164,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     ],
     menuHeaderRender: undefined,
     // 无权限页面
-    unAccessible: (
-      <div style={{ padding: '100px 0', textAlign: 'center' }}>
-        <h2>无权访问后台</h2>
-        <p>您的账户尚未激活或没有后台访问权限。</p>
-        <p>请联系管理员开通权限。</p>
-      </div>
-    ),
-    childrenRender: (children) => {
-      return <LogtoAuthProvider>{children}</LogtoAuthProvider>;
-    },
+    unAccessible: <ForbiddenPage />,
     ...initialState?.settings,
   };
 };
@@ -184,7 +174,36 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
  * 它基于 axios 提供了一套统一的网络请求和错误处理方案。
  * @doc https://umijs.org/docs/max/request#配置
  */
-export const request: RequestConfig = {
+export const requestConfig: RequestConfig = {
   baseURL: isDev ? '' : 'https://exam.micromoving.net',
   ...errorConfig,
+};
+
+// 无权限页面组件
+const ForbiddenPage: React.FC = () => {
+  const [loading, setLoading] = React.useState(false);
+
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      await request('/api/auth/logout', { method: 'POST' });
+    } catch (_) {
+      // ignore logout errors
+    }
+    clearAuthStorage();
+    window.location.href = '/login';
+  };
+
+  return (
+    <Result
+      status="403"
+      title="无权访问后台"
+      subTitle="您的账户尚未激活或没有后台访问权限，请联系管理员开通权限。"
+      extra={
+        <Button type="primary" loading={loading} onClick={handleLogout}>
+          重新登录
+        </Button>
+      }
+    />
+  );
 };

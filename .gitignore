@@ -48,6 +48,7 @@ tmp/
 # Local runtime data
 app_data/
 data/
+*.db
 
 # Docker override files
 docker-compose.override.yml

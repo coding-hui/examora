@@ -5,14 +5,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	authentity "github.com/coding-hui/examora/internal/auth/entity"
-	authusecase "github.com/coding-hui/examora/internal/auth/usecase"
+	"github.com/coding-hui/examora/internal/auth"
 	"github.com/coding-hui/examora/internal/transport/http/response"
 )
 
 const currentUserKey = "current_user"
 
-func Authenticator(auth *authusecase.Usecase) gin.HandlerFunc {
+func Authenticator(authSvc *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header := c.GetHeader("Authorization")
 		token, ok := strings.CutPrefix(header, "Bearer ")
@@ -21,7 +20,7 @@ func Authenticator(auth *authusecase.Usecase) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		user, err := auth.Authenticate(c.Request.Context(), token)
+		user, err := authSvc.Authenticate(c.Request.Context(), token)
 		if err != nil {
 			response.FromError(c, err)
 			c.Abort()
@@ -32,9 +31,9 @@ func Authenticator(auth *authusecase.Usecase) gin.HandlerFunc {
 	}
 }
 
-func RequireAdmin() gin.HandlerFunc {
+func RequireAdmin(authSvc *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := authusecase.RequireAdmin(CurrentUser(c)); err != nil {
+		if err := authSvc.RequireAdmin(CurrentUser(c)); err != nil {
 			response.FromError(c, err)
 			c.Abort()
 			return
@@ -43,9 +42,9 @@ func RequireAdmin() gin.HandlerFunc {
 	}
 }
 
-func RequireClient() gin.HandlerFunc {
+func RequireClient(authSvc *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := authusecase.RequireClient(CurrentUser(c)); err != nil {
+		if err := authSvc.RequireClient(CurrentUser(c)); err != nil {
 			response.FromError(c, err)
 			c.Abort()
 			return
@@ -54,14 +53,14 @@ func RequireClient() gin.HandlerFunc {
 	}
 }
 
-func CurrentUser(c *gin.Context) *authentity.User {
+func CurrentUser(c *gin.Context) *auth.AuthenticatedUser {
 	value, exists := c.Get(currentUserKey)
 	if !exists {
-		return &authentity.User{}
+		return &auth.AuthenticatedUser{}
 	}
-	user, ok := value.(*authentity.User)
+	user, ok := value.(*auth.AuthenticatedUser)
 	if !ok {
-		return &authentity.User{}
+		return &auth.AuthenticatedUser{}
 	}
 	return user
 }

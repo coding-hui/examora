@@ -16,12 +16,13 @@ declare module 'mockjs';
 declare const __APP_VERSION__: string;
 
 interface CurrentUser {
-  user_id: string;
-  external_subject: string;
-  display_name: string | null;
-  role: string | null;
-  role_code: string | null;
-  status: string;
+  id: number;
+  username: string;
+  name?: string;
+  display_name?: string;
+  roles?: string[];
+  permissions?: Record<string, string[]>;
+  external_subject?: string;
 }
 
 declare namespace API {

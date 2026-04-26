@@ -1,10 +1,15 @@
+// main provides the sandbox server entrypoint.
 package main
 
-import "github.com/coding-hui/examora/internal/bootstrap"
+import (
+	"github.com/coding-hui/examora/internal/infra/config"
+	"github.com/coding-hui/examora/internal/server"
+)
 
 func main() {
-	app := bootstrap.NewSandboxApp()
-	if err := app.Run(); err != nil {
+	cfg := config.Load()
+	sandboxServer := server.NewSandboxServer(cfg)
+	if err := sandboxServer.Run(); err != nil {
 		panic(err)
 	}
 }

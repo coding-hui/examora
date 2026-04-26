@@ -84,13 +84,13 @@ export class ApiClient {
 
   // Auth
   async authMe(): Promise<{
-    user_id: number;
-    external_subject: string;
-    display_name: string | null;
-    email?: string | null;
-    role: string | null;
-    role_code: string | null;
-    status: string;
+    user_id: string;
+    name?: string;
+    email?: string;
+    scopes?: string[];
+    audience?: string[];
+    client_id?: string;
+    organization_id?: string;
   }> {
     return this.get('/api/auth/me');
   }

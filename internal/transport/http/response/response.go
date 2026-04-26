@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 const (
@@ -55,10 +54,6 @@ func BadRequest(c *gin.Context, message string) {
 }
 
 func FromError(c *gin.Context, err error) {
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		c.JSON(http.StatusNotFound, Envelope{Code: CodeNotFound, Message: "resource not found"})
-		return
-	}
 	var appErr *AppError
 	if errors.As(err, &appErr) {
 		c.JSON(appErr.Status, Envelope{Code: appErr.Code, Message: appErr.Message, Details: appErr.Details})

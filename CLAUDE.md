@@ -24,9 +24,10 @@ go run ./cmd/sandbox   # run sandbox runner
 
 ### Infrastructure (Docker)
 ```bash
-make infra-up         # docker compose up -d (Postgres + Redis)
+make infra-up         # docker compose up -d (Postgres + Redis) for production
 make infra-down       # docker compose down
 ```
+Note: For local development, SQLite is used by default (no Docker needed).
 
 ### Combined / root
 ```bash
@@ -40,8 +41,8 @@ make worker           # go run ./cmd/worker
 Examora is a monorepo with three logical layers:
 
 **ClientSide**
-- `apps/admin-web` — Vue 3 admin console (no API client wired yet)
-- `apps/exam-desktop` — Tauri 2 + Vue 3 desktop exam client (uses `@examora/client`)
+- `apps/admin-web` — React + Umi admin console
+- `apps/exam-desktop` — Tauri 2 + React desktop exam client (uses `@examora/client`)
 
 **ServiceLayer**
 - `cmd/api` — Go Gin API server (binds `:8080`)
@@ -60,7 +61,9 @@ Examora is a monorepo with three logical layers:
 - `client` — Candidate-facing API client
 
 **DataLayer**
-- PostgreSQL 16 on `:5432`, Redis 7 on `:6379` (from `deploy/docker-compose.yml`)
+- SQLite for local development (auto-created as `./examora.db`)
+- PostgreSQL 16 on `:5432` for production (via Docker)
+- Redis 7 on `:6379` for job queue
 - MinIO for file storage — **deferred** (not in docker-compose, not required for MVP)
 
 **Shared packages** (`packages/`)

@@ -3,14 +3,13 @@ import {
   SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import LogtoClient from '@logto/browser';
-import { history, useModel } from '@umijs/max';
+import { history, request, useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
 import { Spin } from 'antd';
 import { createStyles } from 'antd-style';
 import React from 'react';
 import { flushSync } from 'react-dom';
-import { createLogtoConfig } from '@/auth/LogtoProvider';
+import { clearAuthStorage } from '@/auth/token';
 import HeaderDropdown from '../HeaderDropdown';
 
 export type GlobalHeaderRightProps = {
@@ -23,7 +22,7 @@ export const AvatarName = () => {
   const { currentUser } = initialState || {};
   return (
     <span className="anticon">
-      {currentUser?.display_name || currentUser?.external_subject}
+      {currentUser?.display_name || currentUser?.username}
     </span>
   );
 };
@@ -51,16 +50,13 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   children,
 }) => {
   const loginOut = async () => {
-    const config = createLogtoConfig();
-    // Clear token storage
-    localStorage.removeItem('examora_access_token');
-    localStorage.removeItem('examora_user_profile');
-    if (config) {
-      const client = new LogtoClient(config);
-      await client.signOut(window.location.origin);
-    } else {
-      history.push('/login');
+    try {
+      await request('/api/auth/logout', { method: 'POST' });
+    } catch (_) {
+      // ignore logout errors
     }
+    clearAuthStorage();
+    history.push('/login');
   };
   const { styles } = useStyles();
 
@@ -96,7 +92,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
 
   const { currentUser } = initialState;
 
-  if (!currentUser?.display_name && !currentUser?.external_subject) {
+  if (!currentUser?.display_name && !currentUser?.username) {
     return loading;
   }
 

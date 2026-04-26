@@ -1,8 +1,6 @@
 /**
- * Logto Configuration
- * @description Set these values from your Logto application settings
- * @doc https://docs.logto.io/docs/references/application/
+ * Authentication Constants
  */
-export const logtoEndpoint =
-  process.env.LOGTO_ENDPOINT || 'https://auth.micromoving.net/';
-export const logtoAppId = process.env.LOGTO_APP_ID || 'uzwis7z4bg41ipzbenzwo';
+
+// API base URL for auth endpoints
+export const API_BASE_URL = process.env.API_BASE_URL || '';

@@ -1,6 +1,6 @@
 GOCACHE ?= /tmp/examora-gocache
 
-.PHONY: help deps infra-up infra-down go-check api worker sandbox
+.PHONY: help deps infra-up infra-down go-check api worker sandbox fmt lint test check
 
 help:
 	@echo "Available targets:"
@@ -32,3 +32,14 @@ worker:
 
 sandbox:
 	GOCACHE=$(GOCACHE) go run ./cmd/sandbox
+
+fmt:
+	golangci-lint fmt ./...
+
+lint:
+	golangci-lint run ./...
+
+test:
+	go test ./...
+
+check: fmt lint test

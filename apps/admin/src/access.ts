@@ -13,12 +13,9 @@ export default function access(
     return { canAdmin: false };
   }
 
-  const isAdmin =
-    currentUser?.status === 'ACTIVE' &&
-    (currentUser?.role_code === 'SUPER_ADMIN' ||
-      currentUser?.role_code === 'TEACHER' ||
-      currentUser?.role_code === 'PROCTOR');
+  // Check for admin role in the user's roles array
+  const isAdmin = currentUser?.roles?.includes('admin') ?? false;
   return {
-    canAdmin: !!isAdmin,
+    canAdmin: isAdmin,
   };
 }

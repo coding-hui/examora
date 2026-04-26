@@ -21,7 +21,7 @@ services:
   examora-sandbox:
     build:
       context: ..
-      dockerfile: deployments/Dockerfile.sandbox
+      dockerfile: deploy/Dockerfile.sandbox
     container_name: examora-sandbox
     ports:
       - "8081:8081"
@@ -29,7 +29,7 @@ services:
   examora-api:
     build:
       context: ..
-      dockerfile: deployments/Dockerfile.api
+      dockerfile: deploy/Dockerfile.api
     container_name: examora-api
     depends_on:
       - postgres
@@ -50,7 +50,7 @@ services:
   examora-worker:
     build:
       context: ..
-      dockerfile: deployments/Dockerfile.worker
+      dockerfile: deploy/Dockerfile.worker
     container_name: examora-worker
     depends_on:
       - postgres

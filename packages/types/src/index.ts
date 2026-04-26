@@ -34,8 +34,8 @@ export type SubmissionStatus =
 
 /** Admin-facing question — includes scoring answer (never send to candidate) */
 export interface AdminQuestion {
-  id: number;
-  subjectId: number;
+  id: string;
+  subjectId: string;
   type: QuestionType;
   title: string;
   content: string;
@@ -47,8 +47,8 @@ export interface AdminQuestion {
 
 /** Candidate-facing question snapshot — excludes answer and hidden test cases */
 export interface QuestionSnapshot {
-  questionSnapshotId: number;
-  questionId: number;
+  questionSnapshotId: string;
+  questionId: string;
   type: QuestionType;
   title: string;
   content: string;
@@ -58,9 +58,9 @@ export interface QuestionSnapshot {
 
 /** Candidate-facing exam paper */
 export interface ExamPaper {
-  sessionId: number;
+  sessionId: string;
   exam: {
-    id: number;
+    id: string;
     title: string;
     remainingSeconds: number;
   };
