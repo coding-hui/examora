@@ -5,17 +5,16 @@ import (
 
 	"github.com/coding-hui/examora/internal/infra/database"
 	"github.com/coding-hui/examora/internal/library"
-	"github.com/coding-hui/examora/internal/page"
 )
 
-func (s *Store) ListQuestions(ctx context.Context, query page.Query) ([]library.Question, int64, error) {
+func (s *Store) ListQuestions(ctx context.Context, pageNum, pageSize int) ([]library.Question, int64, error) {
 	db := s.db(ctx).Model(&database.QuestionModel{})
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 	var rows []database.QuestionModel
-	if err := db.Order("id DESC").Offset(query.Offset()).Limit(query.PageSize).Find(&rows).Error; err != nil {
+	if err := db.Order("id DESC").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&rows).Error; err != nil {
 		return nil, 0, err
 	}
 	items := make([]library.Question, 0, len(rows))

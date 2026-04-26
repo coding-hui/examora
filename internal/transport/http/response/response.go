@@ -28,6 +28,13 @@ type Envelope struct {
 	Details any    `json:"details,omitempty"`
 }
 
+type Page[T any] struct {
+	Items    []T   `json:"items"`
+	Total    int64 `json:"total"`
+	Page     int   `json:"page"`
+	PageSize int   `json:"page_size"`
+}
+
 type AppError struct {
 	Status  int
 	Code    int
@@ -39,6 +46,18 @@ func (e *AppError) Error() string { return e.Message }
 
 func Success(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, Envelope{Code: CodeSuccess, Message: "success", Data: data})
+}
+
+func PageSuccess[T any](c *gin.Context, items []T, total int64, page int, pageSize int) {
+	Success(c, Page[T]{Items: items, Total: total, Page: page, PageSize: pageSize})
+}
+
+func PageSuccessWith[T any, U any](c *gin.Context, items []T, total int64, page int, pageSize int, mapper func(T) U) {
+	mapped := make([]U, 0, len(items))
+	for _, item := range items {
+		mapped = append(mapped, mapper(item))
+	}
+	PageSuccess(c, mapped, total, page, pageSize)
 }
 
 func Created(c *gin.Context, data any) {

@@ -26,12 +26,13 @@ func (s *Server) registerExamClientRoutes(client *gin.RouterGroup) {
 }
 
 func (s *Server) listExams(c *gin.Context) {
-	result, err := s.exam.ListExams(c.Request.Context(), pageQuery(c))
+	pageNum, pageSize := pageQuery(c)
+	items, total, err := s.exam.ListExams(c.Request.Context(), pageNum, pageSize)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, pageResponse(result, toExamResponse))
+	response.PageSuccessWith(c, items, total, pageNum, pageSize, toExamResponse)
 }
 
 func (s *Server) getExam(c *gin.Context) {

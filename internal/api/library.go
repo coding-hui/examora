@@ -3,7 +3,6 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/coding-hui/examora/internal/library"
 	"github.com/coding-hui/examora/internal/transport/http/response"
 )
 
@@ -26,14 +25,13 @@ func (s *Server) registerLibraryAdminRoutes(admin *gin.RouterGroup) {
 }
 
 func (s *Server) listQuestions(c *gin.Context) {
-	result, err := s.library.ListQuestions(c.Request.Context(), pageQuery(c))
+	pageNum, pageSize := pageQuery(c)
+	items, total, err := s.library.ListQuestions(c.Request.Context(), pageNum, pageSize)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, pageResponse(result, func(q library.Question) questionResponse {
-		return toQuestionResponse(q, true)
-	}))
+	response.PageSuccessWith(c, items, total, pageNum, pageSize, toQuestionAdminResponse)
 }
 
 func (s *Server) getQuestion(c *gin.Context) {
@@ -126,12 +124,13 @@ func (s *Server) listTestCases(c *gin.Context) {
 }
 
 func (s *Server) listPapers(c *gin.Context) {
-	result, err := s.library.ListPapers(c.Request.Context(), pageQuery(c))
+	pageNum, pageSize := pageQuery(c)
+	items, total, err := s.library.ListPapers(c.Request.Context(), pageNum, pageSize)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, pageResponse(result, toPaperResponse))
+	response.PageSuccessWith(c, items, total, pageNum, pageSize, toPaperResponse)
 }
 
 func (s *Server) getPaper(c *gin.Context) {

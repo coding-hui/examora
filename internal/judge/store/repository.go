@@ -10,7 +10,6 @@ import (
 	"github.com/coding-hui/examora/internal/infra/database"
 	"github.com/coding-hui/examora/internal/infra/transaction"
 	"github.com/coding-hui/examora/internal/judge"
-	"github.com/coding-hui/examora/internal/page"
 )
 
 var _ judge.TaskStore = (*Store)(nil)
@@ -51,14 +50,14 @@ func (r *Store) Update(ctx context.Context, t *judge.Task) error {
 	return nil
 }
 
-func (r *Store) List(ctx context.Context, q page.Query) ([]judge.Task, int64, error) {
+func (r *Store) List(ctx context.Context, pageNum, pageSize int) ([]judge.Task, int64, error) {
 	db := transaction.DBFromContext(ctx, r.db).Model(&database.JudgeTaskModel{})
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 	var rows []database.JudgeTaskModel
-	if err := db.Order("id DESC").Offset(q.Offset()).Limit(q.PageSize).Find(&rows).Error; err != nil {
+	if err := db.Order("id DESC").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&rows).Error; err != nil {
 		return nil, 0, err
 	}
 	items := make([]judge.Task, 0, len(rows))

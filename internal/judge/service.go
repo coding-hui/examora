@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 	"time"
-
-	"github.com/coding-hui/examora/internal/page"
 )
 
 type Service struct {
@@ -38,13 +36,8 @@ func (u *Service) CreateAndEnqueue(ctx context.Context, submissionID, questionID
 	return u.tasks.Update(ctx, task)
 }
 
-func (u *Service) List(ctx context.Context, q page.Query) (page.Result[Task], error) {
-	items, total, err := u.tasks.List(ctx, q.Normalize())
-	if err != nil {
-		return page.Result[Task]{}, err
-	}
-	q = q.Normalize()
-	return page.Result[Task]{Items: items, Total: total, Page: q.Page, PageSize: q.PageSize}, nil
+func (u *Service) List(ctx context.Context, pageNum, pageSize int) ([]Task, int64, error) {
+	return u.tasks.List(ctx, pageNum, pageSize)
 }
 
 func (u *Service) Get(ctx context.Context, id uint64) (*Task, error) {

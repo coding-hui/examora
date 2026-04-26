@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/coding-hui/examora/internal/library"
-	"github.com/coding-hui/examora/internal/page"
 )
 
 const (
@@ -56,13 +55,8 @@ type SaveExamCommand struct {
 	CreatedBy       uint64
 }
 
-func (s *Service) ListExams(ctx context.Context, q page.Query) (page.Result[Exam], error) {
-	items, total, err := s.store.ListExams(ctx, q.Normalize())
-	if err != nil {
-		return page.Result[Exam]{}, err
-	}
-	q = q.Normalize()
-	return page.Result[Exam]{Items: items, Total: total, Page: q.Page, PageSize: q.PageSize}, nil
+func (s *Service) ListExams(ctx context.Context, pageNum, pageSize int) ([]Exam, int64, error) {
+	return s.store.ListExams(ctx, pageNum, pageSize)
 }
 
 func (s *Service) GetExam(ctx context.Context, id uint64) (*Exam, error) {

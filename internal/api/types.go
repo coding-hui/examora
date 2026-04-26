@@ -6,7 +6,6 @@ import (
 	"github.com/coding-hui/examora/internal/exam"
 	"github.com/coding-hui/examora/internal/judge"
 	"github.com/coding-hui/examora/internal/library"
-	"github.com/coding-hui/examora/internal/page"
 )
 
 // region Auth
@@ -236,20 +235,16 @@ func (r recordEventRequest) command(defaultType string) exam.RecordEventCommand 
 
 // region Response converters
 
-func pageResponse[T any, U any](result page.Result[T], mapper func(T) U) page.Result[U] {
-	items := make([]U, 0, len(result.Items))
-	for _, item := range result.Items {
-		items = append(items, mapper(item))
-	}
-	return page.Result[U]{Items: items, Total: result.Total, Page: result.Page, PageSize: result.PageSize}
-}
-
 func toQuestionResponse(q library.Question, includeAnswer bool) questionResponse {
 	resp := questionResponse{ID: q.ID, Type: q.Type, Title: q.Title, Content: q.Content, Difficulty: q.Difficulty, Language: q.Language, StarterCode: q.StarterCode, TimeLimitMS: q.TimeLimitMS, MemoryLimitMB: q.MemoryLimitMB, Status: q.Status, CreatedBy: q.CreatedBy, CreatedAt: q.CreatedAt, UpdatedAt: q.UpdatedAt}
 	if includeAnswer {
 		resp.Answer = q.Answer
 	}
 	return resp
+}
+
+func toQuestionAdminResponse(q library.Question) questionResponse {
+	return toQuestionResponse(q, true)
 }
 
 func toTestCaseResponse(tc library.TestCase, includeExpected bool) testCaseResponse {
@@ -282,10 +277,6 @@ func toClientEventResponse(ev exam.ClientEvent) clientEventResponse {
 
 func toJudgeTaskResponse(task judge.Task) judgeTaskResponse {
 	return judgeTaskResponse{ID: task.ID, SubmissionID: task.SubmissionID, QuestionID: task.QuestionID, UserID: task.UserID, Language: task.Language, Status: task.Status, RetryCount: task.RetryCount, MaxRetryCount: task.MaxRetryCount, ErrorMessage: task.ErrorMessage, ResultSummary: task.ResultSummary, CreatedAt: task.CreatedAt, UpdatedAt: task.UpdatedAt, StartedAt: task.StartedAt, FinishedAt: task.FinishedAt}
-}
-
-func toJudgeTaskPage(result page.Result[judge.Task]) page.Result[judgeTaskResponse] {
-	return pageResponse(result, toJudgeTaskResponse)
 }
 
 // endregion

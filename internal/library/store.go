@@ -1,10 +1,6 @@
 package library
 
-import (
-	"context"
-
-	"github.com/coding-hui/examora/internal/page"
-)
+import "context"
 
 type Store interface {
 	QuestionStore
@@ -13,7 +9,7 @@ type Store interface {
 }
 
 type QuestionStore interface {
-	ListQuestions(ctx context.Context, query page.Query) ([]Question, int64, error)
+	ListQuestions(ctx context.Context, pageNum, pageSize int) ([]Question, int64, error)
 	GetQuestion(ctx context.Context, id uint64) (*Question, error)
 	CreateQuestion(ctx context.Context, q *Question) error
 	UpdateQuestion(ctx context.Context, q *Question) error
@@ -25,7 +21,7 @@ type QuestionStore interface {
 
 type PaperStore interface {
 	PaperReader
-	ListPapers(ctx context.Context, query page.Query) ([]Paper, int64, error)
+	ListPapers(ctx context.Context, pageNum, pageSize int) ([]Paper, int64, error)
 	GetPaper(ctx context.Context, id uint64) (*Paper, error)
 	CreatePaper(ctx context.Context, p *Paper) error
 	UpdatePaper(ctx context.Context, p *Paper) error

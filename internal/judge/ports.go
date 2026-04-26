@@ -5,7 +5,6 @@ import (
 
 	"github.com/coding-hui/examora/internal/exam"
 	"github.com/coding-hui/examora/internal/library"
-	"github.com/coding-hui/examora/internal/page"
 )
 
 type TaskStore interface {
@@ -13,7 +12,7 @@ type TaskStore interface {
 	FindByID(ctx context.Context, id uint64) (*Task, error)
 	Update(ctx context.Context, task *Task) error
 	Delete(ctx context.Context, id uint64) error
-	List(ctx context.Context, query page.Query) ([]Task, int64, error)
+	List(ctx context.Context, pageNum, pageSize int) ([]Task, int64, error)
 }
 
 type SubmissionReceiver interface {

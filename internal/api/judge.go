@@ -12,12 +12,13 @@ func (s *Server) registerJudgeRoutes(admin *gin.RouterGroup) {
 }
 
 func (s *Server) listJudgeTasks(c *gin.Context) {
-	result, err := s.judge.List(c.Request.Context(), pageQuery(c))
+	pageNum, pageSize := pageQuery(c)
+	items, total, err := s.judge.List(c.Request.Context(), pageNum, pageSize)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, toJudgeTaskPage(result))
+	response.PageSuccessWith(c, items, total, pageNum, pageSize, toJudgeTaskResponse)
 }
 
 func (s *Server) getJudgeTask(c *gin.Context) {

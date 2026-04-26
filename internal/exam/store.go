@@ -1,10 +1,6 @@
 package exam
 
-import (
-	"context"
-
-	"github.com/coding-hui/examora/internal/page"
-)
+import "context"
 
 type JudgeDispatcher interface {
 	CreateAndEnqueue(ctx context.Context, submissionID, questionID, userID uint64, language string) error
@@ -18,7 +14,7 @@ type Store interface {
 }
 
 type ExamStore interface {
-	ListExams(ctx context.Context, query page.Query) ([]Exam, int64, error)
+	ListExams(ctx context.Context, pageNum, pageSize int) ([]Exam, int64, error)
 	GetExam(ctx context.Context, id uint64) (*Exam, error)
 	CreateExam(ctx context.Context, e *Exam) error
 	UpdateExam(ctx context.Context, e *Exam) error

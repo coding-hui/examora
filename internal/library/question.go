@@ -3,8 +3,6 @@ package library
 import (
 	"context"
 	"time"
-
-	"github.com/coding-hui/examora/internal/page"
 )
 
 const (
@@ -72,13 +70,8 @@ type SaveTestCaseCommand struct {
 	SortOrder      int
 }
 
-func (s *Service) ListQuestions(ctx context.Context, q page.Query) (page.Result[Question], error) {
-	items, total, err := s.store.ListQuestions(ctx, q.Normalize())
-	if err != nil {
-		return page.Result[Question]{}, err
-	}
-	q = q.Normalize()
-	return page.Result[Question]{Items: items, Total: total, Page: q.Page, PageSize: q.PageSize}, nil
+func (s *Service) ListQuestions(ctx context.Context, pageNum, pageSize int) ([]Question, int64, error) {
+	return s.store.ListQuestions(ctx, pageNum, pageSize)
 }
 
 func (s *Service) GetQuestion(ctx context.Context, id uint64) (*Question, error) {

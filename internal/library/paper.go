@@ -3,8 +3,6 @@ package library
 import (
 	"context"
 	"time"
-
-	"github.com/coding-hui/examora/internal/page"
 )
 
 const (
@@ -44,13 +42,8 @@ type AddPaperQuestionCommand struct {
 	SortOrder  int
 }
 
-func (s *Service) ListPapers(ctx context.Context, q page.Query) (page.Result[Paper], error) {
-	items, total, err := s.store.ListPapers(ctx, q.Normalize())
-	if err != nil {
-		return page.Result[Paper]{}, err
-	}
-	q = q.Normalize()
-	return page.Result[Paper]{Items: items, Total: total, Page: q.Page, PageSize: q.PageSize}, nil
+func (s *Service) ListPapers(ctx context.Context, pageNum, pageSize int) ([]Paper, int64, error) {
+	return s.store.ListPapers(ctx, pageNum, pageSize)
 }
 
 func (s *Service) GetPaper(ctx context.Context, id uint64) (*Paper, error) {
