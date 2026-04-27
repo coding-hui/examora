@@ -33,20 +33,23 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/admin
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install pnpm
-        run: corepack enable && corepack prepare pnpm@9 --activate
-
       - name: Install dependencies
         run: pnpm install
 
       - name: Build
-        run: pnpm --filter admin build
+        run: pnpm build
