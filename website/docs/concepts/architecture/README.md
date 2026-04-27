@@ -4,17 +4,17 @@ title: Architecture
 
 # Architecture
 
-Examora is built as a modular monolith with one user-facing backend, one asynchronous judge worker, and a constrained sandbox boundary.
+Examora is a monorepo with three layers: client apps, Go services, and shared packages.
 
 ![Examora system architecture](/img/system-architecture-overview.png)
 
 ## System Components
 
-- `apps/admin-web`: Vue 3 admin console for question bank, papers, exams, and scores
-- `apps/exam-desktop`: Tauri 2 desktop client for student exam sessions
-- `services/api`: Rust Axum API for auth, RBAC, exam orchestration, scoring, and logs
-- `services/judge-worker`: asynchronous consumer for programming submissions
-- `services/sandbox-runner`: isolated compile/run abstraction used by the worker
+- `apps/admin`: React + Umi admin console for question bank, papers, exams, and scores
+- `apps/desktop`: Tauri 2 desktop client for student exam sessions
+- `cmd/api`: Go Gin API server for auth, RBAC, exam orchestration, and scoring
+- `cmd/worker`: Asynq worker for programming submissions
+- `cmd/sandbox`: Isolated compile/run sandbox
 
 ## Core Boundaries
 

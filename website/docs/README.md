@@ -7,8 +7,6 @@ sidebar_position: 1
 
 Online examination platform for multi-subject exams, programming exams, and desktop-secured exam scenarios.
 
-Examora is a desktop-first online examination platform for multi-subject exams, programming exams, and secured exam scenarios.
-
 ## What You Should Read First
 
 - [Getting Started](./getting-started/) for local setup and day-one development commands
@@ -24,17 +22,16 @@ Examora is a desktop-first online examination platform for multi-subject exams, 
 
 ```bash
 cp .env.example .env
-corepack install
 pnpm install
-cargo check
+go mod download
 docker compose -f deploy/docker-compose.yml up -d
 ```
 
 Start services:
 
 ```bash
-cargo run -p examora-api
-cargo run -p examora-judge-worker
+go run ./cmd/api
+go run ./cmd/worker
 ```
 
 ## Core Principles
