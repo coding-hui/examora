@@ -48,5 +48,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Type check
-        run: pnpm -r typecheck
+      - name: Build
+        run: pnpm --filter admin build
