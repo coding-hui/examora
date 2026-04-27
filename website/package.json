@@ -30,6 +30,11 @@
     "@docusaurus/types": "3.10.0",
     "typescript": "^5.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "webpackbar": "^7.0.0"
+    }
+  },
   "browserslist": {
     "production": [
       ">0.5%",
