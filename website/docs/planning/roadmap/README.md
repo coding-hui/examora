@@ -14,6 +14,17 @@ This page tracks the public-facing feature roadmap for Examora.
 
 ## Feature Roadmap
 
+## Implementation Phases
+
+| Phase | Module | Description | Status |
+| --- | --- | --- | --- |
+| M1 | Exam publishing with frozen snapshots | Publish exam, freeze paper to snapshot, candidate safe paper retrieval API | Planned |
+| M2 | Admin management pages | Question bank, paper assembly, exam publishing UI | Planned |
+| M3 | Desktop candidate exam flow | Login, take exam, auto-save, event reporting on desktop client | Planned |
+| M4 | Scoring and judge observability | Objective auto-grading, programming judge results, minimal operations tooling | Planned |
+
+## Feature Roadmap
+
 | Module | Description | Status |
 | --- | --- | --- |
 | Admin console | Admin-side management for subjects, questions, papers, exams, and results. | Planned |
@@ -26,6 +37,10 @@ This page tracks the public-facing feature roadmap for Examora.
 | Programming judge | Draft saving, formal submission, async judging, and sandbox execution for programming questions. | Planned |
 | Audit and proctoring logs | Client-side event capture and admin-side audit visibility for exam sessions. | Planned |
 | Operations and engineering tooling | Migrations, seed data, logging, metrics, CI, and related engineering support. | Planned |
+
+## Current Development Focus
+
+**Phase M1** is the current focus: implementing frozen snapshots for exam publishing and candidate-safe paper retrieval APIs. This establishes the critical data boundary between editable source content and published exam delivery.
 
 ## Notes
 

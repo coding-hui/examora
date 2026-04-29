@@ -8,14 +8,13 @@ export type QuestionType =
   | "SHORT_ANSWER"
   | "PROGRAMMING";
 
-export type ExamStatus = "DRAFT" | "PUBLISHED" | "ONGOING" | "ENDED" | "CANCELLED";
+export type ExamStatus = "DRAFT" | "PUBLISHED" | "RUNNING" | "CLOSED" | "ARCHIVED";
 
 export type ExamSessionStatus =
   | "NOT_STARTED"
-  | "ONGOING"
+  | "IN_PROGRESS"
   | "SUBMITTED"
-  | "EXPIRED"
-  | "CANCELLED";
+  | "EXPIRED";
 
 export type SubmissionStatus =
   | "PENDING"
@@ -32,37 +31,102 @@ export type SubmissionStatus =
   | "OUTPUT_LIMIT_EXCEEDED"
   | "SYSTEM_ERROR";
 
+// =====================================================================
+// M1: Admin-facing types (includes sensitive data)
+// =====================================================================
+
 /** Admin-facing question — includes scoring answer (never send to candidate) */
 export interface AdminQuestion {
   id: string;
-  subjectId: string;
   type: QuestionType;
   title: string;
   content: string;
-  score: number;
-  config: Record<string, unknown>;
   answer: Record<string, unknown> | null;
+  difficulty?: string;
+  language?: string;
+  starterCode?: string;
+  timeLimitMs: number;
+  memoryLimitMb: number;
   status: string;
+  testCases?: AdminTestCase[];
 }
 
-/** Candidate-facing question snapshot — excludes answer and hidden test cases */
-export interface QuestionSnapshot {
-  questionSnapshotId: string;
-  questionId: string;
+export interface AdminTestCase {
+  id: string;
+  input: string;
+  expectedOutput: string;
+  timeLimitMs: number;
+  memoryLimitMb: number;
+  isSample: boolean;
+  isHidden: boolean;
+  sortOrder: number;
+}
+
+// =====================================================================
+// M1: Candidate-facing types (excludes answer and hidden test cases)
+// =====================================================================
+
+/** Candidate exam snapshot metadata */
+export interface ExamSnapshot {
+  id: string;
+  examId: string;
+  paperSnapshotId: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  publishedAt: string;
+}
+
+/** Candidate exam session */
+export interface ExamSession {
+  id: string;
+  examSnapshotId: string;
+  userId: string;
+  status: ExamSessionStatus;
+  startedAt?: string;
+  submittedAt?: string;
+  remainingSeconds?: number;
+}
+
+/** Candidate-facing exam paper (API response) */
+export interface CandidatePaper {
+  examSnapshotId: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  remainingSeconds: number;
+  questions: CandidateQuestion[];
+}
+
+/** Candidate-facing question snapshot */
+export interface CandidateQuestion {
+  snapshotId: string;
   type: QuestionType;
   title: string;
-  content: string;
+  content: Record<string, unknown>;
   score: number;
-  config: Record<string, unknown>;
+  sortOrder: number;
+  sampleTestCases?: SampleTestCase[];
+  starterCode?: string;
+  timeLimitMs: number;
 }
 
-/** Candidate-facing exam paper */
-export interface ExamPaper {
-  sessionId: string;
-  exam: {
-    id: string;
-    title: string;
-    remainingSeconds: number;
-  };
-  questions: QuestionSnapshot[];
+/** Sample test case for programming questions only */
+export interface SampleTestCase {
+  input: string;
+  expectedOutput: string;
+}
+
+/** Candidate submission for objective questions */
+export interface CandidateSubmission {
+  questionId: string;
+  answer: Record<string, unknown>;
+}
+
+/** Programming submission */
+export interface ProgrammingSubmission {
+  questionId: string;
+  code: string;
+  language: string;
 }

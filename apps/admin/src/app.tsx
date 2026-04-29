@@ -141,8 +141,18 @@ export async function getInitialState(): Promise<{
 export const layout: RunTimeLayoutConfig = ({ initialState }) => {
   return {
     actionsRender: () => [
-      <Question key="doc" />,
-      <SelectLang key="SelectLang" />,
+      <div
+        key="actions"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '0 8px',
+        }}
+      >
+        <Question key="doc" />
+        <SelectLang key="SelectLang" />
+      </div>,
     ],
     menuItemRender: (item, dom) => {
       if (item.path) {

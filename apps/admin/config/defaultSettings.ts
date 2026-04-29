@@ -2,6 +2,7 @@ import type { ProLayoutProps } from '@ant-design/pro-components';
 
 /**
  * @name Examora Pro Layout Settings
+ * Vibrant & Professional exam management system design
  */
 const Settings: ProLayoutProps & {
   pwa?: boolean;
@@ -11,19 +12,15 @@ const Settings: ProLayoutProps & {
   colorPrimary: '#1890ff',
   layout: 'mix',
   contentWidth: 'Fluid',
-  fixedHeader: false,
+  fixedHeader: true,
   fixSiderbar: true,
   splitMenus: false,
   siderMenuType: 'group',
   colorWeak: false,
   title: 'Examora',
-  pwa: true,
+  pwa: false,
   logo: '/logo.svg',
   iconfontUrl: '',
-  token: {
-    // 参见ts声明，demo 见文档，通过token 修改样式
-    //https://procomponents.ant.design/components/layout#%E9%80%9A%E8%BF%87-token-%E4%BF%AE%E6%94%B9%E6%A0%B7%E5%BC%8F
-  },
 };
 
 export default Settings;
