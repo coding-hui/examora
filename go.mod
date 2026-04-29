@@ -3,8 +3,8 @@ module github.com/coding-hui/examora
 go 1.25.0
 
 require (
-	github.com/casbin/casbin/v2 v2.135.0
-	github.com/casbin/gorm-adapter/v3 v3.41.0
+	github.com/casbin/casbin/v2 v2.92.0
+	github.com/casbin/gorm-adapter/v3 v3.11.0
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1

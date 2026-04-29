@@ -105,6 +105,16 @@ type saveExamRequest struct {
 	DurationMinutes int     `json:"duration_minutes"`
 }
 
+type publishExamRequest struct {
+	StartTime       time.Time `json:"start_time" binding:"required"`
+	EndTime         time.Time `json:"end_time" binding:"required"`
+	DurationMinutes int       `json:"duration_minutes" binding:"required,min=1"`
+}
+
+type startSessionRequest struct {
+	DeviceID *string `json:"device_id"`
+}
+
 type examResponse struct {
 	ID              uint64     `json:"id"`
 	Title           string     `json:"title"`
@@ -117,6 +127,57 @@ type examResponse struct {
 	CreatedBy       uint64     `json:"created_by"`
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`
+}
+
+type examSnapshotResponse struct {
+	ID              uint64    `json:"id"`
+	ExamID          uint64    `json:"exam_id"`
+	PaperSnapshotID uint64    `json:"paper_snapshot_id"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	DurationMinutes int       `json:"duration_minutes"`
+	PublishedAt     time.Time `json:"published_at"`
+}
+
+type candidatePaperResponse struct {
+	ExamSnapshotID   uint64                      `json:"exam_snapshot_id"`
+	Title            string                      `json:"title"`
+	StartTime        time.Time                   `json:"start_time"`
+	EndTime          time.Time                   `json:"end_time"`
+	DurationMinutes  int                         `json:"duration_minutes"`
+	RemainingSeconds int                         `json:"remaining_seconds"`
+	Questions        []candidateQuestionResponse `json:"questions"`
+}
+
+type candidateQuestionResponse struct {
+	SnapshotID      uint64                   `json:"snapshot_id"`
+	Type            string                   `json:"type"`
+	Title           string                   `json:"title"`
+	Content         map[string]any           `json:"content"`
+	Score           float64                  `json:"score"`
+	SortOrder       int                      `json:"sort_order"`
+	SampleTestCases []sampleTestCaseResponse `json:"sample_test_cases,omitempty"`
+	StarterCode     *string                  `json:"starter_code,omitempty"`
+	TimeLimitMs     int                      `json:"time_limit_ms"`
+}
+
+type sampleTestCaseResponse struct {
+	Input          string `json:"input"`
+	ExpectedOutput string `json:"expected_output"`
+}
+
+type examSessionResponse struct {
+	ID               uint64     `json:"id"`
+	ExamSnapshotID   uint64     `json:"exam_snapshot_id"`
+	UserID           uint64     `json:"user_id"`
+	Status           string     `json:"status"`
+	StartedAt        *time.Time `json:"started_at,omitempty"`
+	SubmittedAt      *time.Time `json:"submitted_at,omitempty"`
+	RemainingSeconds *int       `json:"remaining_seconds,omitempty"`
+}
+
+type saveAnswersRequest struct {
+	Answers map[string]map[string]any `json:"answers"`
 }
 
 type createSubmissionRequest struct {
@@ -277,6 +338,63 @@ func toClientEventResponse(ev exam.ClientEvent) clientEventResponse {
 
 func toJudgeTaskResponse(task judge.Task) judgeTaskResponse {
 	return judgeTaskResponse{ID: task.ID, SubmissionID: task.SubmissionID, QuestionID: task.QuestionID, UserID: task.UserID, Language: task.Language, Status: task.Status, RetryCount: task.RetryCount, MaxRetryCount: task.MaxRetryCount, ErrorMessage: task.ErrorMessage, ResultSummary: task.ResultSummary, CreatedAt: task.CreatedAt, UpdatedAt: task.UpdatedAt, StartedAt: task.StartedAt, FinishedAt: task.FinishedAt}
+}
+
+func toExamSnapshotResponse(s exam.ExamSnapshot) examSnapshotResponse {
+	return examSnapshotResponse{
+		ID:              s.ID,
+		ExamID:          s.ExamID,
+		PaperSnapshotID: s.PaperSnapshotID,
+		StartTime:       s.StartTime,
+		EndTime:         s.EndTime,
+		DurationMinutes: s.DurationMinutes,
+		PublishedAt:     s.PublishedAt,
+	}
+}
+
+func toCandidatePaperResponse(p *exam.CandidatePaper) candidatePaperResponse {
+	questions := make([]candidateQuestionResponse, 0, len(p.Questions))
+	for _, q := range p.Questions {
+		sampleCases := make([]sampleTestCaseResponse, 0, len(q.SampleTestCases))
+		for _, sc := range q.SampleTestCases {
+			sampleCases = append(sampleCases, sampleTestCaseResponse{
+				Input:          sc.Input,
+				ExpectedOutput: sc.ExpectedOutput,
+			})
+		}
+		questions = append(questions, candidateQuestionResponse{
+			SnapshotID:      q.SnapshotID,
+			Type:            q.Type,
+			Title:           q.Title,
+			Content:         q.Content,
+			Score:           q.Score,
+			SortOrder:       q.SortOrder,
+			SampleTestCases: sampleCases,
+			StarterCode:     q.StarterCode,
+			TimeLimitMs:     q.TimeLimitMs,
+		})
+	}
+	return candidatePaperResponse{
+		ExamSnapshotID:   p.ExamSnapshotID,
+		Title:            p.Title,
+		StartTime:        p.StartTime,
+		EndTime:          p.EndTime,
+		DurationMinutes:  p.DurationMinutes,
+		RemainingSeconds: p.RemainingSeconds,
+		Questions:        questions,
+	}
+}
+
+func toExamSessionResponse(session exam.ExamSession) examSessionResponse {
+	return examSessionResponse{
+		ID:               session.ID,
+		ExamSnapshotID:   session.ExamSnapshotID,
+		UserID:           session.UserID,
+		Status:           session.Status,
+		StartedAt:        session.StartedAt,
+		SubmittedAt:      session.SubmittedAt,
+		RemainingSeconds: session.RemainingSeconds,
+	}
 }
 
 // endregion

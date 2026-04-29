@@ -32,6 +32,9 @@ type PaperStore interface {
 
 type PaperReader interface {
 	PaperExists(ctx context.Context, id uint64) (bool, error)
+	ListPaperQuestions(ctx context.Context, paperID uint64) ([]PaperQuestion, error)
+	GetQuestion(ctx context.Context, id uint64) (*Question, error)
+	ListTestCases(ctx context.Context, questionID uint64, includeHidden bool) ([]TestCase, error)
 }
 
 type JudgeTestCase struct {

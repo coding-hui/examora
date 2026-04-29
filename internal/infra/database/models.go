@@ -140,3 +140,66 @@ type ClientEventModel struct {
 }
 
 func (ClientEventModel) TableName() string { return "client_events" }
+
+// =====================================================================
+// M1: Snapshot models for exam publishing
+// =====================================================================
+
+type ExamSnapshotModel struct {
+	ID              uint64    `gorm:"primaryKey;autoIncrement"`
+	ExamID          uint64    `gorm:"uniqueIndex"`
+	PaperSnapshotID uint64    // Currently points to paper_id directly; future: paper_snapshot table
+	StartTime       time.Time `gorm:"not null"`
+	EndTime         time.Time `gorm:"not null"`
+	DurationMinutes int       `gorm:"not null"`
+	PublishedAt     time.Time `gorm:"not null"`
+}
+
+func (ExamSnapshotModel) TableName() string { return "exam_snapshots" }
+
+type QuestionSnapshotModel struct {
+	ID             uint64         `gorm:"primaryKey;autoIncrement"`
+	ExamSnapshotID uint64         `gorm:"index"`
+	QuestionID     uint64         `gorm:"index"`
+	Type           string         `gorm:"size:32;not null"`
+	Title          string         `gorm:"size:255;not null"`
+	Content        datatypes.JSON `gorm:"not null;default:'{}'"`
+	Score          float64        `gorm:"not null;default:0"`
+	SortOrder      int            `gorm:"not null;default:0"`
+	// Internal-only fields (candidate API must never expose these)
+	Answer        datatypes.JSON
+	TestCases     datatypes.JSON `gorm:"type:jsonb"`
+	StarterCode   *string
+	TimeLimitMS   int       `gorm:"default:2000"`
+	MemoryLimitMB int       `gorm:"default:256"`
+	CreatedAt     time.Time `gorm:"not null"`
+}
+
+func (QuestionSnapshotModel) TableName() string { return "question_snapshots" }
+
+type ExamSessionModel struct {
+	ID               uint64 `gorm:"primaryKey;autoIncrement"`
+	ExamSnapshotID   uint64 `gorm:"index;not null"`
+	UserID           uint64 `gorm:"index;not null;default:0"`
+	Status           string `gorm:"size:32;not null;default:NOT_STARTED"`
+	StartedAt        *time.Time
+	SubmittedAt      *time.Time
+	RemainingSeconds *int
+	IPAddress        *string   `gorm:"size:64"`
+	DeviceID         *string   `gorm:"size:128"`
+	CreatedAt        time.Time `gorm:"not null"`
+	UpdatedAt        time.Time `gorm:"not null"`
+}
+
+func (ExamSessionModel) TableName() string { return "exam_sessions" }
+
+// AnswerDraftModel stores candidate answer drafts for objective questions
+type AnswerDraftModel struct {
+	ID            uint64         `gorm:"primaryKey;autoIncrement"`
+	ExamSessionID uint64         `gorm:"uniqueIndex:idx_answer_draft_session_question"`
+	QuestionID    uint64         `gorm:"uniqueIndex:idx_answer_draft_session_question"`
+	Answer        datatypes.JSON `gorm:"type:jsonb"`
+	SavedAt       time.Time      `gorm:"not null"`
+}
+
+func (AnswerDraftModel) TableName() string { return "answer_drafts" }

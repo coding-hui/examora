@@ -115,7 +115,7 @@ func (c *Container) provideLibrary() (*library.Service, error) {
 func (c *Container) provideExam() (*exam.Service, error) {
 	store := examstore.New(c.DB)
 	papers := librarystore.New(c.DB)
-	return exam.ProvideService(store, papers, c.Judge)
+	return exam.ProvideService(store, papers, c.Judge, c.DB)
 }
 
 func (c *Container) provideJudge() (*judge.Service, error) {

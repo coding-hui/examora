@@ -16,6 +16,10 @@ const (
 	StatusArchived  = "ARCHIVED"
 )
 
+const (
+	QuestionTypeProgramming = "PROGRAMMING"
+)
+
 type Exam struct {
 	ID              uint64     `json:"id"`
 	Title           string     `json:"title"`
@@ -112,4 +116,53 @@ func (s *Service) CloseExam(ctx context.Context, id uint64) error {
 		return errors.Join(ErrInvalidExamStatusTransition, err)
 	}
 	return s.store.UpdateExam(ctx, e)
+}
+
+// =====================================================================
+// M1: Snapshot models for exam publishing
+// =====================================================================
+
+type ExamSnapshot struct {
+	ID              uint64    `json:"id"`
+	ExamID          uint64    `json:"exam_id"`
+	PaperSnapshotID uint64    `json:"paper_snapshot_id"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	DurationMinutes int       `json:"duration_minutes"`
+	PublishedAt     time.Time `json:"published_at"`
+}
+
+type QuestionSnapshot struct {
+	ID             uint64         `json:"id"`
+	ExamSnapshotID uint64         `json:"exam_snapshot_id"`
+	QuestionID     uint64         `json:"question_id"`
+	Type           string         `json:"type"`
+	Title          string         `json:"title"`
+	Content        map[string]any `json:"content"`
+	Score          float64        `json:"score"`
+	SortOrder      int            `json:"sort_order"`
+	Answer         map[string]any `json:"-"` // Internal only, never exposed to candidate
+	TestCases      []TestCase     `json:"-"` // Internal only, never exposed to candidate
+	StarterCode    *string        `json:"starter_code,omitempty"`
+	TimeLimitMs    int            `json:"time_limit_ms"`
+	MemoryLimitMb  int            `json:"memory_limit_mb"`
+}
+
+type TestCase struct {
+	ID             uint64 `json:"id,omitempty"`
+	Input          string `json:"input"`
+	ExpectedOutput string `json:"expected_output"`
+	TimeLimitMS    int    `json:"time_limit_ms,omitempty"`
+	MemoryLimitMB  int    `json:"memory_limit_mb,omitempty"`
+	IsSample       bool   `json:"is_sample"`
+	IsHidden       bool   `json:"is_hidden"`
+	SortOrder      int    `json:"sort_order,omitempty"`
+}
+
+// AnswerDraft stores candidate answer drafts
+type AnswerDraft struct {
+	ID            uint64
+	ExamSessionID uint64
+	QuestionID    uint64
+	Answer        map[string]any
 }

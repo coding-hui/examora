@@ -8,9 +8,31 @@ type JudgeDispatcher interface {
 
 type Store interface {
 	ExamStore
+	SnapshotStore
+	ExamSessionStore
+	AnswerDraftStore
 	SubmissionStore
 	ClientEventStore
 	SubmissionReader
+}
+
+type ExamSessionStore interface {
+	CreateExamSession(ctx context.Context, session *ExamSession) error
+	GetExamSession(ctx context.Context, examSnapshotID, userID uint64) (*ExamSession, error)
+	UpdateExamSession(ctx context.Context, session *ExamSession) error
+}
+
+type AnswerDraftStore interface {
+	SaveAnswerDraft(ctx context.Context, sessionID, questionID uint64, answer map[string]any) error
+	GetAnswerDraft(ctx context.Context, sessionID, questionID uint64) (*AnswerDraft, error)
+}
+
+type SnapshotStore interface {
+	CreateExamSnapshot(ctx context.Context, snap *ExamSnapshot) error
+	GetExamSnapshot(ctx context.Context, id uint64) (*ExamSnapshot, error)
+	GetExamSnapshotByExamID(ctx context.Context, examID uint64) (*ExamSnapshot, error)
+	ListQuestionSnapshots(ctx context.Context, examSnapshotID uint64) ([]QuestionSnapshot, error)
+	CreateQuestionSnapshot(ctx context.Context, snap *QuestionSnapshot) error
 }
 
 type ExamStore interface {
