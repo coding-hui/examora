@@ -156,10 +156,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     },
     avatarProps: {
       title: <AvatarName />,
-      src: initialState?.currentUser?.display_name
-        ? undefined
-        : undefined,
-      render: (_, avatarChildren, props) => {
+      render: (_, avatarChildren) => {
         const userName =
           initialState?.currentUser?.display_name ||
           initialState?.currentUser?.username ||
@@ -167,8 +164,8 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
         const initials = getInitials(userName);
         const bgColor = getRandomColor(userName);
 
-        // 如果没有头像，显示带随机颜色的首字母头像
-        if (!props.src && userName) {
+        // 如果有用户名但没有头像，显示带随机颜色的首字母头像
+        if (userName && !initialState?.currentUser?.display_name) {
           return (
             <AvatarDropdown>
               <Avatar
