@@ -1,14 +1,13 @@
 import type { ProLayoutProps } from '@ant-design/pro-components';
 
 /**
- * @name
+ * @name Examora Pro Layout Settings
  */
 const Settings: ProLayoutProps & {
   pwa?: boolean;
   logo?: string;
 } = {
   navTheme: 'light',
-  // 拂晓蓝
   colorPrimary: '#1890ff',
   layout: 'mix',
   contentWidth: 'Fluid',

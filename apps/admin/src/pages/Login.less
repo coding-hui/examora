@@ -1,0 +1,241 @@
+.examora-login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(420px, 0.92fr) minmax(420px, 1fr);
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 38%),
+    radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.12), transparent 32%),
+    linear-gradient(135deg, #eef6ff 0%, #f8fafc 42%, #edf7ff 100%);
+  color: #102033;
+}
+
+.examora-login__brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 44px;
+  padding: 56px 56px 48px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(17, 24, 39, 0.88) 100%);
+  color: #f8fafc;
+}
+
+.examora-login__brand-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.examora-login__logo {
+  width: 36px;
+  height: 36px;
+}
+
+.examora-login__brand-name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.examora-login__brand-copy {
+  max-width: 520px;
+}
+
+.examora-login__eyebrow,
+.examora-login__section-label {
+  display: block;
+  margin-bottom: 14px;
+  color: #38bdf8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.examora-login__brand-copy h1.ant-typography {
+  margin: 0;
+  color: #ffffff;
+  font-size: 44px;
+  line-height: 1.12;
+  font-weight: 760;
+  letter-spacing: 0;
+}
+
+.examora-login__lead {
+  display: block;
+  margin-top: 20px;
+  max-width: 460px;
+  color: #cbd5e1;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.examora-login__signals {
+  display: grid;
+  gap: 2px;
+  max-width: 420px;
+}
+
+.examora-login__signal {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  color: #e2e8f0;
+}
+
+.examora-login__signal:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.examora-login__signal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 8px;
+  background: rgba(14, 165, 233, 0.06);
+}
+
+.examora-login__signal-icon .anticon {
+  color: #38bdf8;
+  font-size: 20px;
+}
+
+.examora-login__signal-title,
+.examora-login__signal-desc {
+  display: block;
+}
+
+.examora-login__signal-title {
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.examora-login__signal-desc {
+  margin-top: 4px;
+  max-width: 340px;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.examora-login__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+}
+
+.examora-login__card {
+  width: min(100%, 440px);
+  padding: 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+}
+
+.examora-login__card-header {
+  margin-bottom: 28px;
+}
+
+.examora-login__card-header h2.ant-typography {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 720;
+  letter-spacing: 0;
+}
+
+.examora-login__card-header .ant-typography {
+  color: #64748b;
+}
+
+.examora-login__alert {
+  margin-bottom: 20px;
+  border-radius: 6px;
+}
+
+.examora-login .ant-form-item-label > label {
+  color: #334155;
+  font-weight: 600;
+}
+
+.examora-login .ant-input-affix-wrapper {
+  min-height: 46px;
+  border-radius: 6px;
+}
+
+.examora-login .ant-input-affix-wrapper .anticon {
+  color: #64748b;
+}
+
+.examora-login__submit {
+  height: 46px;
+  margin-top: 4px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.examora-login__sso {
+  margin-top: 22px;
+}
+
+.examora-login__sso .ant-btn {
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.examora-login__footnote {
+  display: block;
+  margin-top: 24px;
+  color: #64748b;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .examora-login {
+    grid-template-columns: 1fr;
+  }
+
+  .examora-login__brand {
+    padding: 32px;
+    gap: 28px;
+  }
+
+  .examora-login__brand-copy h1.ant-typography {
+    font-size: 34px;
+  }
+
+  .examora-login__signals {
+    grid-template-columns: 1fr;
+  }
+
+  .examora-login__panel {
+    padding: 32px 20px;
+  }
+}
+
+@media (max-width: 520px) {
+  .examora-login__brand {
+    padding: 24px;
+  }
+
+  .examora-login__brand-copy h1.ant-typography {
+    font-size: 28px;
+  }
+
+  .examora-login__card {
+    padding: 28px 22px;
+  }
+}

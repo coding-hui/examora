@@ -98,7 +98,7 @@ export default defineConfig({
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
-  title: 'Ant Design Pro',
+  title: 'Examora',
   layout: {
     locale: true,
     ...defaultSettings,
@@ -131,10 +131,12 @@ export default defineConfig({
   antd: {
     appConfig: {},
     configProvider: {
-      variant: 'filled',
       theme: {
         token: {
-          fontFamily: 'AlibabaSans, sans-serif',
+          fontFamily:
+            "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          borderRadius: 6,
+          colorPrimary: '#1677ff',
         },
       },
     },
@@ -167,15 +169,9 @@ export default defineConfig({
   ],
 
   //================ pro 插件配置 =================
-  plugins: ['@umijs/max-plugin-openapi', '@umijs/request-record'],
-
-  mock: {
-    include: ['src/pages/**/_mock.ts'],
-    exclude: ['mock/requestRecord.mock.js'],
-  },
-  utoopack: {},
-  requestRecord: {},
   exportStatic: {},
+  request: {},
+  esbuildMinifyIIFE: true,
   define: {
     'process.env.CI': process.env.CI,
     'process.env.COMMIT_HASH': process.env.COMMIT_HASH || '',

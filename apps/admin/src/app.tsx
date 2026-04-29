@@ -1,7 +1,7 @@
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
-import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
-import { history, Link, request } from '@umijs/max';
-import { Button, Result } from 'antd';
+import type { RunTimeLayoutConfig } from '@umijs/max';
+import { history, Link } from '@umijs/max';
+import { Button, Result, Avatar } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import React from 'react';
@@ -19,12 +19,39 @@ import {
   SelectLang,
 } from '@/components';
 import { errorConfig } from './request';
+import defaultSettings from '../config/defaultSettings';
 
 // Initialize dayjs plugins globally
 dayjs.extend(relativeTime);
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/login';
+
+// 生成随机颜色的函数
+const getRandomColor = (name: string): string => {
+  const colors = [
+    '#7C3AED', // purple
+    '#2563EB', // blue
+    '#DC2626', // red
+    '#059669', // green
+    '#D97706', // amber
+    '#7C3AED', // violet
+    '#DB2777', // pink
+    '#0891B2', // cyan
+  ];
+  // 基于名字生成一致性随机颜色
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+// 获取名字首字母
+const getInitials = (name: string): string => {
+  if (!name) return '?';
+  return name.charAt(0).toUpperCase();
+};
 
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
@@ -38,15 +65,17 @@ export async function getInitialState(): Promise<{
     if (!token) return null;
 
     try {
-      const response = await request<AuthMeData>('/api/auth/me', {
-        method: 'GET',
+      const response = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (response) {
-        setLocalProfile(response);
+      const data = await response.json();
+      if (data.code === 0 && data.data) {
+        setLocalProfile(data.data);
+        return data.data;
       }
-      return response;
+      return null;
     } catch (_error: any) {
-      const httpStatus = _error?.response?.status;
+      const httpStatus = _error?.status;
       const errorCode = _error?.info?.errorCode;
 
       // 403 Forbidden - user lacks admin role
@@ -91,6 +120,7 @@ export async function getInitialState(): Promise<{
         fetchUserInfo,
         currentUser: null,
         forbidden: true,
+        settings: defaultSettings as Partial<LayoutSettings>,
       };
     }
 
@@ -98,10 +128,13 @@ export async function getInitialState(): Promise<{
       fetchUserInfo,
       currentUser: userProfile,
       forbidden: false,
+      settings: defaultSettings as Partial<LayoutSettings>,
     };
   }
 
-  return {};
+  return {
+    settings: defaultSettings as Partial<LayoutSettings>,
+  };
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
@@ -123,12 +156,32 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     },
     avatarProps: {
       title: <AvatarName />,
-      render: (_, avatarChildren) => (
-        <AvatarDropdown>{avatarChildren}</AvatarDropdown>
-      ),
-    },
-    waterMarkProps: {
-      content: initialState?.currentUser?.display_name,
+      src: initialState?.currentUser?.display_name
+        ? undefined
+        : undefined,
+      render: (_, avatarChildren, props) => {
+        const userName =
+          initialState?.currentUser?.display_name ||
+          initialState?.currentUser?.username ||
+          '';
+        const initials = getInitials(userName);
+        const bgColor = getRandomColor(userName);
+
+        // 如果没有头像，显示带随机颜色的首字母头像
+        if (!props.src && userName) {
+          return (
+            <AvatarDropdown>
+              <Avatar
+                style={{ backgroundColor: bgColor }}
+                size={32}
+              >
+                {initials}
+              </Avatar>
+            </AvatarDropdown>
+          );
+        }
+        return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
+      },
     },
     footerRender: () => <Footer />,
     onPageChange: () => {
@@ -174,7 +227,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
  * 它基于 axios 提供了一套统一的网络请求和错误处理方案。
  * @doc https://umijs.org/docs/max/request#配置
  */
-export const requestConfig: RequestConfig = {
+export const request: any = {
   baseURL: isDev ? '' : 'https://exam.micromoving.net',
   ...errorConfig,
 };
@@ -186,7 +239,11 @@ const ForbiddenPage: React.FC = () => {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      await request('/api/auth/logout', { method: 'POST' });
+      const token = getAccessToken();
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
     } catch (_) {
       // ignore logout errors
     }

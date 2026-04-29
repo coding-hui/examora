@@ -1,0 +1,154 @@
+import { PlusOutlined } from '@ant-design/icons';
+import { PageContainer } from '@ant-design/pro-components';
+import { request, useIntl } from '@umijs/max';
+import { Button, Card, message, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
+import React, { useEffect, useState } from 'react';
+
+interface Exam {
+  id: number;
+  title: string;
+  description: string;
+  paper_id?: number;
+  status: string;
+  start_time?: string;
+  end_time?: string;
+  duration_minutes: number;
+  created_at: string;
+}
+
+const ExamList: React.FC = () => {
+  const intl = useIntl();
+  const [loading, setLoading] = useState(false);
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [total, setTotal] = useState(0);
+
+  const fetchExams = async () => {
+    setLoading(true);
+    try {
+      const response = await request<{
+        code: number;
+        data: { items: Exam[]; total: number };
+      }>('/api/admin/exams', { params: { page: 1, page_size: 100 } });
+      if (response.data) {
+        setExams(response.data.items || []);
+        setTotal(response.data.total || 0);
+      }
+    } catch (error) {
+      message.error('获取考试列表失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExams();
+  }, []);
+
+  const statusColors: Record<string, string> = {
+    DRAFT: 'default',
+    PUBLISHED: 'green',
+    RUNNING: 'blue',
+    CLOSED: 'red',
+    ARCHIVED: 'gray',
+  };
+
+  const columns: ColumnsType<Exam> = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 80,
+    },
+    {
+      title: '考试名称',
+      dataIndex: 'title',
+      key: 'title',
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={statusColors[status] || 'default'}>{status}</Tag>
+      ),
+    },
+    {
+      title: '时长(分钟)',
+      dataIndex: 'duration_minutes',
+      key: 'duration_minutes',
+      width: 100,
+    },
+    {
+      title: '开始时间',
+      dataIndex: 'start_time',
+      key: 'start_time',
+      render: (time: string) =>
+        time ? dayjs(time).format('YYYY-MM-DD HH:mm') : '-',
+    },
+    {
+      title: '结束时间',
+      dataIndex: 'end_time',
+      key: 'end_time',
+      render: (time: string) =>
+        time ? dayjs(time).format('YYYY-MM-DD HH:mm') : '-',
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm'),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 120,
+      render: (_, record) =>
+        record.status === 'DRAFT' && (
+          <Button
+            type="link"
+            onClick={() =>
+              (window.location.href = `/exams/${record.id}/publish`)
+            }
+          >
+            发布
+          </Button>
+        ),
+    },
+  ];
+
+  return (
+    <PageContainer
+      title={intl.formatMessage({
+        id: 'menu.exams',
+        defaultMessage: '考试管理',
+      })}
+    >
+      <Card>
+        <div className="mb-4 flex justify-between">
+          <h2>考试列表</h2>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => (window.location.href = '/exams/create')}
+          >
+            {intl.formatMessage({
+              id: 'common.create',
+              defaultMessage: '创建考试',
+            })}
+          </Button>
+        </div>
+        <Table
+          columns={columns}
+          dataSource={exams}
+          loading={loading}
+          rowKey="id"
+          pagination={{ total, pageSize: 100 }}
+        />
+      </Card>
+    </PageContainer>
+  );
+};
+
+export default ExamList;

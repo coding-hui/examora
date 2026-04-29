@@ -1,17 +1,8 @@
-import { QuestionCircleOutlined } from '@ant-design/icons';
 import { SelectLang as UmiSelectLang } from '@umijs/max';
 
 export type SiderTheme = 'light' | 'dark';
 
-export const SelectLang: React.FC = () => {
-  return (
-    <UmiSelectLang
-      style={{
-        padding: 4,
-      }}
-    />
-  );
-};
+export const SelectLang = () => <UmiSelectLang style={{ padding: 4 }} />;
 
 export const Question: React.FC = () => {
   return (
@@ -21,12 +12,23 @@ export const Question: React.FC = () => {
       rel="noreferrer"
       style={{
         display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         padding: '4px',
-        fontSize: '18px',
+        height: '22px',
+        width: '22px',
         color: 'inherit',
       }}
     >
-      <QuestionCircleOutlined />
+      <img
+        src="/logo.svg"
+        alt="Examora"
+        style={{
+          height: '18px',
+          width: '18px',
+          objectFit: 'contain',
+        }}
+      />
     </a>
   );
 };
