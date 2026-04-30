@@ -12,7 +12,7 @@ const Settings: ProLayoutProps & {
   colorPrimary: '#262626',
   layout: 'mix',
   contentWidth: 'Fluid',
-  fixedHeader: false,
+  fixedHeader: true,
   fixSiderbar: true,
   splitMenus: false,
   siderMenuType: 'group',
