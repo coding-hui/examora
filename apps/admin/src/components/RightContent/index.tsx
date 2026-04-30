@@ -6,9 +6,9 @@ export const SelectLang: React.FC = () => (
   <UmiSelectLang
     style={{
       padding: '8px 12px',
-      borderRadius: 8,
+      borderRadius: 6,
       background: 'transparent',
-      border: '1px solid rgba(255, 255, 255, 0.15)',
+      border: '1px solid #e4e4e7',
       color: 'inherit',
       fontSize: 12,
       height: 28,
@@ -33,10 +33,11 @@ export const Question: React.FC = () => {
         height: '22px',
         width: '22px',
         color: 'inherit',
+        borderRadius: 6,
         transition: 'background 0.2s ease',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+        e.currentTarget.style.background = '#f4f4f5';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'transparent';

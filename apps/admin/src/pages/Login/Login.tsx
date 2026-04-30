@@ -5,7 +5,7 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { request } from '@umijs/max';
+import { request, useIntl } from '@umijs/max';
 import { Alert, Button, Divider, Form, Input, message, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import type { AuthConfig, LoginResponse } from '@/auth/token';
@@ -26,6 +26,15 @@ type ApiEnvelope<T> = {
   data?: T;
 };
 
+const getRequestErrorMessage = (err: any): string | undefined => {
+  return (
+    err?.info?.errorMessage ||
+    err?.response?.data?.message ||
+    err?.data?.message ||
+    err?.message
+  );
+};
+
 const unwrapData = <T,>(response: T | ApiEnvelope<T>): T => {
   if (
     response &&
@@ -39,6 +48,7 @@ const unwrapData = <T,>(response: T | ApiEnvelope<T>): T => {
 };
 
 const Login: React.FC = () => {
+  const intl = useIntl();
   const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +74,7 @@ const Login: React.FC = () => {
     const token = params.get('token');
     if (token) {
       setAccessToken(token);
-      message.success('SSO login successful');
+      message.success(intl.formatMessage({ id: 'pages.login.ssoSuccess' }));
       window.location.href = '/';
     }
   }, []);
@@ -82,6 +92,7 @@ const Login: React.FC = () => {
       >('/api/auth/login', {
         method: 'POST',
         data: values,
+        skipErrorHandler: true,
       });
       const loginResult = unwrapData(response);
 
@@ -90,17 +101,19 @@ const Login: React.FC = () => {
         if (loginResult.user) {
           setLocalProfile(loginResult.user);
         }
-        message.success('登录成功');
+        message.success(intl.formatMessage({ id: 'pages.login.success' }));
         window.location.href = '/';
         return;
       }
 
-      setError('登录响应缺少访问令牌，请联系管理员。');
+      setError(intl.formatMessage({ id: 'pages.login.error.missingToken' }));
     } catch (err: any) {
       console.error('Login failed:', err);
       const errorMsg =
-        err?.info?.errorMessage || err?.message || '登录失败，请检查用户名密码';
+        getRequestErrorMessage(err) ||
+        intl.formatMessage({ id: 'pages.login.error.failed' });
       setError(errorMsg);
+      message.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -119,62 +132,70 @@ const Login: React.FC = () => {
         </div>
 
         <div className="examora-login__brand-copy">
-          <Text className="examora-login__eyebrow">Admin Console</Text>
-          <Title level={1}>考试运营与评测管理后台</Title>
+          <Text className="examora-login__eyebrow">
+            {intl.formatMessage({ id: 'pages.login.brand.eyebrow' })}
+          </Text>
+          <Title level={1}>
+            {intl.formatMessage({ id: 'pages.login.brand.headline' })}
+          </Title>
           <Text className="examora-login__lead">
-            集中管理题库、试卷、考试发布、考生记录与评测结果，面向严肃考试场景构建。
+            {intl.formatMessage({ id: 'pages.login.brand.description' })}
           </Text>
         </div>
 
-        <div className="examora-login__signals" aria-label="Platform signals">
-          <div className="examora-login__signal">
+        <ul className="examora-login__signals" aria-label="Platform signals">
+          <li className="examora-login__signal">
             <div className="examora-login__signal-icon">
               <AuditOutlined />
             </div>
             <div>
               <span className="examora-login__signal-title">
-                Exam Lifecycle
+                {intl.formatMessage({ id: 'pages.login.brand.signal1.title' })}
               </span>
               <span className="examora-login__signal-desc">
-                Publish, schedule, and track exam operations.
+                {intl.formatMessage({ id: 'pages.login.brand.signal1.desc' })}
               </span>
             </div>
-          </div>
-          <div className="examora-login__signal">
+          </li>
+          <li className="examora-login__signal">
             <div className="examora-login__signal-icon">
               <CloudServerOutlined />
             </div>
             <div>
               <span className="examora-login__signal-title">
-                Judge Pipeline
+                {intl.formatMessage({ id: 'pages.login.brand.signal2.title' })}
               </span>
               <span className="examora-login__signal-desc">
-                Review submissions and monitor execution status.
+                {intl.formatMessage({ id: 'pages.login.brand.signal2.desc' })}
               </span>
             </div>
-          </div>
-          <div className="examora-login__signal">
+          </li>
+          <li className="examora-login__signal">
             <div className="examora-login__signal-icon">
               <SafetyCertificateOutlined />
             </div>
             <div>
               <span className="examora-login__signal-title">
-                Access Control
+                {intl.formatMessage({ id: 'pages.login.brand.signal3.title' })}
               </span>
               <span className="examora-login__signal-desc">
-                Manage admin roles and protected workflows.
+                {intl.formatMessage({ id: 'pages.login.brand.signal3.desc' })}
               </span>
             </div>
-          </div>
-        </div>
+          </li>
+        </ul>
       </section>
 
       <section className="examora-login__panel" aria-label="Sign in">
         <div className="examora-login__card">
           <div className="examora-login__card-header">
-            <Text className="examora-login__section-label">Secure access</Text>
-            <Title level={2}>登录后台</Title>
-            <Text>使用管理员账号进入 Examora 控制台。</Text>
+            <Text className="examora-login__section-label">
+              {intl.formatMessage({ id: 'pages.login.sectionLabel' })}
+            </Text>
+            <Title level={2}>
+              {intl.formatMessage({ id: 'pages.login.title' })}
+            </Title>
+            <Text>{intl.formatMessage({ id: 'pages.login.subtitle' })}</Text>
           </div>
 
           {error && (
@@ -194,26 +215,44 @@ const Login: React.FC = () => {
             size="large"
           >
             <Form.Item
-              label="用户名"
+              label={intl.formatMessage({ id: 'pages.login.username.label' })}
               name="username"
-              rules={[{ required: true, message: '请输入用户名' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'pages.login.username.required',
+                  }),
+                },
+              ]}
             >
               <Input
                 autoComplete="username"
                 prefix={<UserOutlined />}
-                placeholder="admin@example.com"
+                placeholder={intl.formatMessage({
+                  id: 'pages.login.username.placeholder',
+                })}
               />
             </Form.Item>
 
             <Form.Item
-              label="密码"
+              label={intl.formatMessage({ id: 'pages.login.password.label' })}
               name="password"
-              rules={[{ required: true, message: '请输入密码' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'pages.login.password.required',
+                  }),
+                },
+              ]}
             >
               <Input.Password
                 autoComplete="current-password"
                 prefix={<LockOutlined />}
-                placeholder="请输入密码"
+                placeholder={intl.formatMessage({
+                  id: 'pages.login.password.placeholder',
+                })}
               />
             </Form.Item>
 
@@ -224,21 +263,25 @@ const Login: React.FC = () => {
               loading={isLoading}
               className="examora-login__submit"
             >
-              {isLoading ? '登录中' : '登录'}
+              {isLoading
+                ? intl.formatMessage({ id: 'pages.login.submitting' })
+                : intl.formatMessage({ id: 'pages.login.submit' })}
             </Button>
           </Form>
 
           {authConfig?.logto_enabled && (
             <div className="examora-login__sso">
-              <Divider plain>或</Divider>
+              <Divider plain>
+                {intl.formatMessage({ id: 'pages.login.or' })}
+              </Divider>
               <Button block size="large" onClick={handleLogtoLogin}>
-                使用企业 SSO 登录
+                {intl.formatMessage({ id: 'pages.login.sso' })}
               </Button>
             </div>
           )}
 
           <Text className="examora-login__footnote">
-            访问权限由系统角色与账号状态控制。
+            {intl.formatMessage({ id: 'pages.login.footnote' })}
           </Text>
         </div>
       </section>

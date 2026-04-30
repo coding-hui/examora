@@ -17,4 +17,47 @@ export default {
   'pages.welcome.links.paperManage': '试卷管理',
   'pages.welcome.links.paperManage.desc': '管理试卷和题目',
   'pages.welcome.alertMessage': '欢迎使用 Examora 考试管理系统。',
+  // Login page
+  'pages.login.title': '登录后台',
+  'pages.login.subtitle': '使用管理员账号进入 Examora 控制台。',
+  'pages.login.username.label': '用户名',
+  'pages.login.username.placeholder': 'admin@example.com',
+  'pages.login.username.required': '请输入用户名',
+  'pages.login.password.label': '密码',
+  'pages.login.password.placeholder': '请输入密码',
+  'pages.login.password.required': '请输入密码',
+  'pages.login.submit': '登录',
+  'pages.login.submitting': '登录中',
+  'pages.login.success': '登录成功',
+  'pages.login.error.missingToken': '登录响应缺少访问令牌，请联系管理员。',
+  'pages.login.error.failed': '登录失败，请检查用户名密码',
+  'pages.login.sso': '使用企业 SSO 登录',
+  'pages.login.footnote': '访问权限由系统角色与账号状态控制。',
+  'pages.login.ssoSuccess': 'SSO 登录成功',
+  'pages.login.sectionLabel': 'Secure access',
+  'pages.login.or': '或',
+  // Login brand section
+  'pages.login.brand.eyebrow': 'Admin Console',
+  'pages.login.brand.headline': '考试运营与评测管理后台',
+  'pages.login.brand.description':
+    '集中管理题库、试卷、考试发布、考生记录与评测结果。',
+  'pages.login.brand.signal1.title': 'Exam Lifecycle',
+  'pages.login.brand.signal1.desc':
+    'Publish, schedule, and track exam operations.',
+  'pages.login.brand.signal2.title': 'Judge Pipeline',
+  'pages.login.brand.signal2.desc':
+    'Review submissions and monitor execution status.',
+  'pages.login.brand.signal3.title': 'Access Control',
+  'pages.login.brand.signal3.desc':
+    'Manage admin roles and protected workflows.',
+  // Users page
+  'pages.users.title': '用户列表',
+  'pages.users.fetchError': '获取用户列表失败',
+  'pages.users.columns.id': 'ID',
+  'pages.users.columns.username': '用户名',
+  'pages.users.columns.displayName': '显示名称',
+  'pages.users.columns.email': '邮箱',
+  'pages.users.columns.role': '角色',
+  'pages.users.columns.status': '状态',
+  'pages.users.columns.createdAt': '创建时间',
 };

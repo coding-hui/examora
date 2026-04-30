@@ -35,7 +35,7 @@ const ExamList: React.FC = () => {
         setExams(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('获取考试列表失败');
     } finally {
       setLoading(false);

@@ -1,12 +1,12 @@
 /**
- * @name 简单版路由配置
- * @description 此配置用于 npm run simple 命令执行后使用
+ * @name 路由配置
+ * @description 按功能分组，页面组件组织在 pages/ 下
  */
 export default [
   {
     path: '/login',
     layout: false,
-    component: './Login',
+    component: './Login/Login',
   },
   {
     path: '/',
@@ -49,21 +49,21 @@ export default [
         path: '/content/library/questions',
         name: 'questions',
         icon: 'DatabaseOutlined',
-        component: './ComingSoon',
+        component: './Content/Library/Questions',
         access: 'canAdmin',
       },
       {
         path: '/content/library/programming',
         name: 'programming',
         icon: 'CodeOutlined',
-        component: './ComingSoon',
+        component: './Content/Library/Programming',
         access: 'canAdmin',
       },
       {
         path: '/content/papers',
         name: 'papers',
         icon: 'FileTextOutlined',
-        component: './ComingSoon',
+        component: './Content/Papers',
         access: 'canAdmin',
       },
     ],
@@ -82,14 +82,14 @@ export default [
         path: '/examination/exams',
         name: 'exams',
         icon: 'ScheduleOutlined',
-        component: './ExamList',
+        component: './Examination/ExamList',
         access: 'canAdmin',
       },
       {
         path: '/examination/candidates',
         name: 'candidates',
         icon: 'TeamOutlined',
-        component: './ComingSoon',
+        component: './Examination/Candidates',
         access: 'canAdmin',
       },
     ],
@@ -106,7 +106,7 @@ export default [
     path: '/examination/exams/:id/publish',
     name: 'examPublish',
     hideInMenu: true,
-    component: './ExamPublish',
+    component: './Examination/ExamPublish',
     access: 'canAdmin',
   },
   // Monitoring section
@@ -127,7 +127,7 @@ export default [
         path: '/monitoring/proctoring/events',
         name: 'events',
         icon: 'SafetyOutlined',
-        component: './ComingSoon',
+        component: './Monitoring/Proctoring/Events',
         access: 'canAdmin',
       },
     ],
@@ -150,14 +150,14 @@ export default [
         path: '/assessment/results/submissions',
         name: 'submissions',
         icon: 'TrophyOutlined',
-        component: './ComingSoon',
+        component: './Assessment/Results/Submissions',
         access: 'canAdmin',
       },
       {
         path: '/assessment/results/judge-tasks',
         name: 'judgeTasks',
         icon: 'ThunderboltOutlined',
-        component: './ComingSoon',
+        component: './Assessment/Results/JudgeTasks',
         access: 'canAdmin',
       },
     ],
@@ -180,7 +180,7 @@ export default [
         path: '/system/settings/users',
         name: 'users',
         icon: 'SettingOutlined',
-        component: './Admin',
+        component: './System/Settings/Users',
         access: 'canAdmin',
       },
     ],
@@ -219,7 +219,7 @@ export default [
     redirect: '/examination/exams/:id/publish',
   },
   {
-    component: '404',
+    component: './404',
     layout: false,
     path: './*',
   },

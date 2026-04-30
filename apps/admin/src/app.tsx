@@ -1,7 +1,7 @@
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
-import { Button, Result, Avatar } from 'antd';
+import { Avatar, Button, ConfigProvider, Result } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import React from 'react';
@@ -18,8 +18,9 @@ import {
   Question,
   SelectLang,
 } from '@/components';
-import { errorConfig } from './request';
+import useShadcnTheme from '@/theme/shadcnTheme';
 import defaultSettings from '../config/defaultSettings';
+import { errorConfig } from './request';
 
 // Initialize dayjs plugins globally
 dayjs.extend(relativeTime);
@@ -30,14 +31,14 @@ const loginPath = '/login';
 // 生成随机颜色的函数
 const getRandomColor = (name: string): string => {
   const colors = [
-    '#7C3AED', // purple
-    '#2563EB', // blue
-    '#DC2626', // red
-    '#059669', // green
-    '#D97706', // amber
-    '#7C3AED', // violet
-    '#DB2777', // pink
-    '#0891B2', // cyan
+    '#18181b',
+    '#262626',
+    '#3f3f46',
+    '#525252',
+    '#16a34a',
+    '#ea580c',
+    '#dc2626',
+    '#404040',
   ];
   // 基于名字生成一致性随机颜色
   let hash = 0;
@@ -52,6 +53,18 @@ const getInitials = (name: string): string => {
   if (!name) return '?';
   return name.charAt(0).toUpperCase();
 };
+
+const ShadcnThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const configProps = useShadcnTheme();
+
+  return <ConfigProvider {...configProps}>{children}</ConfigProvider>;
+};
+
+export function rootContainer(container: React.ReactNode) {
+  return <ShadcnThemeProvider>{container}</ShadcnThemeProvider>;
+}
 
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
@@ -178,10 +191,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
         if (userName && !initialState?.currentUser?.display_name) {
           return (
             <AvatarDropdown>
-              <Avatar
-                style={{ backgroundColor: bgColor }}
-                size={32}
-              >
+              <Avatar style={{ backgroundColor: bgColor }} size={32}>
                 {initials}
               </Avatar>
             </AvatarDropdown>
@@ -202,26 +212,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
         history.push(loginPath);
       }
     },
-    bgLayoutImgList: [
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNky4sAAAAAAAAAAAAAFl94AQBr',
-        left: 85,
-        bottom: 100,
-        height: '303px',
-      },
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/C2TWRpJpiC0AAAAAAAAAAAAAFl94AQBr',
-        bottom: -68,
-        right: -45,
-        height: '303px',
-      },
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/F6vSTbj8KpYAAAAAAAAAAAAAFl94AQBr',
-        bottom: 0,
-        left: 0,
-        width: '331px',
-      },
-    ],
+    bgLayoutImgList: [],
     menuHeaderRender: undefined,
     // 无权限页面
     unAccessible: <ForbiddenPage />,

@@ -2,17 +2,17 @@ import type { ProLayoutProps } from '@ant-design/pro-components';
 
 /**
  * @name Examora Pro Layout Settings
- * Vibrant & Professional exam management system design
+ * Focused workspace design for the exam management system
  */
 const Settings: ProLayoutProps & {
   pwa?: boolean;
   logo?: string;
 } = {
   navTheme: 'light',
-  colorPrimary: '#1890ff',
+  colorPrimary: '#262626',
   layout: 'mix',
   contentWidth: 'Fluid',
-  fixedHeader: true,
+  fixedHeader: false,
   fixSiderbar: true,
   splitMenus: false,
   siderMenuType: 'group',
@@ -21,6 +21,9 @@ const Settings: ProLayoutProps & {
   pwa: false,
   logo: '/logo.svg',
   iconfontUrl: '',
+  menu: {
+    collapsedWidth: 64,
+  },
 };
 
 export default Settings;
