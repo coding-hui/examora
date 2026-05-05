@@ -962,21 +962,6 @@ const QuestionsPageContent: React.FC = () => {
           </Button>
         </div>
         <Table
-          <Form.Item name="keyword" className="question-filter-keyword">
-            <Input
-              ref={searchInputRef}
-              allowClear
-              prefix={
-                <SearchOutlined style={{ color: '#1f2937', fontSize: 17 }} />
-              }
-              suffix={<kbd className="question-shortcut-kbd">⌘ K</kbd>}
-              placeholder="搜索标题、题干或标签..."
-              className="question-search-input"
-              onPressEnter={() => filterForm.submit()}
-            />
-          </Form.Item>
-        </Form>
-        <Table
           rowKey="id"
           columns={columns}
           dataSource={questions}
@@ -1108,8 +1093,8 @@ placeholder="选择难度" />
 </Form>
       </Drawer>
     </PageContainer>
-  )
-}
+  );
+};
 
 const QuestionsPage: React.FC = () => (
   <AntdApp>
