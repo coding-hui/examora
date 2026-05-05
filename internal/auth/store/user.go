@@ -124,13 +124,41 @@ func (r *UserStore) VerifyPassword(ctx context.Context, username, password strin
 	return user, err == nil, nil
 }
 
+func (r *UserStore) Update(ctx context.Context, id uint64, username, displayName string, status string) error {
+	return transaction.DBFromContext(ctx, r.db).Model(&database.UserModel{}).Where("id = ?", id).Updates(map[string]any{
+		"username":     username,
+		"display_name": displayName,
+		"status":       status,
+	}).Error
+}
+
+func (r *UserStore) Delete(ctx context.Context, id uint64) error {
+	return transaction.DBFromContext(ctx, r.db).Delete(&database.UserModel{}, id).Error
+}
+
+func (r *UserStore) List(ctx context.Context, page, pageSize int) ([]auth.User, int64, error) {
+	var total int64
+	if err := transaction.DBFromContext(ctx, r.db).Model(&database.UserModel{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var rows []database.UserModel
+	offset := (page - 1) * pageSize
+	if err := transaction.DBFromContext(ctx, r.db).Order("id desc").Offset(offset).Limit(pageSize).Find(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+	users := make([]auth.User, 0, len(rows))
+	for _, row := range rows {
+		users = append(users, *toUser(&row))
+	}
+	return users, total, nil
+}
+
 func toUser(m *database.UserModel) *auth.User {
 	return &auth.User{
-		ID:              m.ID,
-		Username:        m.Username,
-		Status:          m.Status,
-		DisplayName:     m.DisplayName,
-		AuthProvider:    m.AuthProvider,
-		ExternalSubject: m.ExternalSubject,
+		ID:          m.ID,
+		Username:    m.Username,
+		Status:      m.Status,
+		DisplayName: m.DisplayName,
+		CreatedAt:   m.CreatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }

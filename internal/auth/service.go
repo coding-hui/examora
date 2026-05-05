@@ -228,6 +228,41 @@ func (u *Service) VerifyLogtoIDToken(ctx context.Context, idToken string) (*Clai
 	return u.logtoVerifier.VerifyIDToken(ctx, idToken)
 }
 
+func (u *Service) Casbin() *casbin.Enforcer {
+	return u.casbin
+}
+
+func (u *Service) ListUsers(ctx context.Context, page, pageSize int) ([]User, int64, error) {
+	return u.userRepo.List(ctx, page, pageSize)
+}
+
+func (u *Service) GetUser(ctx context.Context, id uint64) (*User, error) {
+	return u.userRepo.FindByID(ctx, id)
+}
+
+func (u *Service) CreateUser(ctx context.Context, user *User, password string) error {
+	hash, err := u.pwdService.Hash(password)
+	if err != nil {
+		return response.Internal("failed to hash password")
+	}
+	return u.userRepo.Create(ctx, user, hash)
+}
+
+func (u *Service) UpdateUser(ctx context.Context, user *User) error {
+	return u.userRepo.Update(ctx, user.ID, user.Username, derefStr(user.DisplayName), user.Status)
+}
+
+func derefStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func (u *Service) DeleteUser(ctx context.Context, id uint64) error {
+	return u.userRepo.Delete(ctx, id)
+}
+
 func (u *Service) LoginWithLogto(ctx context.Context, subject string, email *string) (*LoginResponse, error) {
 	var user *User
 	var err error
