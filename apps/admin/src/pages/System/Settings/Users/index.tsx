@@ -3,6 +3,7 @@ import {
   EditOutlined,
   MoreOutlined,
   PlusOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { request, useIntl } from '@umijs/max';
@@ -25,7 +26,8 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import type { InputRef } from 'antd';
 
 interface User {
   id: number;
@@ -43,6 +45,10 @@ interface UserFormValues {
   email?: string;
   role: 'ADMIN' | 'TEACHER' | 'STUDENT';
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+}
+
+interface FilterValues {
+  keyword?: string;
 }
 
 const ROLES = [
@@ -73,6 +79,7 @@ const UserListContent: React.FC = () => {
   const intl = useIntl();
   const { message: antdMessage } = AntdApp.useApp();
   const [userForm] = Form.useForm<UserFormValues>();
+  const searchInputRef = useRef<InputRef>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -81,6 +88,8 @@ const UserListContent: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
+  const [filters, setFilters] = useState<FilterValues>({});
+  const [keyword, setKeyword] = useState('');
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -89,7 +98,7 @@ const UserListContent: React.FC = () => {
         code: number;
         data: { items: User[]; total: number };
       }>('/api/admin/users', {
-        params: { page, page_size: pageSize },
+        params: { page, page_size: pageSize, ...filters },
       });
       if (response.data) {
         setUsers(response.data.items || []);
@@ -104,7 +113,24 @@ const UserListContent: React.FC = () => {
 
   useEffect(() => {
     void fetchUsers();
-  }, [page, pageSize]);
+  }, [page, pageSize, filters]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const submitFilters = (value: string) => {
+    setKeyword(value.trim());
+    setFilters(value.trim() ? { keyword: value.trim() } : {});
+    setPage(1);
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -240,18 +266,12 @@ const UserListContent: React.FC = () => {
         defaultMessage: '操作',
       }),
       key: 'actions',
-      width: 96,
+      width: 70,
       fixed: 'right' as const,
       render: (_: unknown, user: User) => (
         <Dropdown
           menu={{
             items: [
-              {
-                key: 'edit',
-                label: '编辑',
-                icon: <EditOutlined />,
-                onClick: () => openEdit(user),
-              },
               {
                 key: 'delete',
                 label: '删除',
@@ -276,19 +296,30 @@ const UserListContent: React.FC = () => {
         defaultMessage: '用户管理',
       })}
       content={
-        <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 14 }}>
+        <p style={{ margin: 0, color: '#6b7280', fontSize: 14 }}>
           创建和管理平台用户账号，支持设置管理员、教师、学生等角色，以及启用、停用、封禁等账号状态。
         </p>
       }
     >
-      <Card>
-        <div className="mb-4 flex justify-between">
-          <div />
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-            {intl.formatMessage({
-              id: 'common.create',
-              defaultMessage: '创建用户',
-            })}
+      <Card style={{ marginTop: 8 }}>
+        <div className="flex justify-between" style={{ marginBottom: 16 }}>
+          <Space size={12}>
+            <Input
+              ref={searchInputRef}
+              allowClear
+              prefix={<SearchOutlined />}
+              placeholder="搜索用户名、邮箱..."
+              style={{ width: 320, height: 40, borderRadius: 8 }}
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onPressEnter={() => submitFilters(keyword)}
+            />
+            <Button type="default" onClick={() => submitFilters(keyword)}>
+              搜索
+            </Button>
+          </Space>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} style={{ borderRadius: 8 }}>
+            添加用户
           </Button>
         </div>
         <Table

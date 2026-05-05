@@ -35,6 +35,7 @@ import {
 import type { ColumnsType, TableProps } from "antd/es/table";
 import dayjs from "dayjs";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import type { InputRef } from "antd";
 import "./index.less";
 
 type QuestionType =
@@ -251,7 +252,7 @@ const QuestionsPageContent: React.FC = () => {
   const { message } = AntdApp.useApp();
   const [filterForm] = Form.useForm<FilterValues>();
   const [questionForm] = Form.useForm<QuestionFormValues>();
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<InputRef>(null);
   const [questions, setQuestions] = useState<AdminQuestion[]>([]);
   const [testCases, setTestCases] = useState<AdminTestCase[]>([]);
   const [filters, setFilters] = useState<FilterValues>({});
@@ -643,49 +644,25 @@ const QuestionsPageContent: React.FC = () => {
     {
       title: "操作",
       key: "actions",
-      width: 96,
+      width: 70,
       fixed: "right" as const,
       render: (_: unknown, question: AdminQuestion) => (
-        <Space size={8}>
-          <button
-            type="button"
-            className="question-action-btn"
-            aria-label="编辑题目"
-            onClick={(event) => {
-              event.stopPropagation();
-              openEdit(question);
-            }}
-          >
-            <EditOutlined style={{ fontSize: 15 }} />
-          </button>
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: "delete",
-                  label: "删除",
-                  icon: <DeleteOutlined />,
-                  danger: true,
-                },
-              ],
-              onClick: ({ key }) => {
-                if (key === "delete") {
-                  deleteQuestion(question.id);
-                }
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: "delete",
+                label: "删除",
+                icon: <DeleteOutlined />,
+                danger: true,
+                onClick: () => deleteQuestion(question.id),
               },
-            }}
-            trigger={["click"]}
-          >
-            <button
-              type="button"
-              className="question-action-btn"
-              aria-label="更多操作"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <MoreOutlined style={{ fontSize: 15 }} />
-            </button>
-          </Dropdown>
-        </Space>
+            ],
+          }}
+          trigger={["click"]}
+        >
+          <Button type="text" size="small" icon={<MoreOutlined />} onClick={(e) => e.stopPropagation()} />
+        </Dropdown>
       ),
     },
   ];
@@ -931,34 +908,28 @@ const QuestionsPageContent: React.FC = () => {
     <PageContainer
       title="题目"
       content={
-        <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 14 }}>
+        <p style={{ margin: 0, color: '#6b7280', fontSize: 14 }}>
           创建和管理考试题目、答案与编程用例，支持单选题、多选题、判断题、填空题、简答题和编程题。
         </p>
       }
     >
-      <Card>
-        <div className="mb-4 flex justify-between">
-          <Form
-            form={filterForm}
-            layout="inline"
-            onFinish={submitFilters}
-            className="question-search-form"
-          >
-            <Form.Item name="keyword" className="question-filter-keyword">
-              <Input
-                ref={searchInputRef}
-                allowClear
-                prefix={
-                  <SearchOutlined style={{ color: '#1f2937', fontSize: 17 }} />
-                }
-                suffix={<kbd className="question-shortcut-kbd">⌘ K</kbd>}
-                placeholder="搜索标题、题干或标签..."
-                className="question-search-input"
-                onPressEnter={() => filterForm.submit()}
-              />
-            </Form.Item>
-          </Form>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+      <Card style={{ marginTop: 8 }}>
+        <div className="flex justify-between" style={{ marginBottom: 16 }}>
+          <Space size={12}>
+            <Input
+              ref={searchInputRef}
+              allowClear
+              prefix={<SearchOutlined style={{ color: '#1f2937', fontSize: 17 }} />}
+              placeholder="搜索标题、题干或标签..."
+              style={{ width: 320, height: 40, borderRadius: 8 }}
+              onPressEnter={() => filterForm.submit()}
+              className="question-search-input"
+            />
+            <Button type="default" onClick={() => filterForm.submit()}>
+              搜索
+            </Button>
+          </Space>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} style={{ borderRadius: 8 }}>
             新建题目
           </Button>
         </div>
@@ -983,8 +954,10 @@ const QuestionsPageContent: React.FC = () => {
                 history.push(`/content/library/questions/${question.id}`),
             })}
           />
-          <div className="question-table-pagination">
-            <span className="question-total">共 {total} 条</span>
+          <div
+            className="question-table-pagination"
+            style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}
+          >
             <Pagination
               current={page}
               pageSize={pageSize}
