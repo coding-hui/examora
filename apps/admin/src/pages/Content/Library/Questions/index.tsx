@@ -8,9 +8,9 @@ import {
   MoreOutlined,
   PlusOutlined,
   SearchOutlined,
-} from '@ant-design/icons';
-import { PageContainer } from '@ant-design/pro-components';
-import { history, request } from '@umijs/max';
+} from "@ant-design/icons";
+import { PageContainer } from "@ant-design/pro-components";
+import { history, request } from "@umijs/max";
 import {
   App as AntdApp,
   Badge,
@@ -23,7 +23,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Pagination,
   Row,
   Select,
@@ -32,21 +31,21 @@ import {
   Table,
   Tag,
   Tooltip,
-} from 'antd';
-import type { ColumnsType, TableProps } from 'antd/es/table';
-import dayjs from 'dayjs';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import './index.less';
+} from "antd";
+import type { ColumnsType, TableProps } from "antd/es/table";
+import dayjs from "dayjs";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import "./index.less";
 
 type QuestionType =
-  | 'SINGLE_CHOICE'
-  | 'MULTIPLE_CHOICE'
-  | 'TRUE_FALSE'
-  | 'FILL_BLANK'
-  | 'SHORT_ANSWER'
-  | 'PROGRAMMING';
+  | "SINGLE_CHOICE"
+  | "MULTIPLE_CHOICE"
+  | "TRUE_FALSE"
+  | "FILL_BLANK"
+  | "SHORT_ANSWER"
+  | "PROGRAMMING";
 
-type QuestionStatus = 'DRAFT' | 'PUBLISHED';
+type QuestionStatus = "DRAFT" | "PUBLISHED";
 
 interface QuestionOption {
   key: string;
@@ -110,8 +109,8 @@ interface FilterValues {
   status?: QuestionStatus;
 }
 
-type QuestionSortField = 'updated_at';
-type QuestionSortOrder = 'asc' | 'desc';
+type QuestionSortField = "updated_at";
+type QuestionSortOrder = "asc" | "desc";
 
 interface QuestionSort {
   field: QuestionSortField;
@@ -127,7 +126,7 @@ interface QuestionFormValues {
   options_text?: string;
   answer_single?: string;
   answer_multiple?: string[];
-  answer_true_false?: 'true' | 'false';
+  answer_true_false?: "true" | "false";
   answer_blanks?: string;
   answer_reference?: string;
   language?: string;
@@ -137,42 +136,42 @@ interface QuestionFormValues {
 }
 
 const QUESTION_TYPES: Array<{ label: string; value: QuestionType }> = [
-  { label: '单选题', value: 'SINGLE_CHOICE' },
-  { label: '多选题', value: 'MULTIPLE_CHOICE' },
-  { label: '判断题', value: 'TRUE_FALSE' },
-  { label: '填空题', value: 'FILL_BLANK' },
-  { label: '简答题', value: 'SHORT_ANSWER' },
-  { label: '编程题', value: 'PROGRAMMING' },
+  { label: "单选题", value: "SINGLE_CHOICE" },
+  { label: "多选题", value: "MULTIPLE_CHOICE" },
+  { label: "判断题", value: "TRUE_FALSE" },
+  { label: "填空题", value: "FILL_BLANK" },
+  { label: "简答题", value: "SHORT_ANSWER" },
+  { label: "编程题", value: "PROGRAMMING" },
 ];
 
 const DIFFICULTIES = [
-  { label: '简单', value: 'EASY' },
-  { label: '中等', value: 'MEDIUM' },
-  { label: '困难', value: 'HARD' },
+  { label: "简单", value: "EASY" },
+  { label: "中等", value: "MEDIUM" },
+  { label: "困难", value: "HARD" },
 ];
 
 const STATUSES: Array<{ label: string; value: QuestionStatus }> = [
-  { label: '草稿', value: 'DRAFT' },
-  { label: '已发布', value: 'PUBLISHED' },
+  { label: "草稿", value: "DRAFT" },
+  { label: "已发布", value: "PUBLISHED" },
 ];
 
 const LANGUAGES = [
-  { label: 'Go', value: 'GO' },
-  { label: 'Python', value: 'PYTHON' },
-  { label: 'JavaScript', value: 'JAVASCRIPT' },
-  { label: 'Java', value: 'JAVA' },
-  { label: 'C++', value: 'CPP' },
+  { label: "Go", value: "GO" },
+  { label: "Python", value: "PYTHON" },
+  { label: "JavaScript", value: "JAVASCRIPT" },
+  { label: "Java", value: "JAVA" },
+  { label: "C++", value: "CPP" },
 ];
 
-const STATUS_BADGE: Record<QuestionStatus, 'default' | 'success'> = {
-  DRAFT: 'default',
-  PUBLISHED: 'success',
+const STATUS_BADGE: Record<QuestionStatus, "default" | "success"> = {
+  DRAFT: "default",
+  PUBLISHED: "success",
 };
 
 const DIFFICULTY_CLASS: Record<string, string> = {
-  EASY: 'question-diff-tag-easy',
-  MEDIUM: 'question-diff-tag-medium',
-  HARD: 'question-diff-tag-hard',
+  EASY: "question-diff-tag-easy",
+  MEDIUM: "question-diff-tag-medium",
+  HARD: "question-diff-tag-hard",
 };
 
 const typeLabel = (type: QuestionType) =>
@@ -184,27 +183,27 @@ const statusLabel = (status: QuestionStatus) =>
 const difficultyLabel = (difficulty?: string) =>
   DIFFICULTIES.find((item) => item.value === difficulty)?.label ||
   difficulty ||
-  '未设置';
+  "未设置";
 
 const filterOptions = <T extends string>(
-  items: Array<{ label: string; value: T }>,
+  items: Array<{ label: string; value: T }>
 ) => items.map((item) => ({ text: item.label, value: item.value }));
 
 const selectedTableFilter = <T extends string>(
-  value?: Array<React.Key | boolean> | null,
+  value?: Array<React.Key | boolean> | null
 ): T | undefined => {
   const selected = value?.[0];
-  return selected === undefined || typeof selected === 'boolean'
+  return selected === undefined || typeof selected === "boolean"
     ? undefined
     : (String(selected) as T);
 };
 
 const antdSortOrder = (order: QuestionSortOrder) =>
-  order === 'asc' ? 'ascend' : 'descend';
+  order === "asc" ? "ascend" : "descend";
 
 const parseOptions = (value?: string): QuestionOption[] =>
-  (value || '')
-    .split('\n')
+  (value || "")
+    .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
@@ -216,11 +215,11 @@ const parseOptions = (value?: string): QuestionOption[] =>
     });
 
 const optionsToText = (options?: QuestionOption[]) =>
-  (options || []).map((item) => `${item.key}. ${item.text}`).join('\n');
+  (options || []).map((item) => `${item.key}. ${item.text}`).join("\n");
 
 const splitLines = (value?: string) =>
-  (value || '')
-    .split('\n')
+  (value || "")
+    .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
 
@@ -236,13 +235,13 @@ const newTestCaseKey = () =>
   `case-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 const questionTypeIcon = (type: QuestionType) => {
-  if (type === 'PROGRAMMING') {
+  if (type === "PROGRAMMING") {
     return <CodeOutlined />;
   }
-  if (type === 'MULTIPLE_CHOICE' || type === 'TRUE_FALSE') {
+  if (type === "MULTIPLE_CHOICE" || type === "TRUE_FALSE") {
     return <CheckSquareOutlined />;
   }
-  if (type === 'FILL_BLANK' || type === 'SHORT_ANSWER') {
+  if (type === "FILL_BLANK" || type === "SHORT_ANSWER") {
     return <FormOutlined />;
   }
   return <FileTextOutlined />;
@@ -257,8 +256,8 @@ const QuestionsPageContent: React.FC = () => {
   const [testCases, setTestCases] = useState<AdminTestCase[]>([]);
   const [filters, setFilters] = useState<FilterValues>({});
   const [sortState, setSortState] = useState<QuestionSort>({
-    field: 'updated_at',
-    order: 'desc',
+    field: "updated_at",
+    order: "desc",
   });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -268,8 +267,8 @@ const QuestionsPageContent: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<AdminQuestion | null>(null);
 
-  const questionType = Form.useWatch('type', questionForm);
-  const optionsText = Form.useWatch('options_text', questionForm);
+  const questionType = Form.useWatch("type", questionForm);
+  const optionsText = Form.useWatch("options_text", questionForm);
 
   const answerOptions = useMemo(
     () =>
@@ -277,13 +276,13 @@ const QuestionsPageContent: React.FC = () => {
         label: `${item.key}. ${item.text}`,
         value: item.key,
       })),
-    [optionsText],
+    [optionsText]
   );
 
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      const response = await request<PageEnvelope>('/api/admin/questions', {
+      const response = await request<PageEnvelope>("/api/admin/questions", {
         params: {
           ...filters,
           sort_field: sortState.field,
@@ -295,7 +294,7 @@ const QuestionsPageContent: React.FC = () => {
       setQuestions(response.data?.items || []);
       setTotal(response.data?.total || 0);
     } catch (_error) {
-      message.error('获取题目列表失败');
+      message.error("获取题目列表失败");
     } finally {
       setLoading(false);
     }
@@ -305,20 +304,9 @@ const QuestionsPageContent: React.FC = () => {
     fetchQuestions();
   }, [filters, sortState, page, pageSize]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   const fetchQuestionDetail = async (id: number) => {
     const response = await request<QuestionEnvelope>(
-      `/api/admin/questions/${id}`,
+      `/api/admin/questions/${id}`
     );
     return response.data;
   };
@@ -327,23 +315,23 @@ const QuestionsPageContent: React.FC = () => {
     const answer = question?.answer || {};
     const content = question?.content || {};
     questionForm.setFieldsValue({
-      type: question?.type || 'SINGLE_CHOICE',
-      status: question?.status || 'DRAFT',
-      title: question?.title || '',
+      type: question?.type || "SINGLE_CHOICE",
+      status: question?.status || "DRAFT",
+      title: question?.title || "",
       difficulty: question?.difficulty,
-      content_text: content.text || '',
+      content_text: content.text || "",
       options_text: optionsToText(content.options),
       answer_single: answer.choice as string | undefined,
       answer_multiple: (answer.choices as string[] | undefined) || [],
       answer_true_false:
-        typeof answer.correct === 'boolean'
+        typeof answer.correct === "boolean"
           ? answer.correct
-            ? 'true'
-            : 'false'
+            ? "true"
+            : "false"
           : undefined,
       answer_blanks: Array.isArray(answer.blanks)
-        ? (answer.blanks as string[]).join('\n')
-        : '',
+        ? (answer.blanks as string[]).join("\n")
+        : "",
       answer_reference: answer.reference as string | undefined,
       language: question?.language,
       starter_code: question?.starter_code,
@@ -358,7 +346,7 @@ const QuestionsPageContent: React.FC = () => {
         memory_limit_mb:
           item.memory_limit_mb || question?.memory_limit_mb || 256,
         sort_order: item.sort_order ?? index,
-      })),
+      }))
     );
   };
 
@@ -379,30 +367,30 @@ const QuestionsPageContent: React.FC = () => {
       fillQuestionForm(detail);
       setDrawerOpen(true);
     } catch (_error) {
-      message.error('获取题目详情失败');
+      message.error("获取题目详情失败");
     }
   };
 
   const buildPayload = (values: QuestionFormValues) => {
     const options = parseOptions(values.options_text);
     const content: Record<string, unknown> = {
-      text: values.content_text || '',
+      text: values.content_text || "",
     };
-    if (values.type === 'SINGLE_CHOICE' || values.type === 'MULTIPLE_CHOICE') {
+    if (values.type === "SINGLE_CHOICE" || values.type === "MULTIPLE_CHOICE") {
       content.options = options;
     }
 
     let answer: Record<string, unknown> = {};
-    if (values.type === 'SINGLE_CHOICE') {
+    if (values.type === "SINGLE_CHOICE") {
       answer = { choice: values.answer_single };
-    } else if (values.type === 'MULTIPLE_CHOICE') {
+    } else if (values.type === "MULTIPLE_CHOICE") {
       answer = { choices: values.answer_multiple || [] };
-    } else if (values.type === 'TRUE_FALSE') {
-      answer = { correct: values.answer_true_false === 'true' };
-    } else if (values.type === 'FILL_BLANK') {
+    } else if (values.type === "TRUE_FALSE") {
+      answer = { correct: values.answer_true_false === "true" };
+    } else if (values.type === "FILL_BLANK") {
       answer = { blanks: splitLines(values.answer_blanks) };
-    } else if (values.type === 'SHORT_ANSWER') {
-      answer = { reference: values.answer_reference || '' };
+    } else if (values.type === "SHORT_ANSWER") {
+      answer = { reference: values.answer_reference || "" };
     }
 
     return {
@@ -411,14 +399,14 @@ const QuestionsPageContent: React.FC = () => {
       content,
       answer,
       difficulty: values.difficulty,
-      language: values.type === 'PROGRAMMING' ? values.language : undefined,
+      language: values.type === "PROGRAMMING" ? values.language : undefined,
       starter_code:
-        values.type === 'PROGRAMMING' ? values.starter_code || '' : undefined,
+        values.type === "PROGRAMMING" ? values.starter_code || "" : undefined,
       time_limit_ms: values.time_limit_ms || 2000,
       memory_limit_mb: values.memory_limit_mb || 256,
       status: values.status,
       test_cases:
-        values.type === 'PROGRAMMING'
+        values.type === "PROGRAMMING"
           ? testCases.map((item, index) => ({
               input: item.input,
               expected_output: item.expected_output,
@@ -436,73 +424,64 @@ const QuestionsPageContent: React.FC = () => {
   const saveQuestion = async () => {
     try {
       const values = await questionForm.validateFields();
-      if (values.type === 'PROGRAMMING' && testCases.length === 0) {
-        message.error('请至少添加一个测试用例');
+      if (values.type === "PROGRAMMING" && testCases.length === 0) {
+        message.error("请至少添加一个测试用例");
         return;
       }
       if (
-        values.type === 'PROGRAMMING' &&
+        values.type === "PROGRAMMING" &&
         testCases.some((item) => !item.expected_output.trim())
       ) {
-        message.error('请填写每个测试用例的预期输出');
+        message.error("请填写每个测试用例的预期输出");
         return;
       }
       setSaving(true);
       const payload = buildPayload(values);
       await request(
-        editing ? `/api/admin/questions/${editing.id}` : '/api/admin/questions',
+        editing ? `/api/admin/questions/${editing.id}` : "/api/admin/questions",
         {
-          method: editing ? 'PUT' : 'POST',
+          method: editing ? "PUT" : "POST",
           data: payload,
-        },
+        }
       );
-      message.success(editing ? '题目已保存' : '题目已创建');
+      message.success(editing ? "题目已保存" : "题目已创建");
       setDrawerOpen(false);
-      await fetchQuestions();
+      fetchQuestions();
     } catch (error) {
       if (errorCode(error) !== undefined) {
-        message.error(editing ? '保存题目失败' : '创建题目失败');
+        message.error(editing ? "保存题目失败" : "创建题目失败");
       }
     } finally {
       setSaving(false);
     }
   };
 
-  const confirmDeleteQuestion = (question: AdminQuestion) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除题目「${question.title}」吗？此操作不可撤销。`,
-      okText: '删除',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          await request(`/api/admin/questions/${question.id}`, {
-            method: 'DELETE',
-            skipErrorHandler: true,
-          });
-          message.success('题目已删除');
-          await fetchQuestions();
-        } catch (error) {
-          if (errorCode(error) === 40900 || errorCode(error) === 409) {
-            message.error('该题已被试卷引用，不能删除');
-            return;
-          }
-          message.error('删除题目失败');
-        }
-      },
-    });
+  const deleteQuestion = async (id: number) => {
+    try {
+      await request(`/api/admin/questions/${id}`, {
+        method: "DELETE",
+        skipErrorHandler: true,
+      });
+      message.success("题目已删除");
+      fetchQuestions();
+    } catch (error) {
+      if (errorCode(error) === 40900 || errorCode(error) === 409) {
+        message.error("该题已被试卷引用，不能删除");
+        return;
+      }
+      message.error("删除题目失败");
+    }
   };
 
   const addTestCase = () => {
     setTestCases((items) => [
       ...items,
       {
-        input: '',
+        input: "",
         client_key: newTestCaseKey(),
-        expected_output: '',
-        time_limit_ms: questionForm.getFieldValue('time_limit_ms') || 2000,
-        memory_limit_mb: questionForm.getFieldValue('memory_limit_mb') || 256,
+        expected_output: "",
+        time_limit_ms: questionForm.getFieldValue("time_limit_ms") || 2000,
+        memory_limit_mb: questionForm.getFieldValue("memory_limit_mb") || 256,
         is_sample: items.length === 0,
         is_hidden: items.length !== 0,
         sort_order: items.length,
@@ -513,12 +492,12 @@ const QuestionsPageContent: React.FC = () => {
   const updateTestCase = <K extends keyof AdminTestCase>(
     index: number,
     key: K,
-    value: AdminTestCase[K],
+    value: AdminTestCase[K]
   ) => {
     setTestCases((items) =>
       items.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [key]: value } : item,
-      ),
+        itemIndex === index ? { ...item, [key]: value } : item
+      )
     );
   };
 
@@ -526,7 +505,7 @@ const QuestionsPageContent: React.FC = () => {
     setTestCases((items) =>
       items
         .filter((_, itemIndex) => itemIndex !== index)
-        .map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
+        .map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
     );
   };
 
@@ -538,10 +517,10 @@ const QuestionsPageContent: React.FC = () => {
     setPage(1);
   };
 
-  const handleTableChange: TableProps<AdminQuestion>['onChange'] = (
+  const handleTableChange: TableProps<AdminQuestion>["onChange"] = (
     _pagination,
     tableFilters,
-    tableSorter,
+    tableSorter
   ) => {
     setFilters((current) => ({
       ...current,
@@ -554,12 +533,12 @@ const QuestionsPageContent: React.FC = () => {
     if (sorter?.field) {
       setSortState({
         field: sorter.field as QuestionSortField,
-        order: sorter.order === 'ascend' ? 'asc' : 'desc',
+        order: sorter.order === "ascend" ? "asc" : "desc",
       });
     } else {
       setSortState((prev) => ({
-        field: 'updated_at',
-        order: prev.order === 'asc' ? 'desc' : 'asc',
+        field: "updated_at",
+        order: prev.order === "asc" ? "desc" : "asc",
       }));
     }
     setPage(1);
@@ -567,9 +546,9 @@ const QuestionsPageContent: React.FC = () => {
 
   const columns: ColumnsType<AdminQuestion> = [
     {
-      title: '题目',
-      dataIndex: 'title',
-      key: 'title',
+      title: "题目",
+      dataIndex: "title",
+      key: "title",
       width: 460,
       render: (_: unknown, question: AdminQuestion) => (
         <div className="question-title-cell">
@@ -590,16 +569,16 @@ const QuestionsPageContent: React.FC = () => {
               </button>
             </Tooltip>
             <div className="question-title-desc">
-              {question.content?.text || '暂无题干'}
+              {question.content?.text || "暂无题干"}
             </div>
           </div>
         </div>
       ),
     },
     {
-      title: '题型',
-      dataIndex: 'type',
-      key: 'type',
+      title: "题型",
+      dataIndex: "type",
+      key: "type",
       width: 118,
       filters: filterOptions(QUESTION_TYPES),
       filteredValue: filters.type ? [filters.type] : null,
@@ -609,9 +588,9 @@ const QuestionsPageContent: React.FC = () => {
       ),
     },
     {
-      title: '难度',
-      dataIndex: 'difficulty',
-      key: 'difficulty',
+      title: "难度",
+      dataIndex: "difficulty",
+      key: "difficulty",
       width: 112,
       filters: filterOptions(DIFFICULTIES),
       filteredValue: filters.difficulty ? [filters.difficulty] : null,
@@ -620,7 +599,7 @@ const QuestionsPageContent: React.FC = () => {
         difficulty ? (
           <Tag
             className={`question-diff-tag ${
-              DIFFICULTY_CLASS[difficulty] || ''
+              DIFFICULTY_CLASS[difficulty] || ""
             }`}
           >
             {difficultyLabel(difficulty)}
@@ -630,9 +609,9 @@ const QuestionsPageContent: React.FC = () => {
         ),
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
+      title: "状态",
+      dataIndex: "status",
+      key: "status",
       width: 118,
       filters: filterOptions(STATUSES),
       filteredValue: filters.status ? [filters.status] : null,
@@ -646,71 +625,93 @@ const QuestionsPageContent: React.FC = () => {
       ),
     },
     {
-      title: '更新时间',
-      dataIndex: 'updated_at',
-      key: 'updated_at',
+      title: "更新时间",
+      dataIndex: "updated_at",
+      key: "updated_at",
       width: 168,
       sorter: true,
       sortOrder:
-        sortState.field === 'updated_at'
+        sortState.field === "updated_at"
           ? antdSortOrder(sortState.order)
-          : undefined,
-      render: (value: string) => dayjs(value).format('YYYY-MM-DD HH:mm'),
+          : null,
+      render: (value: string) => (
+        <span className="question-date">
+          {dayjs(value).format("YYYY-MM-DD HH:mm")}
+        </span>
+      ),
     },
     {
-      title: '操作',
-      key: 'actions',
+      title: "操作",
+      key: "actions",
       width: 96,
-      fixed: 'right' as const,
+      fixed: "right" as const,
       render: (_: unknown, question: AdminQuestion) => (
-        <Dropdown
-          menu={{
-            items: [
-              {
-                key: 'edit',
-                label: '编辑',
-                icon: <EditOutlined />,
-                onClick: () => openEdit(question),
+        <Space size={8}>
+          <button
+            type="button"
+            className="question-action-btn"
+            aria-label="编辑题目"
+            onClick={(event) => {
+              event.stopPropagation();
+              openEdit(question);
+            }}
+          >
+            <EditOutlined style={{ fontSize: 15 }} />
+          </button>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: "delete",
+                  label: "删除",
+                  icon: <DeleteOutlined />,
+                  danger: true,
+                },
+              ],
+              onClick: ({ key }) => {
+                if (key === "delete") {
+                  deleteQuestion(question.id);
+                }
               },
-              {
-                key: 'delete',
-                label: '删除',
-                icon: <DeleteOutlined />,
-                danger: true,
-                onClick: () => confirmDeleteQuestion(question),
-              },
-            ],
-          }}
-          trigger={['click']}
-        >
-          <Button type="text" size="small" icon={<MoreOutlined />} />
-        </Dropdown>
+            }}
+            trigger={["click"]}
+          >
+            <button
+              type="button"
+              className="question-action-btn"
+              aria-label="更多操作"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <MoreOutlined style={{ fontSize: 15 }} />
+            </button>
+          </Dropdown>
+        </Space>
       ),
     },
   ];
 
   const renderAnswerFields = () => {
     if (
-      questionType === 'SINGLE_CHOICE' ||
-      questionType === 'MULTIPLE_CHOICE'
+      questionType === "SINGLE_CHOICE" ||
+      questionType === "MULTIPLE_CHOICE"
     ) {
       return (
         <>
           <Form.Item
             label="选项"
             name="options_text"
-            rules={[{ required: true, message: '请输入题目选项' }]}
+            rules={[{ required: true, message: "请输入题目选项" }]}
           >
             <Input.TextArea
               rows={5}
-              placeholder={'A. 选项一\nB. 选项二\nC. 选项三'}
+              placeholder={"A. 选项一\nB. 选项二\nC. 选项三"}
             />
           </Form.Item>
-          {questionType === 'SINGLE_CHOICE' ? (
+          {questionType === "SINGLE_CHOICE" ? (
             <Form.Item
               label="正确答案"
               name="answer_single"
-              rules={[{ required: true, message: '请选择正确答案' }]}
+              rules={[{ required: true, message: "请选择正确答案" }]}
             >
               <Select options={answerOptions} placeholder="选择一个正确选项" />
             </Form.Item>
@@ -718,7 +719,7 @@ const QuestionsPageContent: React.FC = () => {
             <Form.Item
               label="正确答案"
               name="answer_multiple"
-              rules={[{ required: true, message: '请选择正确答案' }]}
+              rules={[{ required: true, message: "请选择正确答案" }]}
             >
               <Select
                 mode="multiple"
@@ -731,41 +732,41 @@ const QuestionsPageContent: React.FC = () => {
       );
     }
 
-    if (questionType === 'TRUE_FALSE') {
+    if (questionType === "TRUE_FALSE") {
       return (
         <Form.Item
           label="正确答案"
           name="answer_true_false"
-          rules={[{ required: true, message: '请选择正确答案' }]}
+          rules={[{ required: true, message: "请选择正确答案" }]}
         >
           <Select
             options={[
-              { label: '正确', value: 'true' },
-              { label: '错误', value: 'false' },
+              { label: "正确", value: "true" },
+              { label: "错误", value: "false" },
             ]}
           />
         </Form.Item>
       );
     }
 
-    if (questionType === 'FILL_BLANK') {
+    if (questionType === "FILL_BLANK") {
       return (
         <Form.Item
           label="填空答案"
           name="answer_blanks"
-          rules={[{ required: true, message: '请输入填空答案' }]}
+          rules={[{ required: true, message: "请输入填空答案" }]}
         >
           <Input.TextArea rows={3} placeholder="每行一个空的答案" />
         </Form.Item>
       );
     }
 
-    if (questionType === 'SHORT_ANSWER') {
+    if (questionType === "SHORT_ANSWER") {
       return (
         <Form.Item
           label="参考答案"
           name="answer_reference"
-          rules={[{ required: true, message: '请输入参考答案' }]}
+          rules={[{ required: true, message: "请输入参考答案" }]}
         >
           <Input.TextArea rows={5} placeholder="输入参考答案或评分要点" />
         </Form.Item>
@@ -776,7 +777,7 @@ const QuestionsPageContent: React.FC = () => {
   };
 
   const renderProgrammingFields = () => {
-    if (questionType !== 'PROGRAMMING') {
+    if (questionType !== "PROGRAMMING") {
       return null;
     }
 
@@ -787,7 +788,7 @@ const QuestionsPageContent: React.FC = () => {
             <Form.Item
               label="语言"
               name="language"
-              rules={[{ required: true, message: '请选择语言' }]}
+              rules={[{ required: true, message: "请选择语言" }]}
             >
               <Select options={LANGUAGES} placeholder="选择语言" />
             </Form.Item>
@@ -796,18 +797,18 @@ const QuestionsPageContent: React.FC = () => {
             <Form.Item
               label="时间限制(ms)"
               name="time_limit_ms"
-              rules={[{ required: true, message: '请输入时间限制' }]}
+              rules={[{ required: true, message: "请输入时间限制" }]}
             >
-              <InputNumber min={1} max={30000} style={{ width: '100%' }} />
+              <InputNumber min={1} max={30000} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
           <Col span={6}>
             <Form.Item
               label="内存限制(MB)"
               name="memory_limit_mb"
-              rules={[{ required: true, message: '请输入内存限制' }]}
+              rules={[{ required: true, message: "请输入内存限制" }]}
             >
-              <InputNumber min={1} max={4096} style={{ width: '100%' }} />
+              <InputNumber min={1} max={4096} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
         </Row>
@@ -816,11 +817,11 @@ const QuestionsPageContent: React.FC = () => {
             rows={6}
             placeholder="可选，输入候选人初始代码"
             style={{
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
             }}
           />
         </Form.Item>
-        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+        <Space orientation="vertical" style={{ width: "100%" }} size={12}>
           {testCases.map((item, index) => (
             <Card
               key={item.client_key}
@@ -844,7 +845,7 @@ const QuestionsPageContent: React.FC = () => {
                     rows={3}
                     placeholder="标准输入"
                     onChange={(event) =>
-                      updateTestCase(index, 'input', event.target.value)
+                      updateTestCase(index, "input", event.target.value)
                     }
                   />
                 </Col>
@@ -856,8 +857,8 @@ const QuestionsPageContent: React.FC = () => {
                     onChange={(event) =>
                       updateTestCase(
                         index,
-                        'expected_output',
-                        event.target.value,
+                        "expected_output",
+                        event.target.value
                       )
                     }
                   />
@@ -870,9 +871,9 @@ const QuestionsPageContent: React.FC = () => {
                     max={30000}
                     value={item.time_limit_ms}
                     addonAfter="ms"
-                    style={{ width: '100%' }}
+                    style={{ width: "100%" }}
                     onChange={(value) =>
-                      updateTestCase(index, 'time_limit_ms', value || 2000)
+                      updateTestCase(index, "time_limit_ms", value || 2000)
                     }
                   />
                 </Col>
@@ -882,9 +883,9 @@ const QuestionsPageContent: React.FC = () => {
                     max={4096}
                     value={item.memory_limit_mb}
                     addonAfter="MB"
-                    style={{ width: '100%' }}
+                    style={{ width: "100%" }}
                     onChange={(value) =>
-                      updateTestCase(index, 'memory_limit_mb', value || 256)
+                      updateTestCase(index, "memory_limit_mb", value || 256)
                     }
                   />
                 </Col>
@@ -894,7 +895,7 @@ const QuestionsPageContent: React.FC = () => {
                     <Switch
                       checked={item.is_sample}
                       onChange={(value) =>
-                        updateTestCase(index, 'is_sample', value)
+                        updateTestCase(index, "is_sample", value)
                       }
                     />
                   </Space>
@@ -905,7 +906,7 @@ const QuestionsPageContent: React.FC = () => {
                     <Switch
                       checked={item.is_hidden}
                       onChange={(value) =>
-                        updateTestCase(index, 'is_hidden', value)
+                        updateTestCase(index, "is_hidden", value)
                       }
                     />
                   </Space>
@@ -962,135 +963,111 @@ const QuestionsPageContent: React.FC = () => {
           </Button>
         </div>
         <Table
-          rowKey="id"
-          columns={columns}
-          dataSource={questions}
-          loading={loading}
-          scroll={{ x: 1080 }}
-          locale={{
-            emptyText: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="暂无题目，先创建一道题"
-              />
-            ),
-          }}
-          pagination={false}
-          onChange={handleTableChange}
-          onRow={(question) => ({
-            onClick: () =>
-              history.push(`/content/library/questions/${question.id}`),
-          })}
-        />
-        <div
-          className="question-table-pagination"
-          style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}
-        >
-          <Pagination
-            current={page}
-            pageSize={pageSize}
-            total={total}
-            showSizeChanger
-            pageSizeOptions={[10, 20, 50, 100]}
-            onChange={(nextPage: number, nextPageSize: number) => {
-              setPage(nextPageSize !== pageSize ? 1 : nextPage);
-              setPageSize(nextPageSize);
+            rowKey="id"
+            columns={columns}
+            dataSource={questions}
+            loading={loading}
+            scroll={{ x: 1080 }}
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="暂无题目，先创建一道题"
+                />
+              ),
             }}
+            pagination={false}
+            onChange={handleTableChange}
+            onRow={(question) => ({
+              onClick: () =>
+                history.push(`/content/library/questions/${question.id}`),
+            })}
           />
-        </div>
-      </Card>
+          <div className="question-table-pagination">
+            <span className="question-total">共 {total} 条</span>
+            <Pagination
+              current={page}
+              pageSize={pageSize}
+              total={total}
+              showSizeChanger
+              pageSizeOptions={[10, 20, 50, 100]}
+              onChange={(nextPage: number, nextPageSize: number) => {
+                setPage(nextPageSize !== pageSize ? 1 : nextPage);
+                setPageSize(nextPageSize);
+              }}
+            />
+          </div>
+        </Card>
 
       <Drawer
-  title={editing ? '编辑题目' : '新建题目'}
-  size={820}
-  open = { drawerOpen };
-  onClose={() => {
+        title={editing ? "编辑题目" : "新建题目"}
+        size={820}
+        open={drawerOpen}
+        onClose={() => {
           setSaving(false);
-  setDrawerOpen(false);
-};
-}
-        extra=
-{
-  <Space>
-    <Button
-      onClick={() => {
-        setSaving(false);
-        setDrawerOpen(false);
-      }}
-    >
-      取消
-    </Button>
-    <Button type="primary" loading={saving} onClick={saveQuestion}>
-      保存
-    </Button>
-  </Space>;
-}
->
-        <Form form=
-{
-  questionForm;
-}
-layout =
-  'vertical' >
-  (
-    <Row gutter={16}>
-      <Col span={12}>
-        <Form.Item
-          label="题型"
-          name="type"
-          rules={[{ required: true, message: '请选择题型' }]}
-        >
-          <Select options={QUESTION_TYPES} />
-        </Form.Item>
-      </Col>
-      <Col span={12}>
-        <Form.Item
-          label="状态"
-          name="status"
-          rules={[{ required: true, message: '请选择状态' }]}
-        >
-          <Select options={STATUSES} />
-        </Form.Item>
-      </Col>
-    </Row>
-  ) <
-  Form.Item;
-label = '标题';
-name = 'title';
-rules={[
-              { required: true, whitespace: true, message: '请输入标题' },
+          setDrawerOpen(false);
+        }}
+        extra={
+          <Space>
+            <Button
+              onClick={() => {
+                setSaving(false);
+                setDrawerOpen(false);
+              }}
+            >
+              取消
+            </Button>
+            <Button type="primary" loading={saving} onClick={saveQuestion}>
+              保存
+            </Button>
+          </Space>
+        }
+      >
+        <Form form={questionForm} layout="vertical">
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label="题型"
+                name="type"
+                rules={[{ required: true, message: "请选择题型" }]}
+              >
+                <Select options={QUESTION_TYPES} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="状态"
+                name="status"
+                rules={[{ required: true, message: "请选择状态" }]}
+              >
+                <Select options={STATUSES} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item
+            label="标题"
+            name="title"
+            rules={[
+              { required: true, whitespace: true, message: "请输入标题" },
             ]}
           >
             <Input placeholder="输入题目标题" />
-</Form.Item>
+          </Form.Item>
           <Form.Item
             label="题干"
             name="content_text"
-            rules=
-{
-  [{ required: true, whitespace: true, message: '请输入题干' }];
-}
->
-            <Input.TextArea rows=
-{
-  5;
-}
-placeholder="输入题干内容" />
-</Form.Item>
+            rules={[
+              { required: true, whitespace: true, message: "请输入题干" },
+            ]}
+          >
+            <Input.TextArea rows={5} placeholder="输入题干内容" />
+          </Form.Item>
           <Form.Item label="难度" name="difficulty">
-            <Select allowClear options=
-{
-  DIFFICULTIES;
-}
-placeholder="选择难度" />
-</Form.Item>
-{
-  renderAnswerFields();
-}
-{
-  renderProgrammingFields();
-}
-</Form>
+            <Select allowClear options={DIFFICULTIES} placeholder="选择难度" />
+          </Form.Item>
+          {renderAnswerFields()}
+          {renderProgrammingFields()}
+        </Form>
       </Drawer>
     </PageContainer>
   );
