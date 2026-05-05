@@ -937,17 +937,31 @@ const QuestionsPageContent: React.FC = () => {
     >
       <Card>
         <div className="mb-4 flex justify-between">
-          <h2>题目列表</h2>
+          <Form
+            form={filterForm}
+            layout="inline"
+            onFinish={submitFilters}
+            className="question-search-form"
+          >
+            <Form.Item name="keyword" className="question-filter-keyword">
+              <Input
+                ref={searchInputRef}
+                allowClear
+                prefix={
+                  <SearchOutlined style={{ color: '#1f2937', fontSize: 17 }} />
+                }
+                suffix={<kbd className="question-shortcut-kbd">⌘ K</kbd>}
+                placeholder="搜索标题、题干或标签..."
+                className="question-search-input"
+                onPressEnter={() => filterForm.submit()}
+              />
+            </Form.Item>
+          </Form>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             新建题目
           </Button>
         </div>
-        <Form
-          form={filterForm}
-          layout="inline"
-          onFinish={submitFilters}
-          className="question-search-form"
-        >
+        <Table
           <Form.Item name="keyword" className="question-filter-keyword">
             <Input
               ref={searchInputRef}
@@ -1002,78 +1016,100 @@ const QuestionsPageContent: React.FC = () => {
       </Card>
 
       <Drawer
-        title={editing ? '编辑题目' : '新建题目'}
-        size={820}
-        open={drawerOpen}
-        onClose={() => {
+  title={editing ? '编辑题目' : '新建题目'}
+  size={820}
+  open = { drawerOpen };
+  onClose={() => {
           setSaving(false);
-          setDrawerOpen(false);
-        }}
-        extra={
-          <Space>
-            <Button
-              onClick={() => {
-                setSaving(false);
-                setDrawerOpen(false);
-              }}
-            >
-              取消
-            </Button>
-            <Button type="primary" loading={saving} onClick={saveQuestion}>
-              保存
-            </Button>
-          </Space>
-        }
-      >
-        <Form form={questionForm} layout="vertical">
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="题型"
-                name="type"
-                rules={[{ required: true, message: '请选择题型' }]}
-              >
-                <Select options={QUESTION_TYPES} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="状态"
-                name="status"
-                rules={[{ required: true, message: '请选择状态' }]}
-              >
-                <Select options={STATUSES} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Form.Item
-            label="标题"
-            name="title"
-            rules={[
+  setDrawerOpen(false);
+};
+}
+        extra=
+{
+  <Space>
+    <Button
+      onClick={() => {
+        setSaving(false);
+        setDrawerOpen(false);
+      }}
+    >
+      取消
+    </Button>
+    <Button type="primary" loading={saving} onClick={saveQuestion}>
+      保存
+    </Button>
+  </Space>;
+}
+>
+        <Form form=
+{
+  questionForm;
+}
+layout =
+  'vertical' >
+  (
+    <Row gutter={16}>
+      <Col span={12}>
+        <Form.Item
+          label="题型"
+          name="type"
+          rules={[{ required: true, message: '请选择题型' }]}
+        >
+          <Select options={QUESTION_TYPES} />
+        </Form.Item>
+      </Col>
+      <Col span={12}>
+        <Form.Item
+          label="状态"
+          name="status"
+          rules={[{ required: true, message: '请选择状态' }]}
+        >
+          <Select options={STATUSES} />
+        </Form.Item>
+      </Col>
+    </Row>
+  ) <
+  Form.Item;
+label = '标题';
+name = 'title';
+rules={[
               { required: true, whitespace: true, message: '请输入标题' },
             ]}
           >
             <Input placeholder="输入题目标题" />
-          </Form.Item>
+</Form.Item>
           <Form.Item
             label="题干"
             name="content_text"
-            rules={[
-              { required: true, whitespace: true, message: '请输入题干' },
-            ]}
-          >
-            <Input.TextArea rows={5} placeholder="输入题干内容" />
-          </Form.Item>
+            rules=
+{
+  [{ required: true, whitespace: true, message: '请输入题干' }];
+}
+>
+            <Input.TextArea rows=
+{
+  5;
+}
+placeholder="输入题干内容" />
+</Form.Item>
           <Form.Item label="难度" name="difficulty">
-            <Select allowClear options={DIFFICULTIES} placeholder="选择难度" />
-          </Form.Item>
-          {renderAnswerFields()}
-          {renderProgrammingFields()}
-        </Form>
+            <Select allowClear options=
+{
+  DIFFICULTIES;
+}
+placeholder="选择难度" />
+</Form.Item>
+{
+  renderAnswerFields();
+}
+{
+  renderProgrammingFields();
+}
+</Form>
       </Drawer>
     </PageContainer>
-  );
-};
+  )
+}
 
 const QuestionsPage: React.FC = () => (
   <AntdApp>
