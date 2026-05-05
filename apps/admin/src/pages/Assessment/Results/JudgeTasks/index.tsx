@@ -5,7 +5,9 @@ import React from 'react';
 
 const Index: React.FC = () => {
   return (
-    <PageContainer>
+    <PageContainer
+      content="查看编程题目的评测任务状态和执行结果，监控系统判题服务的运行情况。"
+    >
       <Card>
         <Result
           status="info"

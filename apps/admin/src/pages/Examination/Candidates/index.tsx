@@ -5,7 +5,9 @@ import React from 'react';
 
 const Index: React.FC = () => {
   return (
-    <PageContainer>
+    <PageContainer
+      content="管理考生账号，导入和导出考生信息，查看考生参与考试情况。"
+    >
       <Card>
         <Result
           status="info"

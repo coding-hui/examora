@@ -124,6 +124,7 @@ const ExamList: React.FC = () => {
         id: 'menu.exams',
         defaultMessage: '考试管理',
       })}
+      content="创建和管理考试，设置考试时间、时长和参与考生，支持线上监考。"
     >
       <Card>
         <div className="mb-4 flex justify-between">
