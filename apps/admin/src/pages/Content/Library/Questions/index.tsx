@@ -942,8 +942,6 @@ const QuestionsPageContent: React.FC = () => {
             新建题目
           </Button>
         </div>
-      </Card>
-      <Card>
         <Form
           form={filterForm}
           layout="inline"
@@ -964,8 +962,6 @@ const QuestionsPageContent: React.FC = () => {
             />
           </Form.Item>
         </Form>
-      </Card>
-      <Card>
         <Table
           rowKey="id"
           columns={columns}
