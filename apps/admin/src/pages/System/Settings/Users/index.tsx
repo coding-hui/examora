@@ -269,22 +269,24 @@ const UserListContent: React.FC = () => {
       width: 70,
       fixed: 'right' as const,
       render: (_: unknown, user: User) => (
-        <Dropdown
-          menu={{
-            items: [
-              {
-                key: 'delete',
-                label: '删除',
-                icon: <DeleteOutlined />,
-                danger: true,
-                onClick: () => confirmDelete(user),
-              },
-            ],
-          }}
-          trigger={['click']}
-        >
-          <Button type="text" size="small" icon={<MoreOutlined />} />
-        </Dropdown>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'delete',
+                  label: '删除',
+                  icon: <DeleteOutlined />,
+                  danger: true,
+                  onClick: () => confirmDelete(user),
+                },
+              ],
+            }}
+            trigger={['click']}
+          >
+            <Button type="text" size="small" icon={<MoreOutlined />} />
+          </Dropdown>
+        </div>
       ),
     },
   ];

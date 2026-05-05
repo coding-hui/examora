@@ -23,6 +23,7 @@ import {
   Form,
   Input,
   InputNumber,
+  Modal,
   Pagination,
   Row,
   Select,
@@ -457,21 +458,30 @@ const QuestionsPageContent: React.FC = () => {
     }
   };
 
-  const deleteQuestion = async (id: number) => {
-    try {
-      await request(`/api/admin/questions/${id}`, {
-        method: "DELETE",
-        skipErrorHandler: true,
-      });
-      message.success("题目已删除");
-      fetchQuestions();
-    } catch (error) {
-      if (errorCode(error) === 40900 || errorCode(error) === 409) {
-        message.error("该题已被试卷引用，不能删除");
-        return;
-      }
-      message.error("删除题目失败");
-    }
+  const deleteQuestion = (id: number) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: '确定要删除该题目吗？此操作不可撤销。',
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await request(`/api/admin/questions/${id}`, {
+            method: 'DELETE',
+            skipErrorHandler: true,
+          });
+          message.success('题目已删除');
+          fetchQuestions();
+        } catch (error) {
+          if (errorCode(error) === 40900 || errorCode(error) === 409) {
+            message.error('该题已被试卷引用，不能删除');
+            return;
+          }
+          message.error('删除题目失败');
+        }
+      },
+    });
   };
 
   const addTestCase = () => {
@@ -647,22 +657,24 @@ const QuestionsPageContent: React.FC = () => {
       width: 70,
       fixed: "right" as const,
       render: (_: unknown, question: AdminQuestion) => (
-        <Dropdown
-          menu={{
-            items: [
-              {
-                key: "delete",
-                label: "删除",
-                icon: <DeleteOutlined />,
-                danger: true,
-                onClick: () => deleteQuestion(question.id),
-              },
-            ],
-          }}
-          trigger={["click"]}
-        >
-          <Button type="text" size="small" icon={<MoreOutlined />} onClick={(e) => e.stopPropagation()} />
-        </Dropdown>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: "delete",
+                  label: "删除",
+                  icon: <DeleteOutlined />,
+                  danger: true,
+                  onClick: () => deleteQuestion(question.id),
+                },
+              ],
+            }}
+            trigger={["click"]}
+          >
+            <Button type="text" size="small" icon={<MoreOutlined />} />
+          </Dropdown>
+        </div>
       ),
     },
   ];
