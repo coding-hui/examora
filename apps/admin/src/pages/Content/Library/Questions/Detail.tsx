@@ -200,7 +200,7 @@ const QuestionsDetailContent: React.FC = () => {
   };
 
   return (
-    <PageContainer title={false}>
+    <PageContainer title={false} breadcrumbRender={false}>
       <Button
         type="link"
         icon={<ArrowLeftOutlined />}
