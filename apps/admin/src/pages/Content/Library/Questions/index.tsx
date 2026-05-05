@@ -654,12 +654,8 @@ const QuestionsPageContent: React.FC = () => {
       sortOrder:
         sortState.field === 'updated_at'
           ? antdSortOrder(sortState.order)
-          : null,
-      render: (value: string) => (
-        <span className="question-date">
-          {dayjs(value).format('YYYY-MM-DD HH:mm')}
-        </span>
-      ),
+          : undefined,
+      render: (value: string) => dayjs(value).format('YYYY-MM-DD HH:mm'),
     },
     {
       title: '操作',
