@@ -283,12 +283,7 @@ const UserListContent: React.FC = () => {
     >
       <Card>
         <div className="mb-4 flex justify-between">
-          <h2>
-            {intl.formatMessage({
-              id: 'pages.users.title',
-              defaultMessage: '用户列表',
-            })}
-          </h2>
+          <div />
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             {intl.formatMessage({
               id: 'common.create',
