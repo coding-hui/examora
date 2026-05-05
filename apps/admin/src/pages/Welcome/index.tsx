@@ -290,7 +290,7 @@ const Welcome: React.FC = () => {
               <Space size={8} wrap className="hero-kicker">
                 <span className="hero-status-dot" />
                 <span>实时运营</span>
-                <Tag className="hero-product-tag" bordered={false}>
+                <Tag className="hero-product-tag" variant="filled">
                   Examora Admin
                 </Tag>
               </Space>
@@ -339,12 +339,12 @@ const Welcome: React.FC = () => {
               >
                 <div className="metric-card-header">
                   <span className="metric-icon">{stat.icon}</span>
-                  <Tag bordered={false}>{stat.trend}</Tag>
+                  <Tag variant="filled">{stat.trend}</Tag>
                 </div>
                 <Statistic
                   title={stat.label}
                   value={stat.value}
-                  valueStyle={{ fontSize: 30 }}
+                  styles={{ content: { fontSize: 30 } }}
                 />
                 <Text className="metric-caption">{stat.caption}</Text>
                 <TrendLineChart
@@ -418,7 +418,7 @@ const Welcome: React.FC = () => {
                   type="link"
                   href="/examination/exams"
                   icon={<ArrowRightOutlined />}
-                  iconPosition="end"
+                  iconPlacement="end"
                 >
                   全部考试
                 </Button>
@@ -454,7 +454,7 @@ const Welcome: React.FC = () => {
                   <Progress
                     percent={exam.progress}
                     strokeColor={exam.progress === 100 ? '#22c55e' : '#18181b'}
-                    trailColor="#f4f4f5"
+                    railColor="#f4f4f5"
                     size={{ height: 10 }}
                   />
                 </div>
@@ -472,7 +472,7 @@ const Welcome: React.FC = () => {
                 </Space>
               }
               extra={
-                <Tag color="#f97316" bordered={false}>
+                <Tag color="#f97316" variant="filled">
                   需关注 9
                 </Tag>
               }
@@ -483,7 +483,7 @@ const Welcome: React.FC = () => {
                   percent={91}
                   size={118}
                   strokeColor="#22c55e"
-                  trailColor="#f4f4f5"
+                  railColor="#f4f4f5"
                 />
                 <div>
                   <Text className="risk-label">今日考试健康度</Text>
@@ -524,7 +524,7 @@ const Welcome: React.FC = () => {
                 </Space>
               }
             >
-              <Space direction="vertical" size={16} className="queue-list">
+              <Space orientation="vertical" size={16} className="queue-list">
                 {judgeQueues.map((item) => (
                   <div key={item.key} className="queue-item">
                     <div className="queue-header">
@@ -535,7 +535,7 @@ const Welcome: React.FC = () => {
                       percent={item.percent}
                       showInfo={false}
                       strokeColor={item.color}
-                      trailColor="#f4f4f5"
+                      railColor="#f4f4f5"
                     />
                   </div>
                 ))}
@@ -559,7 +559,7 @@ const Welcome: React.FC = () => {
                 items={activities.map((item) => ({
                   key: item.key,
                   color: item.color,
-                  children: (
+                  content: (
                     <div className="activity-item">
                       <Text>{item.text}</Text>
                       <Text type="secondary">{item.meta}</Text>

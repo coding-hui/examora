@@ -109,7 +109,8 @@ func (c *Container) provideAuth() (*auth.Service, error) {
 
 func (c *Container) provideLibrary() (*library.Service, error) {
 	store := librarystore.New(c.DB)
-	return library.ProvideService(store)
+	tx := transaction.NewManager(c.DB)
+	return library.ProvideService(store, tx)
 }
 
 func (c *Container) provideExam() (*exam.Service, error) {

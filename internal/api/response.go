@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
@@ -24,11 +23,15 @@ func writeError(c *gin.Context, err error) {
 		c.JSON(http.StatusNotFound, response.Envelope{Code: response.CodeNotFound, Message: err.Error()})
 		return
 	}
-	if exam.IsConflict(err) {
+	if library.IsConflict(err) || exam.IsConflict(err) {
 		c.JSON(http.StatusConflict, response.Envelope{Code: response.CodeConflict, Message: err.Error()})
 		return
 	}
-	if errors.Is(err, exam.ErrForbidden) {
+	if library.IsValidation(err) || exam.IsValidation(err) {
+		c.JSON(http.StatusBadRequest, response.Envelope{Code: response.CodeBadRequest, Message: err.Error()})
+		return
+	}
+	if exam.IsForbidden(err) {
 		c.JSON(http.StatusForbidden, response.Envelope{Code: response.CodeForbidden, Message: err.Error()})
 		return
 	}

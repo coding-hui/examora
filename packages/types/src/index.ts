@@ -37,29 +37,62 @@ export type SubmissionStatus =
 
 /** Admin-facing question — includes scoring answer (never send to candidate) */
 export interface AdminQuestion {
-  id: string;
+  id: number;
   type: QuestionType;
   title: string;
-  content: string;
+  content: Record<string, unknown>;
   answer: Record<string, unknown> | null;
   difficulty?: string;
   language?: string;
-  starterCode?: string;
-  timeLimitMs: number;
-  memoryLimitMb: number;
+  starter_code?: string;
+  time_limit_ms: number;
+  memory_limit_mb: number;
   status: string;
-  testCases?: AdminTestCase[];
+  test_cases?: AdminTestCase[];
 }
 
 export interface AdminTestCase {
-  id: string;
+  id: number;
+  question_id: number;
   input: string;
-  expectedOutput: string;
-  timeLimitMs: number;
-  memoryLimitMb: number;
-  isSample: boolean;
-  isHidden: boolean;
-  sortOrder: number;
+  expected_output: string;
+  time_limit_ms: number;
+  memory_limit_mb: number;
+  is_sample: boolean;
+  is_hidden: boolean;
+  sort_order: number;
+}
+
+export interface QuestionFilter {
+  keyword?: string;
+  type?: QuestionType;
+  difficulty?: string;
+  status?: "DRAFT" | "PUBLISHED";
+  sort_field?: "type" | "difficulty" | "status" | "updated_at";
+  sort_order?: "asc" | "desc";
+  page?: number;
+  page_size?: number;
+}
+
+export interface QuestionPageResponse {
+  items: AdminQuestion[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface SaveQuestionPayload {
+  type: QuestionType;
+  title: string;
+  content: Record<string, unknown>;
+  answer: Record<string, unknown> | null;
+  difficulty?: string;
+  language?: string;
+  starter_code?: string;
+  time_limit_ms: number;
+  memory_limit_mb: number;
+  status: string;
+  test_cases?: Omit<AdminTestCase, 'id' | 'question_id'>[];
 }
 
 // =====================================================================
@@ -68,65 +101,65 @@ export interface AdminTestCase {
 
 /** Candidate exam snapshot metadata */
 export interface ExamSnapshot {
-  id: string;
-  examId: string;
-  paperSnapshotId: string;
-  startTime: string;
-  endTime: string;
-  durationMinutes: number;
-  publishedAt: string;
+  id: number;
+  exam_id: number;
+  paper_snapshot_id: number;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  published_at: string;
 }
 
 /** Candidate exam session */
 export interface ExamSession {
-  id: string;
-  examSnapshotId: string;
-  userId: string;
+  id: number;
+  exam_snapshot_id: number;
+  user_id: number;
   status: ExamSessionStatus;
-  startedAt?: string;
-  submittedAt?: string;
-  remainingSeconds?: number;
+  started_at?: string;
+  submitted_at?: string;
+  remaining_seconds?: number;
 }
 
 /** Candidate-facing exam paper (API response) */
 export interface CandidatePaper {
-  examSnapshotId: string;
+  exam_snapshot_id: number;
   title: string;
-  startTime: string;
-  endTime: string;
-  durationMinutes: number;
-  remainingSeconds: number;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  remaining_seconds: number;
   questions: CandidateQuestion[];
 }
 
 /** Candidate-facing question snapshot */
 export interface CandidateQuestion {
-  snapshotId: string;
+  snapshot_id: number;
   type: QuestionType;
   title: string;
   content: Record<string, unknown>;
   score: number;
-  sortOrder: number;
-  sampleTestCases?: SampleTestCase[];
-  starterCode?: string;
-  timeLimitMs: number;
+  sort_order: number;
+  sample_test_cases?: SampleTestCase[];
+  starter_code?: string;
+  time_limit_ms: number;
 }
 
 /** Sample test case for programming questions only */
 export interface SampleTestCase {
   input: string;
-  expectedOutput: string;
+  expected_output: string;
 }
 
 /** Candidate submission for objective questions */
 export interface CandidateSubmission {
-  questionId: string;
+  question_id: number;
   answer: Record<string, unknown>;
 }
 
 /** Programming submission */
 export interface ProgrammingSubmission {
-  questionId: string;
+  question_id: number;
   code: string;
   language: string;
 }

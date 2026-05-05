@@ -11,6 +11,7 @@ export default {
   'menu.login': '登录',
   'menu.library': '题库',
   'menu.content.questions': '题目',
+  'menu.content.questionDetail': '题目详情',
   'menu.content.programming': '编程题',
   'menu.content.papers': '试卷',
   'menu.examination.exams': '考试',

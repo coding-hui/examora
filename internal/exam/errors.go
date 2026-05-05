@@ -12,6 +12,7 @@ var (
 	ErrNotEligible                 = errors.New("not eligible for this exam")
 	ErrExamNotStarted              = errors.New("exam has not started yet")
 	ErrExamEnded                   = errors.New("exam has ended")
+	ErrInvalidExamWindow           = errors.New("invalid exam time window")
 )
 
 func IsNotFound(err error) bool {
@@ -30,4 +31,8 @@ func IsForbidden(err error) bool {
 		errors.Is(err, ErrNotEligible) ||
 		errors.Is(err, ErrExamNotStarted) ||
 		errors.Is(err, ErrExamEnded)
+}
+
+func IsValidation(err error) bool {
+	return errors.Is(err, ErrInvalidExamWindow)
 }

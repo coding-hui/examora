@@ -1,7 +1,8 @@
 import type {
-  ExamPaper,
+  CandidatePaper,
+  CandidateQuestion,
+  ExamSession,
   ExamSessionStatus,
-  QuestionSnapshot,
   SubmissionStatus,
 } from '@examora/types';
 
@@ -98,8 +99,9 @@ export class ApiClient {
 
 // Re-export types for convenience
 export type {
-  ExamPaper,
+  CandidatePaper,
+  CandidateQuestion,
+  ExamSession,
   ExamSessionStatus,
-  QuestionSnapshot,
   SubmissionStatus,
 };

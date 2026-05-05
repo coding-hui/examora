@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"github.com/coding-hui/examora/internal/exam"
 	"github.com/coding-hui/examora/internal/infra/database"
@@ -12,10 +13,11 @@ func (s *Store) SaveAnswerDraft(ctx context.Context, sessionID, questionID uint6
 		ExamSessionID: sessionID,
 		QuestionID:    questionID,
 		Answer:        mapToJSON(answer),
+		SavedAt:       time.Now(),
 	}
 	return s.db(ctx).
 		Where("exam_session_id = ? AND question_id = ?", sessionID, questionID).
-		Assign(database.AnswerDraftModel{Answer: row.Answer}).
+		Assign(database.AnswerDraftModel{Answer: row.Answer, SavedAt: row.SavedAt}).
 		FirstOrCreate(row).Error
 }
 

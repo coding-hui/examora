@@ -53,6 +53,13 @@ export default [
         access: 'canAdmin',
       },
       {
+        path: '/content/library/questions/:id',
+        name: 'questionDetail',
+        hideInMenu: true,
+        component: './Content/Library/Questions/Detail',
+        access: 'canAdmin',
+      },
+      {
         path: '/content/library/programming',
         name: 'programming',
         icon: 'CodeOutlined',

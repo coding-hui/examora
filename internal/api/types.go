@@ -14,19 +14,21 @@ import (
 // region Library and Exam
 
 type saveQuestionRequest struct {
-	Type          string         `json:"type"`
-	Title         string         `json:"title"`
-	Content       map[string]any `json:"content"`
-	Answer        map[string]any `json:"answer"`
-	Difficulty    *string        `json:"difficulty"`
-	Language      *string        `json:"language"`
-	StarterCode   *string        `json:"starter_code"`
-	TimeLimitMS   int            `json:"time_limit_ms"`
-	MemoryLimitMB int            `json:"memory_limit_mb"`
-	Status        string         `json:"status"`
+	Type          string                `json:"type"`
+	Title         string                `json:"title"`
+	Content       map[string]any        `json:"content"`
+	Answer        map[string]any        `json:"answer"`
+	Difficulty    *string               `json:"difficulty"`
+	Language      *string               `json:"language"`
+	StarterCode   *string               `json:"starter_code"`
+	TimeLimitMS   int                   `json:"time_limit_ms"`
+	MemoryLimitMB int                   `json:"memory_limit_mb"`
+	Status        string                `json:"status"`
+	TestCases     []saveTestCaseRequest `json:"test_cases"`
 }
 
 type saveTestCaseRequest struct {
+	ID             uint64 `json:"id"`
 	Input          string `json:"input"`
 	ExpectedOutput string `json:"expected_output"`
 	TimeLimitMS    int    `json:"time_limit_ms"`
@@ -37,20 +39,21 @@ type saveTestCaseRequest struct {
 }
 
 type questionResponse struct {
-	ID            uint64         `json:"id"`
-	Type          string         `json:"type"`
-	Title         string         `json:"title"`
-	Content       map[string]any `json:"content"`
-	Answer        map[string]any `json:"answer,omitempty"`
-	Difficulty    *string        `json:"difficulty,omitempty"`
-	Language      *string        `json:"language,omitempty"`
-	StarterCode   *string        `json:"starter_code,omitempty"`
-	TimeLimitMS   int            `json:"time_limit_ms"`
-	MemoryLimitMB int            `json:"memory_limit_mb"`
-	Status        string         `json:"status"`
-	CreatedBy     uint64         `json:"created_by"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
+	ID            uint64             `json:"id"`
+	Type          string             `json:"type"`
+	Title         string             `json:"title"`
+	Content       map[string]any     `json:"content"`
+	Answer        map[string]any     `json:"answer,omitempty"`
+	Difficulty    *string            `json:"difficulty,omitempty"`
+	Language      *string            `json:"language,omitempty"`
+	StarterCode   *string            `json:"starter_code,omitempty"`
+	TimeLimitMS   int                `json:"time_limit_ms"`
+	MemoryLimitMB int                `json:"memory_limit_mb"`
+	Status        string             `json:"status"`
+	TestCases     []testCaseResponse `json:"test_cases,omitempty"`
+	CreatedBy     uint64             `json:"created_by"`
+	CreatedAt     time.Time          `json:"created_at"`
+	UpdatedAt     time.Time          `json:"updated_at"`
 }
 
 type testCaseResponse struct {
@@ -249,6 +252,19 @@ type judgeTaskResponse struct {
 // region Command converters
 
 func (r saveQuestionRequest) command(createdBy uint64) library.SaveQuestionCommand {
+	tcs := make([]library.TestCase, 0, len(r.TestCases))
+	for _, tc := range r.TestCases {
+		tcs = append(tcs, library.TestCase{
+			ID:             tc.ID,
+			Input:          tc.Input,
+			ExpectedOutput: tc.ExpectedOutput,
+			TimeLimitMS:    tc.TimeLimitMS,
+			MemoryLimitMB:  tc.MemoryLimitMB,
+			IsSample:       tc.IsSample,
+			IsHidden:       tc.IsHidden,
+			SortOrder:      tc.SortOrder,
+		})
+	}
 	return library.SaveQuestionCommand{
 		Type:          r.Type,
 		Title:         r.Title,
@@ -261,6 +277,7 @@ func (r saveQuestionRequest) command(createdBy uint64) library.SaveQuestionComma
 		MemoryLimitMB: r.MemoryLimitMB,
 		Status:        r.Status,
 		CreatedBy:     createdBy,
+		TestCases:     tcs,
 	}
 }
 
@@ -304,8 +321,17 @@ func toQuestionResponse(q library.Question, includeAnswer bool) questionResponse
 	return resp
 }
 
+func toQuestionResponseWithTestCases(q library.Question, tcs []library.TestCase, includeAnswer bool) questionResponse {
+	resp := toQuestionResponse(q, includeAnswer)
+	resp.TestCases = make([]testCaseResponse, 0, len(tcs))
+	for _, tc := range tcs {
+		resp.TestCases = append(resp.TestCases, toTestCaseResponse(tc, includeAnswer))
+	}
+	return resp
+}
+
 func toQuestionAdminResponse(q library.Question) questionResponse {
-	return toQuestionResponse(q, true)
+	return toQuestionResponse(q, false)
 }
 
 func toTestCaseResponse(tc library.TestCase, includeExpected bool) testCaseResponse {

@@ -11,13 +11,7 @@ import {
   getAccessToken,
   setLocalProfile,
 } from '@/auth/token';
-import {
-  AvatarDropdown,
-  AvatarName,
-  Footer,
-  Question,
-  SelectLang,
-} from '@/components';
+import { AvatarDropdown, Footer, SelectLang } from '@/components';
 import useShadcnTheme from '@/theme/shadcnTheme';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './request';
@@ -48,10 +42,11 @@ const getRandomColor = (name: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-// 获取名字首字母
+// 获取名字首字母（最多两个）
 const getInitials = (name: string): string => {
   if (!name) return '?';
-  return name.charAt(0).toUpperCase();
+  if (name.length === 1) return name.charAt(0).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
 };
 
 const ShadcnThemeProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -153,20 +148,7 @@ export async function getInitialState(): Promise<{
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
 export const layout: RunTimeLayoutConfig = ({ initialState }) => {
   return {
-    actionsRender: () => [
-      <div
-        key="actions"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '0 8px',
-        }}
-      >
-        <Question key="doc" />
-        <SelectLang key="SelectLang" />
-      </div>,
-    ],
+    actionsRender: () => [<SelectLang key="SelectLang" />],
     menuItemRender: (item, dom) => {
       if (item.path) {
         return (
@@ -178,26 +160,29 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
       return dom;
     },
     avatarProps: {
-      title: <AvatarName />,
-      render: (_, avatarChildren) => {
+      title: null,
+      render: () => {
         const userName =
           initialState?.currentUser?.display_name ||
           initialState?.currentUser?.username ||
-          '';
+          '?';
         const initials = getInitials(userName);
         const bgColor = getRandomColor(userName);
 
-        // 如果有用户名但没有头像，显示带随机颜色的首字母头像
-        if (userName && !initialState?.currentUser?.display_name) {
-          return (
-            <AvatarDropdown>
-              <Avatar style={{ backgroundColor: bgColor }} size={32}>
-                {initials}
-              </Avatar>
-            </AvatarDropdown>
-          );
-        }
-        return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
+        return (
+          <AvatarDropdown>
+            <Avatar
+              style={{
+                backgroundColor: bgColor,
+                cursor: 'pointer',
+                fontSize: 12,
+              }}
+              size={28}
+            >
+              {initials}
+            </Avatar>
+          </AvatarDropdown>
+        );
       },
     },
     footerRender: () => <Footer />,

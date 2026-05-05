@@ -179,8 +179,8 @@ func (QuestionSnapshotModel) TableName() string { return "question_snapshots" }
 
 type ExamSessionModel struct {
 	ID               uint64 `gorm:"primaryKey;autoIncrement"`
-	ExamSnapshotID   uint64 `gorm:"index;not null"`
-	UserID           uint64 `gorm:"index;not null;default:0"`
+	ExamSnapshotID   uint64 `gorm:"index;uniqueIndex:idx_exam_sessions_exam_user;not null"`
+	UserID           uint64 `gorm:"index;uniqueIndex:idx_exam_sessions_exam_user;not null;default:0"`
 	Status           string `gorm:"size:32;not null;default:NOT_STARTED"`
 	StartedAt        *time.Time
 	SubmittedAt      *time.Time

@@ -11,6 +11,7 @@ export default {
   'menu.login': 'Login',
   'menu.library': 'Questions',
   'menu.content.questions': 'Questions',
+  'menu.content.questionDetail': 'Question Detail',
   'menu.content.programming': 'Programming',
   'menu.content.papers': 'Papers',
   'menu.examination.exams': 'Exams',

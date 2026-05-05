@@ -15,6 +15,10 @@ import (
 
 // PublishExam creates a frozen snapshot of the exam for candidate delivery
 func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, startTime, endTime time.Time, durationMinutes int) (*ExamSnapshot, error) {
+	if !endTime.After(startTime) || durationMinutes < 1 {
+		return nil, ErrInvalidExamWindow
+	}
+
 	// Get exam and verify it's in DRAFT status
 	e, err := s.store.GetExam(ctx, examID)
 	if err != nil {
@@ -140,7 +144,14 @@ func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, st
 		e.StartTime = &startTime
 		e.EndTime = &endTime
 		e.DurationMinutes = durationMinutes
-		return tx.Save(e).Error
+		return tx.Model(&database.ExamModel{}).
+			Where("id = ?", e.ID).
+			Updates(database.ExamModel{
+				Status:          e.Status,
+				StartTime:       e.StartTime,
+				EndTime:         e.EndTime,
+				DurationMinutes: e.DurationMinutes,
+			}).Error
 	})
 	if err != nil {
 		return nil, err
@@ -151,6 +162,11 @@ func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, st
 
 // GetCandidatePaper returns a candidate-safe view of the exam paper (no answers, no hidden test cases)
 func (s *Service) GetCandidatePaper(ctx context.Context, examID, userID uint64) (*CandidatePaper, error) {
+	e, err := s.store.GetExam(ctx, examID)
+	if err != nil {
+		return nil, err
+	}
+
 	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, examID)
 	if err != nil {
 		return nil, err
@@ -180,7 +196,7 @@ func (s *Service) GetCandidatePaper(ctx context.Context, examID, userID uint64) 
 	// Build candidate-safe response
 	cp := &CandidatePaper{
 		ExamSnapshotID:   snapshot.ID,
-		Title:            "", // Will be filled from exam
+		Title:            e.Title,
 		StartTime:        snapshot.StartTime,
 		EndTime:          snapshot.EndTime,
 		DurationMinutes:  snapshot.DurationMinutes,
@@ -241,7 +257,9 @@ func (s *Service) StartExamSession(ctx context.Context, examID, userID uint64, i
 		existing.Status = SessionStatusInProgress
 		remaining := calculateRemainingSeconds(existing, snapshot)
 		existing.RemainingSeconds = &remaining
-		s.store.UpdateExamSession(ctx, existing)
+		if err := s.store.UpdateExamSession(ctx, existing); err != nil {
+			return nil, err
+		}
 		return existing, nil
 	}
 
@@ -334,11 +352,23 @@ func (s *Service) SaveAnswers(ctx context.Context, examID, userID uint64, answer
 		}
 	}
 
+	questionSnapshots, err := s.store.ListQuestionSnapshots(ctx, snapshot.ID)
+	if err != nil {
+		return err
+	}
+	validSnapshotIDs := make(map[uint64]struct{}, len(questionSnapshots))
+	for _, qs := range questionSnapshots {
+		validSnapshotIDs[qs.ID] = struct{}{}
+	}
+
 	// Save each answer draft
 	for questionIDStr, answer := range answers {
 		questionID, err := strconv.ParseUint(questionIDStr, 10, 64)
 		if err != nil {
 			continue
+		}
+		if _, ok := validSnapshotIDs[questionID]; !ok {
+			return ErrForbidden
 		}
 		if err := s.store.SaveAnswerDraft(ctx, session.ID, questionID, answer); err != nil {
 			return err

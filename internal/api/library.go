@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/coding-hui/examora/internal/library"
 	"github.com/coding-hui/examora/internal/transport/http/response"
 )
 
@@ -26,7 +27,17 @@ func (s *Server) registerLibraryAdminRoutes(admin *gin.RouterGroup) {
 
 func (s *Server) listQuestions(c *gin.Context) {
 	pageNum, pageSize := pageQuery(c)
-	items, total, err := s.library.ListQuestions(c.Request.Context(), pageNum, pageSize)
+	filter := library.QuestionFilter{
+		Keyword:    c.Query("keyword"),
+		Type:       c.Query("type"),
+		Difficulty: c.Query("difficulty"),
+		Status:     c.Query("status"),
+		SortField:  c.Query("sort_field"),
+		SortOrder:  c.Query("sort_order"),
+		PageNum:    pageNum,
+		PageSize:   pageSize,
+	}
+	items, total, err := s.library.ListQuestions(c.Request.Context(), filter)
 	if err != nil {
 		writeError(c, err)
 		return
@@ -44,7 +55,12 @@ func (s *Server) getQuestion(c *gin.Context) {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, toQuestionResponse(*q, true))
+	tcs, err := s.library.ListTestCases(c.Request.Context(), id, true)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toQuestionResponseWithTestCases(*q, tcs, true))
 }
 
 func (s *Server) createQuestion(c *gin.Context) {
@@ -57,7 +73,12 @@ func (s *Server) createQuestion(c *gin.Context) {
 		writeError(c, err)
 		return
 	}
-	response.Created(c, toQuestionResponse(*q, true))
+	tcs, err := s.library.ListTestCases(c.Request.Context(), q.ID, true)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Created(c, toQuestionResponseWithTestCases(*q, tcs, true))
 }
 
 func (s *Server) updateQuestion(c *gin.Context) {
@@ -74,7 +95,12 @@ func (s *Server) updateQuestion(c *gin.Context) {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, toQuestionResponse(*q, true))
+	tcs, err := s.library.ListTestCases(c.Request.Context(), id, true)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toQuestionResponseWithTestCases(*q, tcs, true))
 }
 
 func (s *Server) deleteQuestion(c *gin.Context) {

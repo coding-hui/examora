@@ -9,14 +9,17 @@ type Store interface {
 }
 
 type QuestionStore interface {
-	ListQuestions(ctx context.Context, pageNum, pageSize int) ([]Question, int64, error)
+	ListQuestions(ctx context.Context, filter QuestionFilter) ([]Question, int64, error)
 	GetQuestion(ctx context.Context, id uint64) (*Question, error)
 	CreateQuestion(ctx context.Context, q *Question) error
 	UpdateQuestion(ctx context.Context, q *Question) error
 	DeleteQuestion(ctx context.Context, id uint64) error
 	QuestionExists(ctx context.Context, id uint64) (bool, error)
+	CountPaperQuestions(ctx context.Context, questionID uint64) (int64, error)
 	AddTestCase(ctx context.Context, tc *TestCase) error
 	ListTestCases(ctx context.Context, questionID uint64, includeHidden bool) ([]TestCase, error)
+	DeleteTestCasesByQuestionID(ctx context.Context, questionID uint64) error
+	UpsertTestCases(ctx context.Context, questionID uint64, tcs []TestCase) error
 }
 
 type PaperStore interface {
