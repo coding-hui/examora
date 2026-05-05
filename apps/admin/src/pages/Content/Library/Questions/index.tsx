@@ -932,21 +932,20 @@ const QuestionsPageContent: React.FC = () => {
 
   return (
     <PageContainer
-      className="questions-page"
-      breadcrumbRender={false}
       title="题目"
       content={
         <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 14 }}>
           创建和管理考试题目、答案与编程用例，支持单选题、多选题、判断题、填空题、简答题和编程题。
         </p>
       }
-      extra={
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          新建题目
-        </Button>
-      }
     >
-      <div className="questions-shell">
+      <Card>
+        <div className="mb-4 flex justify-between">
+          <h2>题目列表</h2>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            新建题目
+          </Button>
+        </div>
         <Form
           form={filterForm}
           layout="inline"
@@ -967,45 +966,44 @@ const QuestionsPageContent: React.FC = () => {
             />
           </Form.Item>
         </Form>
-
-        <Card>
-          <Table
-            rowKey="id"
-            columns={columns}
-            dataSource={questions}
-            loading={loading}
-            scroll={{ x: 1080 }}
-            locale={{
-              emptyText: (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="暂无题目，先创建一道题"
-                />
-              ),
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={questions}
+          loading={loading}
+          scroll={{ x: 1080 }}
+          locale={{
+            emptyText: (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="暂无题目，先创建一道题"
+              />
+            ),
+          }}
+          pagination={false}
+          onChange={handleTableChange}
+          onRow={(question) => ({
+            onClick: () =>
+              history.push(`/content/library/questions/${question.id}`),
+          })}
+        />
+        <div
+          className="question-table-pagination"
+          style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}
+        >
+          <Pagination
+            current={page}
+            pageSize={pageSize}
+            total={total}
+            showSizeChanger
+            pageSizeOptions={[10, 20, 50, 100]}
+            onChange={(nextPage: number, nextPageSize: number) => {
+              setPage(nextPageSize !== pageSize ? 1 : nextPage);
+              setPageSize(nextPageSize);
             }}
-            pagination={false}
-            onChange={handleTableChange}
-            onRow={(question) => ({
-              onClick: () =>
-                history.push(`/content/library/questions/${question.id}`),
-            })}
           />
-          <div className="question-table-pagination">
-            <span className="question-total">共 {total} 条</span>
-            <Pagination
-              current={page}
-              pageSize={pageSize}
-              total={total}
-              showSizeChanger
-              pageSizeOptions={[10, 20, 50, 100]}
-              onChange={(nextPage: number, nextPageSize: number) => {
-                setPage(nextPageSize !== pageSize ? 1 : nextPage);
-                setPageSize(nextPageSize);
-              }}
-            />
-          </div>
-        </Card>
-      </div>
+        </div>
+      </Card>
 
       <Drawer
         title={editing ? '编辑题目' : '新建题目'}
