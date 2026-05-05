@@ -23,6 +23,7 @@ import {
   Form,
   Input,
   InputNumber,
+  Modal,
   Pagination,
   Row,
   Select,
@@ -457,7 +458,7 @@ const QuestionsPageContent: React.FC = () => {
       );
       message.success(editing ? '题目已保存' : '题目已创建');
       setDrawerOpen(false);
-      fetchQuestions();
+      await fetchQuestions();
     } catch (error) {
       if (errorCode(error) !== undefined) {
         message.error(editing ? '保存题目失败' : '创建题目失败');
@@ -467,21 +468,30 @@ const QuestionsPageContent: React.FC = () => {
     }
   };
 
-  const deleteQuestion = async (id: number) => {
-    try {
-      await request(`/api/admin/questions/${id}`, {
-        method: 'DELETE',
-        skipErrorHandler: true,
-      });
-      message.success('题目已删除');
-      fetchQuestions();
-    } catch (error) {
-      if (errorCode(error) === 40900 || errorCode(error) === 409) {
-        message.error('该题已被试卷引用，不能删除');
-        return;
-      }
-      message.error('删除题目失败');
-    }
+  const confirmDeleteQuestion = (question: AdminQuestion) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除题目「${question.title}」吗？此操作不可撤销。`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await request(`/api/admin/questions/${question.id}`, {
+            method: 'DELETE',
+            skipErrorHandler: true,
+          });
+          message.success('题目已删除');
+          await fetchQuestions();
+        } catch (error) {
+          if (errorCode(error) === 40900 || errorCode(error) === 409) {
+            message.error('该题已被试卷引用，不能删除');
+            return;
+          }
+          message.error('删除题目失败');
+        }
+      },
+    });
   };
 
   const addTestCase = () => {
@@ -657,46 +667,28 @@ const QuestionsPageContent: React.FC = () => {
       width: 96,
       fixed: 'right' as const,
       render: (_: unknown, question: AdminQuestion) => (
-        <Space size={8}>
-          <button
-            type="button"
-            className="question-action-btn"
-            aria-label="编辑题目"
-            onClick={(event) => {
-              event.stopPropagation();
-              openEdit(question);
-            }}
-          >
-            <EditOutlined style={{ fontSize: 15 }} />
-          </button>
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: 'delete',
-                  label: '删除',
-                  icon: <DeleteOutlined />,
-                  danger: true,
-                },
-              ],
-              onClick: ({ key }) => {
-                if (key === 'delete') {
-                  deleteQuestion(question.id);
-                }
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'edit',
+                label: '编辑',
+                icon: <EditOutlined />,
+                onClick: () => openEdit(question),
               },
-            }}
-            trigger={['click']}
-          >
-            <button
-              type="button"
-              className="question-action-btn"
-              aria-label="更多操作"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <MoreOutlined style={{ fontSize: 15 }} />
-            </button>
-          </Dropdown>
-        </Space>
+              {
+                key: 'delete',
+                label: '删除',
+                icon: <DeleteOutlined />,
+                danger: true,
+                onClick: () => confirmDeleteQuestion(question),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <Button type="text" size="small" icon={<MoreOutlined />} />
+        </Dropdown>
       ),
     },
   ];
@@ -942,19 +934,19 @@ const QuestionsPageContent: React.FC = () => {
     <PageContainer
       className="questions-page"
       breadcrumbRender={false}
-      title={false}
+      title="题目"
+      content={
+        <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 14 }}>
+          创建和管理考试题目、答案与编程用例，支持单选题、多选题、判断题、填空题、简答题和编程题。
+        </p>
+      }
+      extra={
+        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+          新建题目
+        </Button>
+      }
     >
       <div className="questions-shell">
-        <section className="questions-page-header">
-          <div>
-            <h1>题目</h1>
-            <p>创建和管理考试题目、答案与编程用例。</p>
-          </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-            新建题目
-          </Button>
-        </section>
-
         <Form
           form={filterForm}
           layout="inline"
