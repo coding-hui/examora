@@ -942,28 +942,30 @@ const QuestionsPageContent: React.FC = () => {
             新建题目
           </Button>
         </div>
-        <Card>
-          <Form
-            form={filterForm}
-            layout="inline"
-            onFinish={submitFilters}
-            className="question-search-form"
-          >
-            <Form.Item name="keyword" className="question-filter-keyword">
-              <Input
-                ref={searchInputRef}
-                allowClear
-                prefix={
-                  <SearchOutlined style={{ color: '#1f2937', fontSize: 17 }} />
-                }
-                suffix={<kbd className="question-shortcut-kbd">⌘ K</kbd>}
-                placeholder="搜索标题、题干或标签..."
-                className="question-search-input"
-                onPressEnter={() => filterForm.submit()}
-              />
-            </Form.Item>
-          </Form>
-        </Card>
+      </Card>
+      <Card>
+        <Form
+          form={filterForm}
+          layout="inline"
+          onFinish={submitFilters}
+          className="question-search-form"
+        >
+          <Form.Item name="keyword" className="question-filter-keyword">
+            <Input
+              ref={searchInputRef}
+              allowClear
+              prefix={
+                <SearchOutlined style={{ color: '#1f2937', fontSize: 17 }} />
+              }
+              suffix={<kbd className="question-shortcut-kbd">⌘ K</kbd>}
+              placeholder="搜索标题、题干或标签..."
+              className="question-search-input"
+              onPressEnter={() => filterForm.submit()}
+            />
+          </Form.Item>
+        </Form>
+      </Card>
+      <Card>
         <Table
           rowKey="id"
           columns={columns}
