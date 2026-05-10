@@ -65,5 +65,3 @@ docker-compose.override.yml
 design-system/
 
 # Dev utilities
-apps/admin/public/login-bridge*.html
-apps/admin/src/theme/preference.ts
