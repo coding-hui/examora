@@ -63,3 +63,7 @@ docker-compose.override.yml
 # Local data
 *.rdb
 design-system/
+
+# Dev utilities
+apps/admin/public/login-bridge*.html
+apps/admin/src/theme/preference.ts
