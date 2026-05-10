@@ -5,9 +5,7 @@ import React from 'react';
 
 const Index: React.FC = () => {
   return (
-    <PageContainer
-      content="查看考试过程中的异常事件和违规行为记录，保障线上考试公平公正。"
-    >
+    <PageContainer content="查看考试过程中的异常事件和违规行为记录，保障线上考试公平公正。">
       <Card>
         <Result
           status="info"

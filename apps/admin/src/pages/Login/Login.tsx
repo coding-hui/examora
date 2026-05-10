@@ -6,7 +6,15 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { request, useIntl } from '@umijs/max';
-import { Alert, Button, Divider, Form, Input, message, Typography } from 'antd';
+import {
+  Alert,
+  App as AntdApp,
+  Button,
+  Divider,
+  Form,
+  Input,
+  Typography,
+} from 'antd';
 import { useEffect, useState } from 'react';
 import type { AuthConfig, LoginResponse } from '@/auth/token';
 import { setAccessToken, setLocalProfile } from '@/auth/token';
@@ -49,6 +57,7 @@ const unwrapData = <T,>(response: T | ApiEnvelope<T>): T => {
 
 const Login: React.FC = () => {
   const intl = useIntl();
+  const { message } = AntdApp.useApp();
   const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

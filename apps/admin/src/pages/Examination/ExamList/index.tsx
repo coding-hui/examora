@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { request, useIntl } from '@umijs/max';
-import { Button, Card, message, Table, Tag } from 'antd';
+import { App as AntdApp, Button, Card, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
@@ -20,6 +20,7 @@ interface Exam {
 
 const ExamList: React.FC = () => {
   const intl = useIntl();
+  const { message } = AntdApp.useApp();
   const [loading, setLoading] = useState(false);
   const [exams, setExams] = useState<Exam[]>([]);
   const [total, setTotal] = useState(0);

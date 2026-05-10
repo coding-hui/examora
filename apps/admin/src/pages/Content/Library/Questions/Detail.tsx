@@ -253,7 +253,9 @@ const QuestionsDetailContent: React.FC = () => {
                     {question.title}
                   </h2>
                   <Space size={10} style={{ marginTop: 8 }}>
-                    <span style={{ color: '#737373' }}>Question ID</span>
+                    <span style={{ color: 'var(--q-text-muted)' }}>
+                      Question ID
+                    </span>
                     <code
                       style={{
                         padding: '4px 10px',
@@ -308,7 +310,7 @@ const QuestionsDetailContent: React.FC = () => {
                 >
                   BASIC
                 </div>
-                <p style={{ color: '#737373', marginTop: 12 }}>
+                <p style={{ color: 'var(--q-text-muted)', marginTop: 12 }}>
                   题目的基础属性和候选人可见题干。
                 </p>
               </Col>
@@ -376,7 +378,7 @@ const QuestionsDetailContent: React.FC = () => {
                 >
                   ANSWER
                 </div>
-                <p style={{ color: '#737373', marginTop: 12 }}>
+                <p style={{ color: 'var(--q-text-muted)', marginTop: 12 }}>
                   管理端可见的标准答案和编程题测试数据。
                 </p>
               </Col>
@@ -423,7 +425,7 @@ const QuestionsDetailContent: React.FC = () => {
                               {testCase.is_hidden && (
                                 <Tag color="orange">隐藏</Tag>
                               )}
-                              <span style={{ color: '#737373' }}>
+                              <span style={{ color: 'var(--q-text-muted)' }}>
                                 {testCase.time_limit_ms}ms /{' '}
                                 {testCase.memory_limit_mb}MB
                               </span>

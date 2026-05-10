@@ -3,31 +3,30 @@ import {
   EditOutlined,
   MoreOutlined,
   PlusOutlined,
-  SearchOutlined,
 } from '@ant-design/icons';
-import { PageContainer } from '@ant-design/pro-components';
+import {
+  PageContainer,
+  ProTable,
+  type ActionType,
+  type ProColumns,
+} from '@ant-design/pro-components';
 import { request, useIntl } from '@umijs/max';
 import {
   App as AntdApp,
   Button,
-  Card,
   Col,
   Drawer,
   Dropdown,
   Form,
   Input,
   Modal,
-  Pagination,
   Row,
   Select,
   Space,
-  Table,
   Tag,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import React, { useEffect, useRef, useState } from 'react';
-import type { InputRef } from 'antd';
+import React, { useRef, useState } from 'react';
 
 interface User {
   id: number;
@@ -45,10 +44,6 @@ interface UserFormValues {
   email?: string;
   role: 'ADMIN' | 'TEACHER' | 'STUDENT';
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-}
-
-interface FilterValues {
-  keyword?: string;
 }
 
 const ROLES = [
@@ -75,62 +70,31 @@ const statusColors: Record<string, string> = {
   SUSPENDED: 'error',
 };
 
+const roleLabels = Object.fromEntries(
+  ROLES.map((role) => [role.value, role.label]),
+) as Record<string, string>;
+
+const statusLabels = Object.fromEntries(
+  STATUSES.map((status) => [status.value, status.label]),
+) as Record<string, string>;
+
+const roleValueEnum = Object.fromEntries(
+  ROLES.map((role) => [role.value, { text: role.label }]),
+);
+
+const statusValueEnum = Object.fromEntries(
+  STATUSES.map((status) => [status.value, { text: status.label }]),
+);
+
 const UserListContent: React.FC = () => {
   const intl = useIntl();
   const { message: antdMessage } = AntdApp.useApp();
   const [userForm] = Form.useForm<UserFormValues>();
-  const searchInputRef = useRef<InputRef>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [loading, setLoading] = useState(false);
+  const actionRef = useRef<ActionType>(null);
+  const [tableLoading, setTableLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
-  const [filters, setFilters] = useState<FilterValues>({});
-  const [keyword, setKeyword] = useState('');
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const response = await request<{
-        code: number;
-        data: { items: User[]; total: number };
-      }>('/api/admin/users', {
-        params: { page, page_size: pageSize, ...filters },
-      });
-      if (response.data) {
-        setUsers(response.data.items || []);
-        setTotal(response.data.total || 0);
-      }
-    } catch (_error) {
-      antdMessage.error('获取用户列表失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchUsers();
-  }, [page, pageSize, filters]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const submitFilters = (value: string) => {
-    setKeyword(value.trim());
-    setFilters(value.trim() ? { keyword: value.trim() } : {});
-    setPage(1);
-  };
 
   const openCreate = () => {
     setEditing(null);
@@ -163,9 +127,9 @@ const UserListContent: React.FC = () => {
       );
       antdMessage.success(editing ? '用户已保存' : '用户已创建');
       setDrawerOpen(false);
-      await fetchUsers();
+      actionRef.current?.reload();
     } catch (_error) {
-      // form validation errors are handled by Form automatically
+      // form validation errors are handled by Form automatically; only show error for API failures
       antdMessage.error(editing ? '保存用户失败' : '创建用户失败');
     } finally {
       setSaving(false);
@@ -185,7 +149,7 @@ const UserListContent: React.FC = () => {
             method: 'DELETE',
           });
           antdMessage.success('用户已删除');
-          await fetchUsers();
+          actionRef.current?.reload();
         } catch (_error) {
           antdMessage.error('删除用户失败');
         }
@@ -193,7 +157,18 @@ const UserListContent: React.FC = () => {
     });
   };
 
-  const columns: ColumnsType<User> = [
+  const columns: ProColumns<User>[] = [
+    {
+      title: '关键词',
+      dataIndex: 'keyword',
+      valueType: 'text',
+      hideInTable: true,
+      order: 100,
+      fieldProps: {
+        allowClear: true,
+        placeholder: '搜索用户名、邮箱...',
+      },
+    },
     {
       title: intl.formatMessage({
         id: 'pages.users.columns.id',
@@ -201,7 +176,9 @@ const UserListContent: React.FC = () => {
       }),
       dataIndex: 'id',
       key: 'id',
-      width: 80,
+      hideInTable: true,
+      search: false,
+      sorter: true,
     },
     {
       title: intl.formatMessage({
@@ -210,6 +187,9 @@ const UserListContent: React.FC = () => {
       }),
       dataIndex: 'username',
       key: 'username',
+      width: 150,
+      search: false,
+      ellipsis: true,
     },
     {
       title: intl.formatMessage({
@@ -218,7 +198,10 @@ const UserListContent: React.FC = () => {
       }),
       dataIndex: 'display_name',
       key: 'display_name',
-      render: (name: string) => name || '-',
+      width: 150,
+      search: false,
+      ellipsis: true,
+      renderText: (name?: string) => name || '-',
     },
     {
       title: intl.formatMessage({
@@ -227,7 +210,10 @@ const UserListContent: React.FC = () => {
       }),
       dataIndex: 'email',
       key: 'email',
-      render: (email: string) => email || '-',
+      width: 210,
+      search: false,
+      ellipsis: true,
+      renderText: (email?: string) => email || '-',
     },
     {
       title: intl.formatMessage({
@@ -236,8 +222,13 @@ const UserListContent: React.FC = () => {
       }),
       dataIndex: 'role',
       key: 'role',
-      render: (role: string) => (
-        <Tag color={roleColors[role] || 'default'}>{role}</Tag>
+      width: 90,
+      search: false,
+      valueEnum: roleValueEnum,
+      render: (_, user) => (
+        <Tag color={roleColors[user.role] || 'default'}>
+          {roleLabels[user.role] || user.role}
+        </Tag>
       ),
     },
     {
@@ -247,8 +238,13 @@ const UserListContent: React.FC = () => {
       }),
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => (
-        <Tag color={statusColors[status] || 'default'}>{status}</Tag>
+      width: 90,
+      search: false,
+      valueEnum: statusValueEnum,
+      render: (_, user) => (
+        <Tag color={statusColors[user.status] || 'default'}>
+          {statusLabels[user.status] || user.status}
+        </Tag>
       ),
     },
     {
@@ -258,7 +254,10 @@ const UserListContent: React.FC = () => {
       }),
       dataIndex: 'created_at',
       key: 'created_at',
-      render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm'),
+      width: 150,
+      search: false,
+      sorter: true,
+      render: (_, user) => dayjs(user.created_at).format('YYYY-MM-DD HH:mm'),
     },
     {
       title: intl.formatMessage({
@@ -266,13 +265,21 @@ const UserListContent: React.FC = () => {
         defaultMessage: '操作',
       }),
       key: 'actions',
-      width: 70,
+      width: 60,
       fixed: 'right' as const,
+      search: false,
+      hideInSetting: true,
       render: (_: unknown, user: User) => (
         <div onClick={(e) => e.stopPropagation()}>
           <Dropdown
             menu={{
               items: [
+                {
+                  key: 'edit',
+                  label: '编辑',
+                  icon: <EditOutlined />,
+                  onClick: () => openEdit(user),
+                },
                 {
                   key: 'delete',
                   label: '删除',
@@ -298,57 +305,115 @@ const UserListContent: React.FC = () => {
         defaultMessage: '用户管理',
       })}
       content={
-        <p style={{ margin: 0, color: '#6b7280', fontSize: 14 }}>
+        <p
+          style={{
+            margin: 0,
+            color: 'var(--examora-text-secondary)',
+            fontSize: 14,
+          }}
+        >
           创建和管理平台用户账号，支持设置管理员、教师、学生等角色，以及启用、停用、封禁等账号状态。
         </p>
       }
     >
-      <Card style={{ marginTop: 8 }}>
-        <div className="flex justify-between" style={{ marginBottom: 16 }}>
-          <Space size={12}>
-            <Input
-              ref={searchInputRef}
-              allowClear
-              prefix={<SearchOutlined />}
-              placeholder="搜索用户名、邮箱..."
-              style={{ width: 320, height: 40, borderRadius: 8 }}
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onPressEnter={() => submitFilters(keyword)}
-            />
-            <Button type="default" onClick={() => submitFilters(keyword)}>
-              搜索
-            </Button>
-          </Space>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} style={{ borderRadius: 8 }}>
+      <ProTable<User>
+        actionRef={actionRef}
+        cardBordered={{
+          search: true,
+          table: true,
+        }}
+        columns={columns}
+        columnsState={{
+          persistenceKey: 'examora-system-users-table-columns',
+          persistenceType: 'localStorage',
+        }}
+        columnEmptyText="-"
+        dateFormatter="string"
+        debounceTime={300}
+        defaultSize="middle"
+        headerTitle="用户列表"
+        loading={tableLoading}
+        onLoadingChange={(loading) => {
+          setTableLoading(Boolean(loading));
+        }}
+        options={{
+          density: true,
+          fullScreen: false,
+          reload: true,
+          setting: true,
+        }}
+        rowKey="id"
+        search={{
+          labelWidth: 'auto',
+          span: {
+            xs: 24,
+            sm: 24,
+            md: 12,
+            lg: 8,
+            xl: 8,
+            xxl: 6,
+          },
+          defaultCollapsed: false,
+          searchText: '查询',
+          resetText: '重置',
+        }}
+        beforeSearchSubmit={(params) => ({
+          ...params,
+          keyword:
+            typeof params.keyword === 'string'
+              ? params.keyword.trim()
+              : params.keyword,
+        })}
+        request={async ({ current, pageSize, keyword }) => {
+          try {
+            const trimmedKeyword =
+              typeof keyword === 'string' ? keyword.trim() : undefined;
+            const response = await request<{
+              code: number;
+              data: { items: User[]; total: number };
+            }>('/api/admin/users', {
+              params: {
+                page: current,
+                page_size: pageSize,
+                ...(trimmedKeyword ? { keyword: trimmedKeyword } : {}),
+              },
+            });
+
+            return {
+              data: response.data?.items || [],
+              total: response.data?.total || 0,
+              success: true,
+            };
+          } catch (_error) {
+            antdMessage.error('获取用户列表失败');
+            return {
+              data: [],
+              total: 0,
+              success: false,
+            };
+          }
+        }}
+        pagination={{
+          defaultPageSize: 20,
+          showSizeChanger: true,
+          pageSizeOptions: [10, 20, 50, 100],
+          showTotal: (total) => `共 ${total} 条`,
+        }}
+        revalidateOnFocus={false}
+        scroll={{ x: 900 }}
+        tableLayout="fixed"
+        tooltip="支持关键词检索、列显隐、密度切换和刷新"
+        toolBarRender={() => [
+          <Button
+            key="create"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={openCreate}
+          >
             添加用户
-          </Button>
-        </div>
-        <Table
-          columns={columns}
-          dataSource={users}
-          loading={loading}
-          rowKey="id"
-          pagination={false}
-          scroll={{ x: 900 }}
-        />
-        <div
-          className="question-table-pagination"
-          style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}
-        >
-          <Pagination
-            current={page}
-            pageSize={pageSize}
-            total={total}
-            showSizeChanger
-            pageSizeOptions={[10, 20, 50, 100]}
-            onChange={(nextPage, nextPageSize) => {
-              setPage(nextPageSize !== pageSize ? 1 : nextPage);
-              setPageSize(nextPageSize);
-            }}
-          />
-        </div>
-      </Card>
+          </Button>,
+        ]}
+      />
 
       <Drawer
         title={editing ? '编辑用户' : '创建用户'}
@@ -360,14 +425,6 @@ const UserListContent: React.FC = () => {
         }}
         extra={
           <Space>
-            <Button
-              onClick={() => {
-                setSaving(false);
-                setDrawerOpen(false);
-              }}
-            >
-              取消
-            </Button>
             <Button type="primary" loading={saving} onClick={saveUser}>
               保存
             </Button>

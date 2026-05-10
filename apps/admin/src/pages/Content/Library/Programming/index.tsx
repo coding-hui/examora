@@ -5,9 +5,7 @@ import React from 'react';
 
 const Index: React.FC = () => {
   return (
-    <PageContainer
-      content="编程题目管理，支持创建和编辑编程题目，配置测试用例用于在线评测。"
-    >
+    <PageContainer content="编程题目管理，支持创建和编辑编程题目，配置测试用例用于在线评测。">
       <Card>
         <Result
           status="info"

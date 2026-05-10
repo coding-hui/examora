@@ -12,6 +12,29 @@ export default [
     path: '/',
     redirect: '/overview/dashboard',
   },
+  {
+    path: '/account',
+    hideInMenu: true,
+    access: 'canAdmin',
+    routes: [
+      {
+        path: '/account',
+        redirect: '/account/center',
+      },
+      {
+        path: '/account/center',
+        name: 'accountCenter',
+        component: './Account/Center',
+        access: 'canAdmin',
+      },
+      {
+        path: '/account/settings',
+        name: 'accountSettings',
+        component: './Account/Settings',
+        access: 'canAdmin',
+      },
+    ],
+  },
   // Overview section
   {
     path: '/overview',

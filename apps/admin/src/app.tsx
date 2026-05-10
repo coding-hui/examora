@@ -1,4 +1,7 @@
-import type { Settings as LayoutSettings } from '@ant-design/pro-components';
+import {
+  SettingDrawer,
+  type Settings as LayoutSettings,
+} from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import { Avatar, Button, ConfigProvider, Result } from 'antd';
@@ -13,6 +16,11 @@ import {
 } from '@/auth/token';
 import { AvatarDropdown, Footer, SelectLang } from '@/components';
 import useShadcnTheme from '@/theme/shadcnTheme';
+import {
+  loadThemePreference,
+  saveThemePreference,
+  toLayoutSettings,
+} from '@/theme/preference';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './request';
 
@@ -60,6 +68,11 @@ const ShadcnThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 export function rootContainer(container: React.ReactNode) {
   return <ShadcnThemeProvider>{container}</ShadcnThemeProvider>;
 }
+
+const getLayoutSettings = (): Partial<LayoutSettings> => ({
+  ...(defaultSettings as unknown as Partial<LayoutSettings>),
+  ...(toLayoutSettings(loadThemePreference()) as Partial<LayoutSettings>),
+});
 
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
@@ -128,7 +141,7 @@ export async function getInitialState(): Promise<{
         fetchUserInfo,
         currentUser: null,
         forbidden: true,
-        settings: defaultSettings as Partial<LayoutSettings>,
+        settings: getLayoutSettings(),
       };
     }
 
@@ -136,17 +149,20 @@ export async function getInitialState(): Promise<{
       fetchUserInfo,
       currentUser: userProfile,
       forbidden: false,
-      settings: defaultSettings as Partial<LayoutSettings>,
+      settings: getLayoutSettings(),
     };
   }
 
   return {
-    settings: defaultSettings as Partial<LayoutSettings>,
+    settings: getLayoutSettings(),
   };
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
-export const layout: RunTimeLayoutConfig = ({ initialState }) => {
+export const layout: RunTimeLayoutConfig = ({
+  initialState,
+  setInitialState,
+}) => {
   return {
     actionsRender: () => [<SelectLang key="SelectLang" />],
     menuItemRender: (item, dom) => {
@@ -170,7 +186,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
         const bgColor = getRandomColor(userName);
 
         return (
-          <AvatarDropdown>
+          <AvatarDropdown menu>
             <Avatar
               style={{
                 backgroundColor: bgColor,
@@ -199,6 +215,28 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     },
     bgLayoutImgList: [],
     menuHeaderRender: undefined,
+    childrenRender: (children) => (
+      <>
+        {children}
+        <SettingDrawer
+          enableDarkTheme
+          hideCopyButton
+          hideHintAlert
+          disableUrlParams
+          settings={initialState?.settings}
+          onSettingChange={(settings) => {
+            saveThemePreference({
+              ...loadThemePreference(),
+              ...settings,
+            });
+            setInitialState?.((state: any) => ({
+              ...state,
+              settings,
+            }));
+          }}
+        />
+      </>
+    ),
     // 无权限页面
     unAccessible: <ForbiddenPage />,
     ...initialState?.settings,

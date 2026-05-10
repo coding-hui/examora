@@ -1,5 +1,12 @@
 import { request, useIntl } from '@umijs/max';
-import { Button, Card, DatePicker, Form, InputNumber, message } from 'antd';
+import {
+  App as AntdApp,
+  Button,
+  Card,
+  DatePicker,
+  Form,
+  InputNumber,
+} from 'antd';
 import type dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 
@@ -14,6 +21,7 @@ interface Exam {
 
 const ExamPublish: React.FC = () => {
   const intl = useIntl();
+  const { message } = AntdApp.useApp();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [exam, setExam] = useState<Exam | null>(null);
