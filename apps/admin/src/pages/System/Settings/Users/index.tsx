@@ -3,19 +3,18 @@ import {
   DownOutlined,
   EditOutlined,
   PlusOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
 import {
   type ActionType,
   PageContainer,
   type ProColumns,
   ProTable,
-} from "@ant-design/pro-components";
-import { request, useIntl } from "@umijs/max";
+} from '@ant-design/pro-components';
+import { request, useIntl } from '@umijs/max';
 import {
   App as AntdApp,
   Button,
   Col,
-  Divider,
   Drawer,
   Dropdown,
   Form,
@@ -25,9 +24,11 @@ import {
   Select,
   Space,
   Tag,
-} from "antd";
-import dayjs from "dayjs";
-import React, { useMemo, useRef, useState } from "react";
+  Tooltip,
+} from 'antd';
+import dayjs from 'dayjs';
+import React, { useMemo, useRef, useState } from 'react';
+import './index.less';
 
 interface User {
   id: number;
@@ -43,24 +44,12 @@ interface UserFormValues {
   username: string;
   display_name?: string;
   email?: string;
-  role: "ADMIN" | "TEACHER" | "STUDENT";
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  role: 'ADMIN' | 'TEACHER' | 'STUDENT';
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 }
 
-const ROLE_KEYS = ["ADMIN", "TEACHER", "STUDENT"] as const;
-const STATUS_KEYS = ["ACTIVE", "INACTIVE", "SUSPENDED"] as const;
-
-const roleColors: Record<string, string> = {
-  ADMIN: "red",
-  TEACHER: "blue",
-  STUDENT: "green",
-};
-
-const statusColors: Record<string, string> = {
-  ACTIVE: "success",
-  INACTIVE: "default",
-  SUSPENDED: "error",
-};
+const ROLE_KEYS = ['ADMIN', 'TEACHER', 'STUDENT'] as const;
+const STATUS_KEYS = ['ACTIVE', 'INACTIVE', 'SUSPENDED'] as const;
 
 const UserListContent: React.FC = () => {
   const intl = useIntl();
@@ -77,16 +66,16 @@ const UserListContent: React.FC = () => {
   const roleLabelMap: Record<string, string> = useMemo(
     () => ({
       ADMIN: intl.formatMessage({
-        id: "pages.users.roles.ADMIN",
-        defaultMessage: "管理员",
+        id: 'pages.users.roles.ADMIN',
+        defaultMessage: '管理员',
       }),
       TEACHER: intl.formatMessage({
-        id: "pages.users.roles.TEACHER",
-        defaultMessage: "教师",
+        id: 'pages.users.roles.TEACHER',
+        defaultMessage: '教师',
       }),
       STUDENT: intl.formatMessage({
-        id: "pages.users.roles.STUDENT",
-        defaultMessage: "学生",
+        id: 'pages.users.roles.STUDENT',
+        defaultMessage: '学生',
       }),
     }),
     [intl],
@@ -95,16 +84,16 @@ const UserListContent: React.FC = () => {
   const statusLabelMap: Record<string, string> = useMemo(
     () => ({
       ACTIVE: intl.formatMessage({
-        id: "pages.users.statuses.ACTIVE",
-        defaultMessage: "启用",
+        id: 'pages.users.statuses.ACTIVE',
+        defaultMessage: '启用',
       }),
       INACTIVE: intl.formatMessage({
-        id: "pages.users.statuses.INACTIVE",
-        defaultMessage: "停用",
+        id: 'pages.users.statuses.INACTIVE',
+        defaultMessage: '停用',
       }),
       SUSPENDED: intl.formatMessage({
-        id: "pages.users.statuses.SUSPENDED",
-        defaultMessage: "封禁",
+        id: 'pages.users.statuses.SUSPENDED',
+        defaultMessage: '封禁',
       }),
     }),
     [intl],
@@ -148,8 +137,8 @@ const UserListContent: React.FC = () => {
       username: user.username,
       display_name: user.display_name,
       email: user.email,
-      role: user.role as UserFormValues["role"],
-      status: user.status as UserFormValues["status"],
+      role: user.role as UserFormValues['role'],
+      status: user.status as UserFormValues['status'],
     });
     setDrawerOpen(true);
   };
@@ -159,21 +148,21 @@ const UserListContent: React.FC = () => {
       const values = await userForm.validateFields();
       setSaving(true);
       await request(
-        editing ? `/api/admin/users/${editing.id}` : "/api/admin/users",
+        editing ? `/api/admin/users/${editing.id}` : '/api/admin/users',
         {
-          method: editing ? "PUT" : "POST",
+          method: editing ? 'PUT' : 'POST',
           data: values,
         },
       );
       antdMessage.success(
         editing
           ? intl.formatMessage({
-              id: "pages.users.saveSuccess",
-              defaultMessage: "用户已保存",
+              id: 'pages.users.saveSuccess',
+              defaultMessage: '用户已保存',
             })
           : intl.formatMessage({
-              id: "pages.users.createSuccess",
-              defaultMessage: "用户已创建",
+              id: 'pages.users.createSuccess',
+              defaultMessage: '用户已创建',
             }),
       );
       if (editing) {
@@ -186,12 +175,12 @@ const UserListContent: React.FC = () => {
       antdMessage.error(
         editing
           ? intl.formatMessage({
-              id: "pages.users.saveError",
-              defaultMessage: "保存用户失败",
+              id: 'pages.users.saveError',
+              defaultMessage: '保存用户失败',
             })
           : intl.formatMessage({
-              id: "pages.users.createError",
-              defaultMessage: "创建用户失败",
+              id: 'pages.users.createError',
+              defaultMessage: '创建用户失败',
             }),
       );
     } finally {
@@ -202,42 +191,42 @@ const UserListContent: React.FC = () => {
   const confirmDelete = (user: User) => {
     Modal.confirm({
       title: intl.formatMessage({
-        id: "pages.users.deleteConfirmTitle",
-        defaultMessage: "确认删除",
+        id: 'pages.users.deleteConfirmTitle',
+        defaultMessage: '确认删除',
       }),
       content: intl.formatMessage(
         {
-          id: "pages.users.deleteConfirmContent",
-          defaultMessage: "确定要删除用户「{username}」吗？此操作不可撤销。",
+          id: 'pages.users.deleteConfirmContent',
+          defaultMessage: '确定要删除用户「{username}」吗？此操作不可撤销。',
         },
         { username: user.username },
       ),
       okText: intl.formatMessage({
-        id: "pages.users.delete",
-        defaultMessage: "删除",
+        id: 'pages.users.delete',
+        defaultMessage: '删除',
       }),
-      okType: "danger",
+      okType: 'danger',
       cancelText: intl.formatMessage({
-        id: "pages.users.cancel",
-        defaultMessage: "取消",
+        id: 'pages.users.cancel',
+        defaultMessage: '取消',
       }),
       onOk: async () => {
         try {
           await request(`/api/admin/users/${user.id}`, {
-            method: "DELETE",
+            method: 'DELETE',
           });
           antdMessage.success(
             intl.formatMessage({
-              id: "pages.users.deleteSuccess",
-              defaultMessage: "用户已删除",
+              id: 'pages.users.deleteSuccess',
+              defaultMessage: '用户已删除',
             }),
           );
           actionRef.current?.reload();
         } catch (_error) {
           antdMessage.error(
             intl.formatMessage({
-              id: "pages.users.deleteError",
-              defaultMessage: "删除用户失败",
+              id: 'pages.users.deleteError',
+              defaultMessage: '删除用户失败',
             }),
           );
         }
@@ -248,138 +237,141 @@ const UserListContent: React.FC = () => {
   const columns: ProColumns<User>[] = [
     {
       title: intl.formatMessage({
-        id: "pages.users.columns.keyword",
-        defaultMessage: "关键词",
+        id: 'pages.users.columns.keyword',
+        defaultMessage: '关键词',
       }),
-      dataIndex: "keyword",
-      valueType: "text",
+      dataIndex: 'keyword',
+      valueType: 'text',
       hideInTable: true,
       order: 100,
       fieldProps: {
         allowClear: true,
         placeholder: intl.formatMessage({
-          id: "pages.users.search.placeholder",
-          defaultMessage: "搜索用户名、邮箱...",
+          id: 'pages.users.search.placeholder',
+          defaultMessage: '搜索用户名、邮箱...',
         }),
       },
     },
     {
       title: intl.formatMessage({
-        id: "pages.users.columns.id",
-        defaultMessage: "ID",
+        id: 'pages.users.columns.id',
+        defaultMessage: 'ID',
       }),
-      dataIndex: "id",
-      key: "id",
+      dataIndex: 'id',
+      key: 'id',
       hideInTable: true,
       search: false,
       sorter: true,
     },
     {
       title: intl.formatMessage({
-        id: "pages.users.columns.username",
-        defaultMessage: "用户名",
+        id: 'pages.users.columns.username',
+        defaultMessage: '用户',
       }),
-      dataIndex: "username",
-      key: "username",
-      width: 150,
+      dataIndex: 'username',
+      key: 'username',
+      width: 320,
       search: false,
-      ellipsis: true,
+      render: (_: unknown, user: User) => {
+        const firstChar = (user.display_name || user.username)
+          .charAt(0)
+          .toUpperCase();
+        return (
+          <div className="user-name-cell">
+            <div className="user-avatar" aria-hidden="true">
+              {firstChar}
+            </div>
+            <div className="user-name-main">
+              <Tooltip title={user.display_name || user.username}>
+                <span className="user-name-text">
+                  {user.display_name || user.username}
+                </span>
+              </Tooltip>
+              <div className="user-name-sub">{user.email || '-'}</div>
+            </div>
+          </div>
+        );
+      },
     },
     {
       title: intl.formatMessage({
-        id: "pages.users.columns.displayName",
-        defaultMessage: "显示名称",
+        id: 'pages.users.columns.role',
+        defaultMessage: '角色',
       }),
-      dataIndex: "display_name",
-      key: "display_name",
-      width: 150,
-      search: false,
-      ellipsis: true,
-      renderText: (name?: string) => name || "-",
-    },
-    {
-      title: intl.formatMessage({
-        id: "pages.users.columns.email",
-        defaultMessage: "邮箱",
-      }),
-      dataIndex: "email",
-      key: "email",
-      width: 210,
-      search: false,
-      ellipsis: true,
-      renderText: (email?: string) => email || "-",
-    },
-    {
-      title: intl.formatMessage({
-        id: "pages.users.columns.role",
-        defaultMessage: "角色",
-      }),
-      dataIndex: "role",
-      key: "role",
+      dataIndex: 'role',
+      key: 'role',
       width: 90,
       search: false,
       valueEnum: roleValueEnum,
       render: (_, user) => (
-        <Tag color={roleColors[user.role] || "default"}>
+        <Tag className="user-role-tag">
           {roleLabelMap[user.role] || user.role}
         </Tag>
       ),
     },
     {
       title: intl.formatMessage({
-        id: "pages.users.columns.status",
-        defaultMessage: "状态",
+        id: 'pages.users.columns.status',
+        defaultMessage: '状态',
       }),
-      dataIndex: "status",
-      key: "status",
+      dataIndex: 'status',
+      key: 'status',
       width: 90,
       search: false,
       valueEnum: statusValueEnum,
       render: (_, user) => (
-        <Tag color={statusColors[user.status] || "default"}>
+        <Tag
+          className={`user-status-tag user-status-${user.status.toLowerCase()}`}
+        >
           {statusLabelMap[user.status] || user.status}
         </Tag>
       ),
     },
     {
       title: intl.formatMessage({
-        id: "pages.users.columns.createdAt",
-        defaultMessage: "创建时间",
+        id: 'pages.users.columns.createdAt',
+        defaultMessage: '创建时间',
       }),
-      dataIndex: "created_at",
-      key: "created_at",
+      dataIndex: 'created_at',
+      key: 'created_at',
       width: 150,
       search: false,
       sorter: true,
-      render: (_, user) => dayjs(user.created_at).format("YYYY-MM-DD HH:mm"),
+      render: (_, user) => (
+        <span className="user-date">
+          {dayjs(user.created_at).format('YYYY-MM-DD HH:mm')}
+        </span>
+      ),
     },
     {
       title: intl.formatMessage({
-        id: "common.actions",
-        defaultMessage: "操作",
+        id: 'common.actions',
+        defaultMessage: '操作',
       }),
-      key: "actions",
-      width: 130,
-      fixed: "right" as const,
+      key: 'actions',
+      width: 80,
+      fixed: 'right' as const,
       search: false,
       hideInSetting: true,
       render: (_: unknown, user: User) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <a onClick={() => openEdit(user)}>
-            {intl.formatMessage({
-              id: "pages.users.edit",
-              defaultMessage: "编辑",
-            })}
-          </a>
-          <Divider type="vertical" />
+        <div className="user-actions-cell" onClick={(e) => e.stopPropagation()}>
           <Dropdown
             menu={{
               items: [
                 {
-                  key: "delete",
+                  key: 'edit',
                   label: intl.formatMessage({
-                    id: "pages.users.delete",
-                    defaultMessage: "删除",
+                    id: 'pages.users.edit',
+                    defaultMessage: '编辑',
+                  }),
+                  icon: <EditOutlined />,
+                  onClick: () => openEdit(user),
+                },
+                {
+                  key: 'delete',
+                  label: intl.formatMessage({
+                    id: 'pages.users.delete',
+                    defaultMessage: '删除',
                   }),
                   icon: <DeleteOutlined />,
                   danger: true,
@@ -387,13 +379,13 @@ const UserListContent: React.FC = () => {
                 },
               ],
             }}
-            trigger={["click"]}
+            trigger={['click']}
           >
             <a onClick={(e) => e.preventDefault()}>
               <Space size={4}>
                 {intl.formatMessage({
-                  id: "pages.users.more",
-                  defaultMessage: "更多",
+                  id: 'pages.users.more',
+                  defaultMessage: '更多',
                 })}
                 <DownOutlined />
               </Space>
@@ -407,21 +399,21 @@ const UserListContent: React.FC = () => {
   return (
     <PageContainer
       title={intl.formatMessage({
-        id: "menu.system.settings.users",
-        defaultMessage: "用户管理",
+        id: 'menu.system.settings.users',
+        defaultMessage: '用户管理',
       })}
       content={
         <p
           style={{
             margin: 0,
-            color: "var(--examora-text-secondary)",
+            color: 'var(--examora-text-secondary)',
             fontSize: 14,
           }}
         >
           {intl.formatMessage({
-            id: "pages.users.description",
+            id: 'pages.users.description',
             defaultMessage:
-              "创建和管理平台用户账号，支持设置管理员、教师、学生等角色，以及启用、停用、封禁等账号状态。",
+              '创建和管理平台用户账号，支持设置管理员、教师、学生等角色，以及启用、停用、封禁等账号状态。',
           })}
         </p>
       }
@@ -434,16 +426,16 @@ const UserListContent: React.FC = () => {
         }}
         columns={columns}
         columnsState={{
-          persistenceKey: "examora-system-users-table-columns",
-          persistenceType: "localStorage",
+          persistenceKey: 'examora-system-users-table-columns',
+          persistenceType: 'localStorage',
         }}
         columnEmptyText="-"
         dateFormatter="string"
         debounceTime={300}
         defaultSize="middle"
         headerTitle={intl.formatMessage({
-          id: "pages.users.listTitle",
-          defaultMessage: "用户列表",
+          id: 'pages.users.listTitle',
+          defaultMessage: '用户列表',
         })}
         loading={tableLoading}
         onLoadingChange={(loading) => {
@@ -457,7 +449,7 @@ const UserListContent: React.FC = () => {
         }}
         rowKey="id"
         search={{
-          labelWidth: "auto",
+          labelWidth: 'auto',
           span: {
             xs: 24,
             sm: 12,
@@ -468,29 +460,29 @@ const UserListContent: React.FC = () => {
           },
           defaultCollapsed: true,
           searchText: intl.formatMessage({
-            id: "pages.users.search.searchText",
-            defaultMessage: "查询",
+            id: 'pages.users.search.searchText',
+            defaultMessage: '查询',
           }),
           resetText: intl.formatMessage({
-            id: "pages.users.search.resetText",
-            defaultMessage: "重置",
+            id: 'pages.users.search.resetText',
+            defaultMessage: '重置',
           }),
         }}
         beforeSearchSubmit={(params) => ({
           ...params,
           keyword:
-            typeof params.keyword === "string"
+            typeof params.keyword === 'string'
               ? params.keyword.trim()
               : params.keyword,
         })}
         request={async ({ current, pageSize, keyword }) => {
           try {
             const trimmedKeyword =
-              typeof keyword === "string" ? keyword.trim() : undefined;
+              typeof keyword === 'string' ? keyword.trim() : undefined;
             const response = await request<{
               code: number;
               data: { items: User[]; total: number };
-            }>("/api/admin/users", {
+            }>('/api/admin/users', {
               params: {
                 page: current,
                 page_size: pageSize,
@@ -506,8 +498,8 @@ const UserListContent: React.FC = () => {
           } catch (_error) {
             antdMessage.error(
               intl.formatMessage({
-                id: "pages.users.fetchError",
-                defaultMessage: "获取用户列表失败",
+                id: 'pages.users.fetchError',
+                defaultMessage: '获取用户列表失败',
               }),
             );
             return {
@@ -524,14 +516,14 @@ const UserListContent: React.FC = () => {
           showTotal: (total) =>
             intl.formatMessage(
               {
-                id: "pages.users.total",
-                defaultMessage: "共 {total} 条",
+                id: 'pages.users.total',
+                defaultMessage: '共 {total} 条',
               },
               { total },
             ),
         }}
         revalidateOnFocus={false}
-        scroll={{ x: 900 }}
+        scroll={{ x: 750 }}
         tableLayout="fixed"
         toolBarRender={() => [
           <Button
@@ -541,8 +533,8 @@ const UserListContent: React.FC = () => {
             onClick={openCreate}
           >
             {intl.formatMessage({
-              id: "pages.users.create",
-              defaultMessage: "添加用户",
+              id: 'pages.users.create',
+              defaultMessage: '添加用户',
             })}
           </Button>,
         ]}
@@ -550,8 +542,8 @@ const UserListContent: React.FC = () => {
 
       <Modal
         title={intl.formatMessage({
-          id: "pages.users.modal.createTitle",
-          defaultMessage: "添加用户",
+          id: 'pages.users.modal.createTitle',
+          defaultMessage: '添加用户',
         })}
         open={modalOpen}
         onCancel={() => {
@@ -561,10 +553,10 @@ const UserListContent: React.FC = () => {
         footer={null}
         centered
       >
-        <p style={{ margin: "0 0 16px", color: "#888" }}>
+        <p style={{ margin: '0 0 16px', color: '#888' }}>
           {intl.formatMessage({
-            id: "pages.users.modal.description",
-            defaultMessage: "提供以下至少一项字段才能继续",
+            id: 'pages.users.modal.description',
+            defaultMessage: '提供以下至少一项字段才能继续',
           })}
         </p>
         <Form
@@ -574,14 +566,14 @@ const UserListContent: React.FC = () => {
             try {
               await userForm.validateFields();
               setSaving(true);
-              await request("/api/admin/users", {
-                method: "POST",
+              await request('/api/admin/users', {
+                method: 'POST',
                 data: userForm.getFieldsValue(),
               });
               antdMessage.success(
                 intl.formatMessage({
-                  id: "pages.users.createSuccess",
-                  defaultMessage: "用户已创建",
+                  id: 'pages.users.createSuccess',
+                  defaultMessage: '用户已创建',
                 }),
               );
               setModalOpen(false);
@@ -589,8 +581,8 @@ const UserListContent: React.FC = () => {
             } catch (_error) {
               antdMessage.error(
                 intl.formatMessage({
-                  id: "pages.users.createError",
-                  defaultMessage: "创建用户失败",
+                  id: 'pages.users.createError',
+                  defaultMessage: '创建用户失败',
                 }),
               );
             } finally {
@@ -600,68 +592,68 @@ const UserListContent: React.FC = () => {
         >
           <Form.Item
             label={intl.formatMessage({
-              id: "pages.users.form.username.label",
-              defaultMessage: "用户名",
+              id: 'pages.users.form.username.label',
+              defaultMessage: '用户名',
             })}
             name="username"
             rules={[
               {
                 required: true,
                 message: intl.formatMessage({
-                  id: "pages.users.form.username.required",
-                  defaultMessage: "请输入用户名",
+                  id: 'pages.users.form.username.required',
+                  defaultMessage: '请输入用户名',
                 }),
               },
               {
                 min: 3,
                 message: intl.formatMessage({
-                  id: "pages.users.form.username.minLength",
-                  defaultMessage: "用户名至少 3 个字符",
+                  id: 'pages.users.form.username.minLength',
+                  defaultMessage: '用户名至少 3 个字符',
                 }),
               },
             ]}
           >
             <Input
               placeholder={intl.formatMessage({
-                id: "pages.users.form.username.placeholder",
-                defaultMessage: "输入用户名",
+                id: 'pages.users.form.username.placeholder',
+                defaultMessage: '输入用户名',
               })}
             />
           </Form.Item>
           <Form.Item
             label={intl.formatMessage({
-              id: "pages.users.form.displayName.label",
-              defaultMessage: "显示名称",
+              id: 'pages.users.form.displayName.label',
+              defaultMessage: '显示名称',
             })}
             name="display_name"
           >
             <Input
               placeholder={intl.formatMessage({
-                id: "pages.users.form.displayName.placeholder",
-                defaultMessage: "输入显示名称（可选）",
+                id: 'pages.users.form.displayName.placeholder',
+                defaultMessage: '输入显示名称（可选）',
               })}
             />
           </Form.Item>
           <Form.Item
             label={intl.formatMessage({
-              id: "pages.users.form.email.label",
-              defaultMessage: "邮箱",
+              id: 'pages.users.form.email.label',
+              defaultMessage: '邮箱',
             })}
             name="email"
             rules={[
               {
-                type: "email",
+                type: 'email',
                 message: intl.formatMessage({
-                  id: "pages.users.form.email.invalid",
-                  defaultMessage: "请输入有效的邮箱地址",
+                  id: 'pages.users.form.email.invalid',
+                  defaultMessage: '请输入有效的邮箱地址',
                 }),
               },
             ]}
           >
             <Input
               placeholder={intl.formatMessage({
-                id: "pages.users.form.email.placeholder",
-                defaultMessage: "输入邮箱（可选）",
+                id: 'pages.users.form.email.placeholder',
+                defaultMessage: '输入邮箱（可选）',
               })}
             />
           </Form.Item>
@@ -669,16 +661,16 @@ const UserListContent: React.FC = () => {
             <Col span={10}>
               <Form.Item
                 label={intl.formatMessage({
-                  id: "pages.users.form.role.label",
-                  defaultMessage: "角色",
+                  id: 'pages.users.form.role.label',
+                  defaultMessage: '角色',
                 })}
                 name="role"
                 rules={[
                   {
                     required: true,
                     message: intl.formatMessage({
-                      id: "pages.users.form.role.required",
-                      defaultMessage: "请选择角色",
+                      id: 'pages.users.form.role.required',
+                      defaultMessage: '请选择角色',
                     }),
                   },
                 ]}
@@ -686,8 +678,8 @@ const UserListContent: React.FC = () => {
                 <Select
                   options={roleOptions}
                   placeholder={intl.formatMessage({
-                    id: "pages.users.form.role.placeholder",
-                    defaultMessage: "选择角色",
+                    id: 'pages.users.form.role.placeholder',
+                    defaultMessage: '选择角色',
                   })}
                 />
               </Form.Item>
@@ -695,16 +687,16 @@ const UserListContent: React.FC = () => {
             <Col span={14}>
               <Form.Item
                 label={intl.formatMessage({
-                  id: "pages.users.form.status.label",
-                  defaultMessage: "状态",
+                  id: 'pages.users.form.status.label',
+                  defaultMessage: '状态',
                 })}
                 name="status"
                 rules={[
                   {
                     required: true,
                     message: intl.formatMessage({
-                      id: "pages.users.form.status.required",
-                      defaultMessage: "请选择状态",
+                      id: 'pages.users.form.status.required',
+                      defaultMessage: '请选择状态',
                     }),
                   },
                 ]}
@@ -712,25 +704,25 @@ const UserListContent: React.FC = () => {
                 <Select
                   options={statusOptions}
                   placeholder={intl.formatMessage({
-                    id: "pages.users.form.status.placeholder",
-                    defaultMessage: "选择状态",
+                    id: 'pages.users.form.status.placeholder',
+                    defaultMessage: '选择状态',
                   })}
                 />
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
+          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
               <Button onClick={() => setModalOpen(false)}>
                 {intl.formatMessage({
-                  id: "pages.users.cancel",
-                  defaultMessage: "取消",
+                  id: 'pages.users.cancel',
+                  defaultMessage: '取消',
                 })}
               </Button>
               <Button type="primary" htmlType="submit" loading={saving}>
                 {intl.formatMessage({
-                  id: "pages.users.modal.submit",
-                  defaultMessage: "添加用户",
+                  id: 'pages.users.modal.submit',
+                  defaultMessage: '添加用户',
                 })}
               </Button>
             </Space>
@@ -742,12 +734,12 @@ const UserListContent: React.FC = () => {
         title={
           editing
             ? intl.formatMessage({
-                id: "pages.users.drawerEditTitle",
-                defaultMessage: "编辑用户",
+                id: 'pages.users.drawerEditTitle',
+                defaultMessage: '编辑用户',
               })
             : intl.formatMessage({
-                id: "pages.users.drawerCreateTitle",
-                defaultMessage: "创建用户",
+                id: 'pages.users.drawerCreateTitle',
+                defaultMessage: '创建用户',
               })
         }
         size={480}
@@ -760,8 +752,8 @@ const UserListContent: React.FC = () => {
           <Space>
             <Button type="primary" loading={saving} onClick={saveUser}>
               {intl.formatMessage({
-                id: "pages.users.save",
-                defaultMessage: "保存",
+                id: 'pages.users.save',
+                defaultMessage: '保存',
               })}
             </Button>
           </Space>
@@ -770,69 +762,69 @@ const UserListContent: React.FC = () => {
         <Form form={userForm} layout="vertical">
           <Form.Item
             label={intl.formatMessage({
-              id: "pages.users.form.username.label",
-              defaultMessage: "用户名",
+              id: 'pages.users.form.username.label',
+              defaultMessage: '用户名',
             })}
             name="username"
             rules={[
               {
                 required: true,
                 message: intl.formatMessage({
-                  id: "pages.users.form.username.required",
-                  defaultMessage: "请输入用户名",
+                  id: 'pages.users.form.username.required',
+                  defaultMessage: '请输入用户名',
                 }),
               },
               {
                 min: 3,
                 message: intl.formatMessage({
-                  id: "pages.users.form.username.minLength",
-                  defaultMessage: "用户名至少 3 个字符",
+                  id: 'pages.users.form.username.minLength',
+                  defaultMessage: '用户名至少 3 个字符',
                 }),
               },
             ]}
           >
             <Input
               placeholder={intl.formatMessage({
-                id: "pages.users.form.username.placeholder",
-                defaultMessage: "输入用户名",
+                id: 'pages.users.form.username.placeholder',
+                defaultMessage: '输入用户名',
               })}
               disabled={!!editing}
             />
           </Form.Item>
           <Form.Item
             label={intl.formatMessage({
-              id: "pages.users.form.displayName.label",
-              defaultMessage: "显示名称",
+              id: 'pages.users.form.displayName.label',
+              defaultMessage: '显示名称',
             })}
             name="display_name"
           >
             <Input
               placeholder={intl.formatMessage({
-                id: "pages.users.form.displayName.placeholder",
-                defaultMessage: "输入显示名称（可选）",
+                id: 'pages.users.form.displayName.placeholder',
+                defaultMessage: '输入显示名称（可选）',
               })}
             />
           </Form.Item>
           <Form.Item
             label={intl.formatMessage({
-              id: "pages.users.form.email.label",
-              defaultMessage: "邮箱",
+              id: 'pages.users.form.email.label',
+              defaultMessage: '邮箱',
             })}
             name="email"
             rules={[
               {
-                type: "email",
+                type: 'email',
                 message: intl.formatMessage({
-                  id: "pages.users.form.email.invalid",
-                  defaultMessage: "请输入有效的邮箱地址",
+                  id: 'pages.users.form.email.invalid',
+                  defaultMessage: '请输入有效的邮箱地址',
                 }),
               },
             ]}
           >
             <Input
               placeholder={intl.formatMessage({
-                id: "pages.users.form.email.placeholder",
-                defaultMessage: "输入邮箱（可选）",
+                id: 'pages.users.form.email.placeholder',
+                defaultMessage: '输入邮箱（可选）',
               })}
             />
           </Form.Item>
@@ -840,16 +832,16 @@ const UserListContent: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 label={intl.formatMessage({
-                  id: "pages.users.form.role.label",
-                  defaultMessage: "角色",
+                  id: 'pages.users.form.role.label',
+                  defaultMessage: '角色',
                 })}
                 name="role"
                 rules={[
                   {
                     required: true,
                     message: intl.formatMessage({
-                      id: "pages.users.form.role.required",
-                      defaultMessage: "请选择角色",
+                      id: 'pages.users.form.role.required',
+                      defaultMessage: '请选择角色',
                     }),
                   },
                 ]}
@@ -857,8 +849,8 @@ const UserListContent: React.FC = () => {
                 <Select
                   options={roleOptions}
                   placeholder={intl.formatMessage({
-                    id: "pages.users.form.role.placeholder",
-                    defaultMessage: "选择角色",
+                    id: 'pages.users.form.role.placeholder',
+                    defaultMessage: '选择角色',
                   })}
                 />
               </Form.Item>
@@ -866,16 +858,16 @@ const UserListContent: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 label={intl.formatMessage({
-                  id: "pages.users.form.status.label",
-                  defaultMessage: "状态",
+                  id: 'pages.users.form.status.label',
+                  defaultMessage: '状态',
                 })}
                 name="status"
                 rules={[
                   {
                     required: true,
                     message: intl.formatMessage({
-                      id: "pages.users.form.status.required",
-                      defaultMessage: "请选择状态",
+                      id: 'pages.users.form.status.required',
+                      defaultMessage: '请选择状态',
                     }),
                   },
                 ]}
@@ -883,8 +875,8 @@ const UserListContent: React.FC = () => {
                 <Select
                   options={statusOptions}
                   placeholder={intl.formatMessage({
-                    id: "pages.users.form.status.placeholder",
-                    defaultMessage: "选择状态",
+                    id: 'pages.users.form.status.placeholder',
+                    defaultMessage: '选择状态',
                   })}
                 />
               </Form.Item>
