@@ -134,9 +134,9 @@ const QuestionsPageContent: React.FC = () => {
             id: `pages.questions.types.${t.value}`,
             defaultMessage: t.label,
           }),
-        ])
+        ]),
       ),
-    [intl]
+    [intl],
   );
 
   const difficultyLabelMap = useMemo(
@@ -148,9 +148,9 @@ const QuestionsPageContent: React.FC = () => {
             id: `pages.questions.difficulty.${d.value}`,
             defaultMessage: d.label,
           }),
-        ])
+        ]),
       ),
-    [intl]
+    [intl],
   );
 
   const statusLabelMap = useMemo(
@@ -162,9 +162,9 @@ const QuestionsPageContent: React.FC = () => {
             id: `pages.questions.status.${s.value}`,
             defaultMessage: s.label,
           }),
-        ])
+        ]),
       ),
-    [intl]
+    [intl],
   );
 
   const notSetLabel = intl.formatMessage({
@@ -181,9 +181,9 @@ const QuestionsPageContent: React.FC = () => {
   const typeValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        QUESTION_TYPES.map((t) => [t.value, { text: typeLabelMap[t.value] }])
+        QUESTION_TYPES.map((t) => [t.value, { text: typeLabelMap[t.value] }]),
       ),
-    [typeLabelMap]
+    [typeLabelMap],
   );
 
   const difficultyValueEnum = useMemo(
@@ -192,17 +192,17 @@ const QuestionsPageContent: React.FC = () => {
         DIFFICULTIES.map((d) => [
           d.value,
           { text: difficultyLabelMap[d.value] },
-        ])
+        ]),
       ),
-    [difficultyLabelMap]
+    [difficultyLabelMap],
   );
 
   const statusValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        STATUSES.map((s) => [s.value, { text: statusLabelMap[s.value] }])
+        STATUSES.map((s) => [s.value, { text: statusLabelMap[s.value] }]),
       ),
-    [statusLabelMap]
+    [statusLabelMap],
   );
 
   const confirmDelete = (question: AdminQuestion) => {
@@ -216,7 +216,7 @@ const QuestionsPageContent: React.FC = () => {
           id: "pages.questions.deleteConfirmContent",
           defaultMessage: "确定要删除题目「{title}」吗？此操作不可撤销。",
         },
-        { title: question.title }
+        { title: question.title },
       ),
       okText: intl.formatMessage({
         id: "pages.questions.delete",
@@ -237,17 +237,24 @@ const QuestionsPageContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.questions.deleteSuccess",
               defaultMessage: "题目已删除",
-            })
+            }),
           );
           actionRef.current?.reload();
         } catch (error) {
-          const code = (error as { info?: { errorCode?: number }; response?: { status?: number } })?.info?.errorCode || (error as { response?: { status?: number } })?.response?.status;
+          const code =
+            (
+              error as {
+                info?: { errorCode?: number };
+                response?: { status?: number };
+              }
+            )?.info?.errorCode ||
+            (error as { response?: { status?: number } })?.response?.status;
           if (code === 40900 || code === 409) {
             message.error(
               intl.formatMessage({
                 id: "pages.questions.deleteRefError",
                 defaultMessage: "该题已被试卷引用，不能删除",
-              })
+              }),
             );
             return;
           }
@@ -255,7 +262,7 @@ const QuestionsPageContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.questions.deleteError",
               defaultMessage: "删除题目失败",
-            })
+            }),
           );
         }
       },
@@ -398,8 +405,15 @@ const QuestionsPageContent: React.FC = () => {
       search: false,
       hideInSetting: true,
       render: (_: unknown, question: AdminQuestion) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <a onClick={() => history.push(`/content/library/questions/${question.id}`)}>
+        <div
+          className="question-actions-cell"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <a
+            onClick={() =>
+              history.push(`/content/library/questions/${question.id}`)
+            }
+          >
             {intl.formatMessage({
               id: "pages.questions.edit",
               defaultMessage: "编辑",
@@ -546,7 +560,7 @@ const QuestionsPageContent: React.FC = () => {
               intl.formatMessage({
                 id: "pages.questions.fetchError",
                 defaultMessage: "获取题目列表失败",
-              })
+              }),
             );
             return { data: [], total: 0, success: false };
           }
@@ -561,7 +575,7 @@ const QuestionsPageContent: React.FC = () => {
                 id: "pages.questions.total",
                 defaultMessage: "共 {total} 条",
               },
-              { total }
+              { total },
             ),
         }}
         revalidateOnFocus={false}

@@ -254,7 +254,7 @@ const OptionsEdit: React.FC<{
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
   return (
@@ -584,7 +584,7 @@ const TestCasesEdit: React.FC = () => {
                     className="qdetail-testcase-advanced-toggle"
                     onClick={() =>
                       setAdvancedCase((current) =>
-                        current === name ? null : name
+                        current === name ? null : name,
                       )
                     }
                   >
@@ -651,7 +651,7 @@ const FillBlankAnswerList: React.FC = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
   return (
@@ -797,14 +797,16 @@ const QuestionsDetailContent: React.FC = () => {
 
   // Effective type: from form field in create mode, from fetched question in edit mode
   const watchType = Form.useWatch("type", form) as QuestionType | undefined;
-  const effectiveType: QuestionType | undefined = isNew ? watchType : question?.type;
+  const effectiveType: QuestionType | undefined = isNew
+    ? watchType
+    : question?.type;
 
   const fetchQuestion = async () => {
     if (!questionId || isNew) return;
     setLoading(true);
     try {
       const response = await request<QuestionEnvelope>(
-        `/api/admin/questions/${questionId}`
+        `/api/admin/questions/${questionId}`,
       );
       setQuestion(response.data);
     } catch (_error) {
@@ -870,7 +872,7 @@ const QuestionsDetailContent: React.FC = () => {
         setSaving(true);
         const response = await request<QuestionEnvelope>(
           "/api/admin/questions",
-          { method: "POST", data: payload }
+          { method: "POST", data: payload },
         );
         message.success("创建成功");
         history.push(`/content/library/questions/${response.data.id}`);
@@ -952,7 +954,7 @@ const QuestionsDetailContent: React.FC = () => {
       message.error(
         code === 40900 || code === 409
           ? "该题已被试卷引用，不能删除"
-          : "删除题目失败"
+          : "删除题目失败",
       );
     }
   };
@@ -964,40 +966,41 @@ const QuestionsDetailContent: React.FC = () => {
       : question?.title || "题目详情";
   const isProgramming = effectiveType === "PROGRAMMING";
 
-  const metaInfoBar = question && !isNew ? (
-    <Space wrap size={[8, 8]} className="qdetail-meta-row">
-      <code className="qdetail-id-code">#{question.id}</code>
-      <Tag className="question-type-tag">{QUESTION_TYPES[question.type]}</Tag>
-      {question.difficulty && (
-        <span
-          className={`question-diff-tag ${
-            DIFFICULTY_TAGS[question.difficulty] || ""
-          }`}
-        >
-          {DIFFICULTIES[question.difficulty] || question.difficulty}
+  const metaInfoBar =
+    question && !isNew ? (
+      <Space wrap size={[8, 8]} className="qdetail-meta-row">
+        <code className="qdetail-id-code">#{question.id}</code>
+        <Tag className="question-type-tag">{QUESTION_TYPES[question.type]}</Tag>
+        {question.difficulty && (
+          <span
+            className={`question-diff-tag ${
+              DIFFICULTY_TAGS[question.difficulty] || ""
+            }`}
+          >
+            {DIFFICULTIES[question.difficulty] || question.difficulty}
+          </span>
+        )}
+        <Badge
+          status={question.status === "PUBLISHED" ? "success" : "default"}
+          text={STATUS_LABELS[question.status]}
+        />
+        {isProgramming && (
+          <>
+            <span className="qdetail-meta-badge">
+              <ClockCircleOutlined />
+              {question.time_limit_ms}ms
+            </span>
+            <span className="qdetail-meta-badge">
+              <DatabaseOutlined />
+              {question.memory_limit_mb}MB
+            </span>
+          </>
+        )}
+        <span className="qdetail-meta-badge">
+          更新于 {dayjs(question.updated_at).format("YYYY-MM-DD HH:mm")}
         </span>
-      )}
-      <Badge
-        status={question.status === "PUBLISHED" ? "success" : "default"}
-        text={STATUS_LABELS[question.status]}
-      />
-      {isProgramming && (
-        <>
-          <span className="qdetail-meta-badge">
-            <ClockCircleOutlined />
-            {question.time_limit_ms}ms
-          </span>
-          <span className="qdetail-meta-badge">
-            <DatabaseOutlined />
-            {question.memory_limit_mb}MB
-          </span>
-        </>
-      )}
-      <span className="qdetail-meta-badge">
-        更新于 {dayjs(question.updated_at).format("YYYY-MM-DD HH:mm")}
-      </span>
-    </Space>
-  ) : null;
+      </Space>
+    ) : null;
 
   return (
     <PageContainer
@@ -1068,7 +1071,7 @@ const QuestionsDetailContent: React.FC = () => {
                       <Select
                         placeholder="请选择题型"
                         options={Object.entries(QUESTION_TYPES).map(
-                          ([value, label]) => ({ value, label })
+                          ([value, label]) => ({ value, label }),
                         )}
                         onChange={() => {
                           // Reset answer fields when type changes
@@ -1165,9 +1168,7 @@ const QuestionsDetailContent: React.FC = () => {
                       {effectiveType === "FILL_BLANK" && (
                         <FillBlankAnswerEdit />
                       )}
-                      {effectiveType === "SHORT_ANSWER" && (
-                        <ShortAnswerEdit />
-                      )}
+                      {effectiveType === "SHORT_ANSWER" && <ShortAnswerEdit />}
                       {effectiveType === "PROGRAMMING" && (
                         <div className="qdetail-answer-hint">
                           编程题无固定标准答案，以测试用例判分为准。
