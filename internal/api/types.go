@@ -27,6 +27,10 @@ type saveQuestionRequest struct {
 	TestCases     []saveTestCaseRequest `json:"test_cases"`
 }
 
+type patchQuestionRequest struct {
+	Status string `json:"status"`
+}
+
 type saveTestCaseRequest struct {
 	ID             uint64 `json:"id"`
 	Input          string `json:"input"`

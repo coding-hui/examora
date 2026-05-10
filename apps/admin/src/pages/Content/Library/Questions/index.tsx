@@ -66,9 +66,9 @@ const QuestionsPageContent: React.FC = () => {
             id: `pages.questions.types.${t.value}`,
             defaultMessage: t.label,
           }),
-        ])
+        ]),
       ),
-    [intl]
+    [intl],
   );
 
   const difficultyLabelMap = useMemo(
@@ -80,9 +80,9 @@ const QuestionsPageContent: React.FC = () => {
             id: `pages.questions.difficulty.${d.value}`,
             defaultMessage: d.label,
           }),
-        ])
+        ]),
       ),
-    [intl]
+    [intl],
   );
 
   const statusLabelMap = useMemo(
@@ -94,9 +94,9 @@ const QuestionsPageContent: React.FC = () => {
             id: `pages.questions.status.${s.value}`,
             defaultMessage: s.label,
           }),
-        ])
+        ]),
       ),
-    [intl]
+    [intl],
   );
 
   const notSetLabel = intl.formatMessage({
@@ -116,9 +116,9 @@ const QuestionsPageContent: React.FC = () => {
         QUESTION_TYPE_OPTIONS.map((t) => [
           t.value,
           { text: typeLabelMap[t.value] },
-        ])
+        ]),
       ),
-    [typeLabelMap]
+    [typeLabelMap],
   );
 
   const difficultyValueEnum = useMemo(
@@ -127,9 +127,9 @@ const QuestionsPageContent: React.FC = () => {
         DIFFICULTY_OPTIONS.map((d) => [
           d.value,
           { text: difficultyLabelMap[d.value] },
-        ])
+        ]),
       ),
-    [difficultyLabelMap]
+    [difficultyLabelMap],
   );
 
   const statusValueEnum = useMemo(
@@ -138,9 +138,9 @@ const QuestionsPageContent: React.FC = () => {
         QUESTION_STATUS_OPTIONS.map((s) => [
           s.value,
           { text: statusLabelMap[s.value] },
-        ])
+        ]),
       ),
-    [statusLabelMap]
+    [statusLabelMap],
   );
 
   const confirmDelete = (question: AdminQuestion) => {
@@ -154,7 +154,7 @@ const QuestionsPageContent: React.FC = () => {
           id: "pages.questions.deleteConfirmContent",
           defaultMessage: "确定要删除题目「{title}」吗？此操作不可撤销。",
         },
-        { title: question.title }
+        { title: question.title },
       ),
       okText: intl.formatMessage({
         id: "pages.questions.delete",
@@ -175,7 +175,7 @@ const QuestionsPageContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.questions.deleteSuccess",
               defaultMessage: "题目已删除",
-            })
+            }),
           );
           actionRef.current?.reload();
         } catch (error) {
@@ -192,7 +192,7 @@ const QuestionsPageContent: React.FC = () => {
               intl.formatMessage({
                 id: "pages.questions.deleteRefError",
                 defaultMessage: "该题已被试卷引用，不能删除",
-              })
+              }),
             );
             return;
           }
@@ -200,11 +200,49 @@ const QuestionsPageContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.questions.deleteError",
               defaultMessage: "删除题目失败",
-            })
+            }),
           );
         }
       },
     });
+  };
+
+  const toggleStatus = async (question: AdminQuestion) => {
+    const next = question.status === "DRAFT" ? "PUBLISHED" : "DRAFT";
+    const label =
+      next === "PUBLISHED"
+        ? intl.formatMessage({
+            id: "pages.questions.status.PUBLISHED",
+            defaultMessage: "已发布",
+          })
+        : intl.formatMessage({
+            id: "pages.questions.status.DRAFT",
+            defaultMessage: "草稿",
+          });
+    try {
+      await request(`/api/admin/questions/${question.id}`, {
+        method: "PATCH",
+        data: { status: next },
+        skipErrorHandler: true,
+      });
+      message.success(
+        intl.formatMessage(
+          {
+            id: "pages.questions.statusUpdateSuccess",
+            defaultMessage: "状态已更新为「{status}」",
+          },
+          { status: label },
+        ),
+      );
+      actionRef.current?.reload();
+    } catch {
+      message.error(
+        intl.formatMessage({
+          id: "pages.questions.statusUpdateError",
+          defaultMessage: "状态更新失败",
+        }),
+      );
+    }
   };
 
   const columns: ProColumns<AdminQuestion>[] = [
@@ -347,15 +385,16 @@ const QuestionsPageContent: React.FC = () => {
           className="question-actions-cell"
           onClick={(e) => e.stopPropagation()}
         >
-          <a
-            onClick={() =>
-              history.push(`/content/library/questions/${question.id}`)
-            }
-          >
-            {intl.formatMessage({
-              id: "pages.questions.edit",
-              defaultMessage: "编辑",
-            })}
+          <a onClick={() => toggleStatus(question)}>
+            {question.status === "DRAFT"
+              ? intl.formatMessage({
+                  id: "pages.questions.publish",
+                  defaultMessage: "发布",
+                })
+              : intl.formatMessage({
+                  id: "pages.questions.unpublish",
+                  defaultMessage: "下架",
+                })}
           </a>
           <Divider type="vertical" />
           <Dropdown
@@ -498,7 +537,7 @@ const QuestionsPageContent: React.FC = () => {
               intl.formatMessage({
                 id: "pages.questions.fetchError",
                 defaultMessage: "获取题目列表失败",
-              })
+              }),
             );
             return { data: [], total: 0, success: false };
           }
@@ -513,7 +552,7 @@ const QuestionsPageContent: React.FC = () => {
                 id: "pages.questions.total",
                 defaultMessage: "共 {total} 条",
               },
-              { total }
+              { total },
             ),
         }}
         revalidateOnFocus={false}

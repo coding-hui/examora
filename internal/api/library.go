@@ -12,6 +12,7 @@ func (s *Server) registerLibraryAdminRoutes(admin *gin.RouterGroup) {
 	admin.POST("/questions", s.createQuestion)
 	admin.GET("/questions/:id", s.getQuestion)
 	admin.PUT("/questions/:id", s.updateQuestion)
+	admin.PATCH("/questions/:id", s.patchQuestion)
 	admin.DELETE("/questions/:id", s.deleteQuestion)
 	admin.POST("/questions/:id/test-cases", s.addTestCase)
 	admin.GET("/questions/:id/test-cases", s.listTestCases)
@@ -101,6 +102,23 @@ func (s *Server) updateQuestion(c *gin.Context) {
 		return
 	}
 	response.Success(c, toQuestionResponseWithTestCases(*q, tcs, true))
+}
+
+func (s *Server) patchQuestion(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	req, ok := bindJSON[patchQuestionRequest](c)
+	if !ok {
+		return
+	}
+	q, err := s.library.PatchQuestionStatus(c.Request.Context(), id, req.Status)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toQuestionAdminResponse(*q))
 }
 
 func (s *Server) deleteQuestion(c *gin.Context) {

@@ -178,6 +178,21 @@ func (s *Service) UpdateQuestion(ctx context.Context, id uint64, cmd SaveQuestio
 	return s.store.GetQuestion(ctx, id)
 }
 
+func (s *Service) PatchQuestionStatus(ctx context.Context, id uint64, status string) (*Question, error) {
+	if status != QuestionStatusDraft && status != QuestionStatusPublished {
+		return nil, fmt.Errorf("%w: unsupported question status", ErrInvalidQuestion)
+	}
+	q, err := s.store.GetQuestion(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	q.Status = status
+	if err := s.store.UpdateQuestion(ctx, q); err != nil {
+		return nil, err
+	}
+	return q, nil
+}
+
 func (s *Service) DeleteQuestion(ctx context.Context, id uint64) error {
 	if _, err := s.store.GetQuestion(ctx, id); err != nil {
 		return err
