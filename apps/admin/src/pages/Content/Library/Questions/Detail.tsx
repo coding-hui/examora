@@ -789,13 +789,18 @@ const QuestionsDetailContent: React.FC = () => {
   const { message } = AntdApp.useApp();
   const [form] = Form.useForm();
   const questionId = history.location.pathname.split("/").filter(Boolean).pop();
+  const isNew = questionId === "new";
   const [question, setQuestion] = useState<AdminQuestion | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
+  // Effective type: from form field in create mode, from fetched question in edit mode
+  const watchType = Form.useWatch("type", form) as QuestionType | undefined;
+  const effectiveType: QuestionType | undefined = isNew ? watchType : question?.type;
+
   const fetchQuestion = async () => {
-    if (!questionId) return;
+    if (!questionId || isNew) return;
     setLoading(true);
     try {
       const response = await request<QuestionEnvelope>(
@@ -810,6 +815,18 @@ const QuestionsDetailContent: React.FC = () => {
   };
 
   useEffect(() => {
+    if (isNew) {
+      form.resetFields();
+      form.setFieldsValue({
+        status: "DRAFT",
+        time_limit_ms: 2000,
+        memory_limit_mb: 256,
+        content: { text: "" },
+      });
+      setLoading(false);
+      setIsDirty(false);
+      return;
+    }
     fetchQuestion();
   }, [questionId]);
 
@@ -836,10 +853,31 @@ const QuestionsDetailContent: React.FC = () => {
   };
 
   const saveQuestion = async () => {
-    if (!question) return;
     try {
       await form.validateFields();
       const values = form.getFieldsValue(true);
+      const questionType = isNew ? values.type : question?.type;
+
+      if (isNew) {
+        const payload = { ...values };
+        if (questionType !== "PROGRAMMING") {
+          delete payload.time_limit_ms;
+          delete payload.memory_limit_mb;
+          delete payload.language;
+          delete payload.starter_code;
+          delete payload.test_cases;
+        }
+        setSaving(true);
+        const response = await request<QuestionEnvelope>(
+          "/api/admin/questions",
+          { method: "POST", data: payload }
+        );
+        message.success("创建成功");
+        history.push(`/content/library/questions/${response.data.id}`);
+        return;
+      }
+
+      if (!question) return;
       const payload = {
         ...values,
         type: question.type,
@@ -861,13 +899,24 @@ const QuestionsDetailContent: React.FC = () => {
       fetchQuestion();
     } catch (error) {
       if ((error as { errorFields?: unknown[] }).errorFields) return;
-      message.error("保存失败");
+      message.error(isNew ? "创建失败" : "保存失败");
     } finally {
       setSaving(false);
     }
   };
 
   const cancelEdit = () => {
+    if (isNew) {
+      form.resetFields();
+      form.setFieldsValue({
+        status: "DRAFT",
+        time_limit_ms: 2000,
+        memory_limit_mb: 256,
+        content: { text: "" },
+      });
+      setIsDirty(false);
+      return;
+    }
     if (question) {
       form.setFieldsValue({
         title: question.title,
@@ -908,10 +957,14 @@ const QuestionsDetailContent: React.FC = () => {
     }
   };
 
-  const pageTitle = loading ? "加载中..." : question?.title || "题目详情";
-  const isProgramming = question?.type === "PROGRAMMING";
+  const pageTitle = isNew
+    ? "新建题目"
+    : loading
+      ? "加载中..."
+      : question?.title || "题目详情";
+  const isProgramming = effectiveType === "PROGRAMMING";
 
-  const metaInfoBar = question ? (
+  const metaInfoBar = question && !isNew ? (
     <Space wrap size={[8, 8]} className="qdetail-meta-row">
       <code className="qdetail-id-code">#{question.id}</code>
       <Tag className="question-type-tag">{QUESTION_TYPES[question.type]}</Tag>
@@ -953,11 +1006,11 @@ const QuestionsDetailContent: React.FC = () => {
       loading={loading}
       className="qdetail-page"
     >
-      {!loading && !question ? (
+      {!loading && !question && !isNew ? (
         <div className="qdetail-wrap">
           <Empty description="题目不存在" />
         </div>
-      ) : question ? (
+      ) : question || isNew ? (
         <>
           <div className="qdetail-hero">
             <div className="qdetail-hero-inner">
@@ -974,18 +1027,24 @@ const QuestionsDetailContent: React.FC = () => {
                   {metaInfoBar}
                 </div>
               </div>
-              <Popconfirm
-                title="删除题目"
-                description="确定删除该题目？"
-                okText="删除"
-                cancelText="取消"
-                okButtonProps={{ danger: true }}
-                onConfirm={deleteQuestion}
-              >
-                <Button danger icon={<DeleteOutlined />} aria-label="删除题目">
-                  删除
-                </Button>
-              </Popconfirm>
+              {!isNew && (
+                <Popconfirm
+                  title="删除题目"
+                  description="确定删除该题目？"
+                  okText="删除"
+                  cancelText="取消"
+                  okButtonProps={{ danger: true }}
+                  onConfirm={deleteQuestion}
+                >
+                  <Button
+                    danger
+                    icon={<DeleteOutlined />}
+                    aria-label="删除题目"
+                  >
+                    删除
+                  </Button>
+                </Popconfirm>
+              )}
             </div>
           </div>
 
@@ -997,90 +1056,119 @@ const QuestionsDetailContent: React.FC = () => {
                 className="qdetail-form"
                 onValuesChange={handleValuesChange}
               >
+                {/* ===== Type (create mode only) ===== */}
+                {isNew && (
+                  <div className="qdetail-section">
+                    <SectionTitle>题型</SectionTitle>
+                    <Form.Item
+                      name="type"
+                      rules={[{ required: true, message: "请选择题型" }]}
+                      style={{ marginBottom: 0 }}
+                    >
+                      <Select
+                        placeholder="请选择题型"
+                        options={Object.entries(QUESTION_TYPES).map(
+                          ([value, label]) => ({ value, label })
+                        )}
+                        onChange={() => {
+                          // Reset answer fields when type changes
+                          form.setFieldValue("answer", undefined);
+                          form.setFieldValue("content", { text: "" });
+                          setTimeout(() => setIsDirty(true), 0);
+                        }}
+                      />
+                    </Form.Item>
+                  </div>
+                )}
+
                 {/* ===== Basic Info ===== */}
-                <div className="qdetail-section">
-                  <SectionTitle>基本信息</SectionTitle>
-                  <Form.Item
-                    name="title"
-                    label="标题"
-                    rules={[{ required: true, message: "请输入题目标题" }]}
-                  >
-                    <Input
-                      placeholder="请输入题目标题"
-                      className="qdetail-title-input"
-                    />
-                  </Form.Item>
-                  <Row gutter={[12, 8]}>
-                    <Col xs={12} sm={8} md={6} lg={4}>
-                      <Form.Item
-                        name="difficulty"
-                        label="难度"
-                        style={{ marginBottom: 0 }}
-                      >
-                        <Select
-                          placeholder="难度"
-                          options={DIFFICULTY_OPTIONS}
-                          size="small"
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={12} sm={8} md={6} lg={4}>
-                      <Form.Item
-                        name="status"
-                        label="状态"
-                        style={{ marginBottom: 0 }}
-                      >
-                        <Select
-                          placeholder="状态"
-                          options={STATUS_OPTIONS}
-                          size="small"
-                        />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                </div>
+                {effectiveType && (
+                  <div className="qdetail-section">
+                    <SectionTitle>基本信息</SectionTitle>
+                    <Form.Item
+                      name="title"
+                      label="标题"
+                      rules={[{ required: true, message: "请输入题目标题" }]}
+                    >
+                      <Input placeholder="请输入题目标题" />
+                    </Form.Item>
+                    <Row gutter={[12, 8]}>
+                      <Col xs={12} sm={8} md={6} lg={4}>
+                        <Form.Item
+                          name="difficulty"
+                          label="难度"
+                          style={{ marginBottom: 0 }}
+                        >
+                          <Select
+                            placeholder="难度"
+                            options={DIFFICULTY_OPTIONS}
+                            size="small"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={12} sm={8} md={6} lg={4}>
+                        <Form.Item
+                          name="status"
+                          label="状态"
+                          style={{ marginBottom: 0 }}
+                        >
+                          <Select
+                            placeholder="状态"
+                            options={STATUS_OPTIONS}
+                            size="small"
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+                )}
 
                 {/* ===== Question Body ===== */}
-                <div className="qdetail-section">
-                  <SectionTitle>题干</SectionTitle>
-                  <Form.Item
-                    name={["content", "text"]}
-                    rules={[{ required: true, message: "请输入题干" }]}
-                    style={{ marginBottom: 0 }}
-                  >
-                    <Input.TextArea
-                      rows={4}
-                      placeholder="请输入题干内容"
-                      className="qdetail-body-textarea"
-                    />
-                  </Form.Item>
-                </div>
+                {effectiveType && (
+                  <div className="qdetail-section">
+                    <SectionTitle>题干</SectionTitle>
+                    <Form.Item
+                      name={["content", "text"]}
+                      rules={[{ required: true, message: "请输入题干" }]}
+                      style={{ marginBottom: 0 }}
+                    >
+                      <Input.TextArea
+                        rows={4}
+                        placeholder="请输入题干内容"
+                        className="qdetail-body-textarea"
+                      />
+                    </Form.Item>
+                  </div>
+                )}
 
                 {/* ===== Options ===== */}
-                {(question.type === "SINGLE_CHOICE" ||
-                  question.type === "MULTIPLE_CHOICE") && (
+                {(effectiveType === "SINGLE_CHOICE" ||
+                  effectiveType === "MULTIPLE_CHOICE") && (
                   <div className="qdetail-section">
                     <SectionTitle>选项</SectionTitle>
                     <OptionsEdit
-                      type={question.type}
+                      type={effectiveType}
                       onAnswerChange={handleValuesChange}
                     />
                   </div>
                 )}
 
                 {/* ===== Answer ===== */}
-                {question.type !== "SINGLE_CHOICE" &&
-                  question.type !== "MULTIPLE_CHOICE" && (
+                {effectiveType &&
+                  effectiveType !== "SINGLE_CHOICE" &&
+                  effectiveType !== "MULTIPLE_CHOICE" && (
                     <div className="qdetail-section">
                       <SectionTitle>参考答案</SectionTitle>
-                      {question.type === "TRUE_FALSE" && (
+                      {effectiveType === "TRUE_FALSE" && (
                         <TrueFalseAnswerEdit />
                       )}
-                      {question.type === "FILL_BLANK" && (
+                      {effectiveType === "FILL_BLANK" && (
                         <FillBlankAnswerEdit />
                       )}
-                      {question.type === "SHORT_ANSWER" && <ShortAnswerEdit />}
-                      {question.type === "PROGRAMMING" && (
+                      {effectiveType === "SHORT_ANSWER" && (
+                        <ShortAnswerEdit />
+                      )}
+                      {effectiveType === "PROGRAMMING" && (
                         <div className="qdetail-answer-hint">
                           编程题无固定标准答案，以测试用例判分为准。
                         </div>
@@ -1089,7 +1177,7 @@ const QuestionsDetailContent: React.FC = () => {
                   )}
 
                 {/* ===== Programming ===== */}
-                {question.type === "PROGRAMMING" && (
+                {effectiveType === "PROGRAMMING" && (
                   <div className="qdetail-section">
                     <SectionTitle>编程配置</SectionTitle>
                     <Row className="qdetail-program-config" gutter={[12, 8]}>
@@ -1149,20 +1237,25 @@ const QuestionsDetailContent: React.FC = () => {
                 )}
               </Form>
 
-              {/* ===== Footer meta (inside paper) ===== */}
-              <div className="qdetail-footer-meta-bar">
-                <span className="qdetail-footer-meta">
-                  创建于 {dayjs(question.created_at).format("YYYY-MM-DD HH:mm")}
-                  &nbsp;·&nbsp; 更新于{" "}
-                  {dayjs(question.updated_at).format("YYYY-MM-DD HH:mm")}
-                </span>
-              </div>
+              {/* ===== Footer meta (inside paper) — edit mode only ===== */}
+              {!isNew && question && (
+                <div className="qdetail-footer-meta-bar">
+                  <span className="qdetail-footer-meta">
+                    创建于{" "}
+                    {dayjs(question.created_at).format("YYYY-MM-DD HH:mm")}
+                    &nbsp;·&nbsp; 更新于{" "}
+                    {dayjs(question.updated_at).format("YYYY-MM-DD HH:mm")}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* ===== Sticky actions (outside paper, fixed to bottom) ===== */}
             {isDirty && (
               <div className="qdetail-sticky-footer">
-                <span className="qdetail-dirty-text">有未保存修改</span>
+                <span className="qdetail-dirty-text">
+                  {isNew ? "题目尚未保存" : "有未保存修改"}
+                </span>
                 <Space>
                   <Button
                     type="primary"
@@ -1170,7 +1263,7 @@ const QuestionsDetailContent: React.FC = () => {
                     loading={saving}
                     onClick={saveQuestion}
                   >
-                    保存
+                    {isNew ? "创建" : "保存"}
                   </Button>
                   <Button onClick={cancelEdit}>还原修改</Button>
                 </Space>
