@@ -8,7 +8,12 @@ export type QuestionType =
   | "SHORT_ANSWER"
   | "PROGRAMMING";
 
-export type ExamStatus = "DRAFT" | "PUBLISHED" | "RUNNING" | "CLOSED" | "ARCHIVED";
+export type ExamStatus =
+  | "DRAFT"
+  | "PUBLISHED"
+  | "RUNNING"
+  | "CLOSED"
+  | "ARCHIVED";
 
 export type ExamSessionStatus =
   | "NOT_STARTED"
@@ -49,6 +54,9 @@ export interface AdminQuestion {
   memory_limit_mb: number;
   status: string;
   test_cases?: AdminTestCase[];
+  created_by: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AdminTestCase {
@@ -68,7 +76,7 @@ export interface QuestionFilter {
   type?: QuestionType;
   difficulty?: string;
   status?: "DRAFT" | "PUBLISHED";
-  sort_field?: "type" | "difficulty" | "status" | "updated_at";
+  sort_field?: "updated_at";
   sort_order?: "asc" | "desc";
   page?: number;
   page_size?: number;
@@ -92,7 +100,7 @@ export interface SaveQuestionPayload {
   time_limit_ms: number;
   memory_limit_mb: number;
   status: string;
-  test_cases?: Omit<AdminTestCase, 'id' | 'question_id'>[];
+  test_cases?: Omit<AdminTestCase, "id" | "question_id">[];
 }
 
 // =====================================================================

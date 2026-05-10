@@ -54,6 +54,9 @@ func (r *UserStore) Create(ctx context.Context, user *auth.User, passwordHash st
 	if user.DisplayName != nil {
 		row.DisplayName = user.DisplayName
 	}
+	if user.Email != nil {
+		row.Email = user.Email
+	}
 	if user.AuthProvider != nil {
 		row.AuthProvider = user.AuthProvider
 	}
@@ -124,10 +127,11 @@ func (r *UserStore) VerifyPassword(ctx context.Context, username, password strin
 	return user, err == nil, nil
 }
 
-func (r *UserStore) Update(ctx context.Context, id uint64, username, displayName string, status string) error {
+func (r *UserStore) Update(ctx context.Context, id uint64, username, displayName, email, status string) error {
 	return transaction.DBFromContext(ctx, r.db).Model(&database.UserModel{}).Where("id = ?", id).Updates(map[string]any{
 		"username":     username,
 		"display_name": displayName,
+		"email":        email,
 		"status":       status,
 	}).Error
 }
@@ -159,6 +163,7 @@ func toUser(m *database.UserModel) *auth.User {
 		Username:    m.Username,
 		Status:      m.Status,
 		DisplayName: m.DisplayName,
+		Email:       m.Email,
 		CreatedAt:   m.CreatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }

@@ -5,10 +5,10 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import {
-  PageContainer,
-  ProTable,
   type ActionType,
+  PageContainer,
   type ProColumns,
+  ProTable,
 } from '@ant-design/pro-components';
 import { request, useIntl } from '@umijs/max';
 import {
@@ -94,12 +94,13 @@ const UserListContent: React.FC = () => {
   const [tableLoading, setTableLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
 
   const openCreate = () => {
     setEditing(null);
     userForm.resetFields();
-    setDrawerOpen(true);
+    setModalOpen(true);
   };
 
   const openEdit = (user: User) => {
@@ -126,7 +127,11 @@ const UserListContent: React.FC = () => {
         },
       );
       antdMessage.success(editing ? '用户已保存' : '用户已创建');
-      setDrawerOpen(false);
+      if (editing) {
+        setDrawerOpen(false);
+      } else {
+        setModalOpen(false);
+      }
       actionRef.current?.reload();
     } catch (_error) {
       // form validation errors are handled by Form automatically; only show error for API failures
@@ -414,6 +419,91 @@ const UserListContent: React.FC = () => {
           </Button>,
         ]}
       />
+
+      <Modal
+        title="添加用户"
+        open={modalOpen}
+        onCancel={() => {
+          setSaving(false);
+          setModalOpen(false);
+        }}
+        footer={null}
+        centered
+      >
+        <p style={{ margin: '0 0 16px', color: '#888' }}>
+          提供以下至少一项字段才能继续
+        </p>
+        <Form
+          form={userForm}
+          layout="vertical"
+          onFinish={async () => {
+            try {
+              await userForm.validateFields();
+              setSaving(true);
+              await request('/api/admin/users', {
+                method: 'POST',
+                data: userForm.getFieldsValue(),
+              });
+              antdMessage.success('用户已创建');
+              setModalOpen(false);
+              actionRef.current?.reload();
+            } catch (_error) {
+              antdMessage.error('创建用户失败');
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          <Form.Item
+            label="用户名"
+            name="username"
+            rules={[
+              { required: true, message: '请输入用户名' },
+              { min: 3, message: '用户名至少 3 个字符' },
+            ]}
+          >
+            <Input placeholder="输入用户名" />
+          </Form.Item>
+          <Form.Item label="显示名称" name="display_name">
+            <Input placeholder="输入显示名称（可选）" />
+          </Form.Item>
+          <Form.Item
+            label="邮箱"
+            name="email"
+            rules={[{ type: 'email', message: '请输入有效的邮箱地址' }]}
+          >
+            <Input placeholder="输入邮箱（可选）" />
+          </Form.Item>
+          <Row gutter={12}>
+            <Col span={10}>
+              <Form.Item
+                label="角色"
+                name="role"
+                rules={[{ required: true, message: '请选择角色' }]}
+              >
+                <Select options={ROLES} placeholder="选择角色" />
+              </Form.Item>
+            </Col>
+            <Col span={14}>
+              <Form.Item
+                label="状态"
+                name="status"
+                rules={[{ required: true, message: '请选择状态' }]}
+              >
+                <Select options={STATUSES} placeholder="选择状态" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+            <Space>
+              <Button onClick={() => setModalOpen(false)}>取消</Button>
+              <Button type="primary" htmlType="submit" loading={saving}>
+                添加用户
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <Drawer
         title={editing ? '编辑用户' : '创建用户'}

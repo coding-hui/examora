@@ -1,6 +1,6 @@
 import {
-  SettingDrawer,
   type Settings as LayoutSettings,
+  SettingDrawer,
 } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
@@ -15,12 +15,12 @@ import {
   setLocalProfile,
 } from '@/auth/token';
 import { AvatarDropdown, Footer, SelectLang } from '@/components';
-import useShadcnTheme from '@/theme/shadcnTheme';
 import {
   loadThemePreference,
   saveThemePreference,
   toLayoutSettings,
 } from '@/theme/preference';
+import useShadcnTheme from '@/theme/shadcnTheme';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './request';
 

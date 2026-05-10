@@ -46,9 +46,6 @@ func (s *Store) ListQuestions(ctx context.Context, filter library.QuestionFilter
 func questionOrderBy(filter library.QuestionFilter) clause.OrderByColumn {
 	column := map[string]string{
 		"updated_at": "updated_at",
-		"type":       "type",
-		"difficulty": "difficulty",
-		"status":     "status",
 	}[filter.SortField]
 	if column == "" {
 		column = "updated_at"

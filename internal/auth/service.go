@@ -249,7 +249,7 @@ func (u *Service) CreateUser(ctx context.Context, user *User, password string) e
 }
 
 func (u *Service) UpdateUser(ctx context.Context, user *User) error {
-	return u.userRepo.Update(ctx, user.ID, user.Username, derefStr(user.DisplayName), user.Status)
+	return u.userRepo.Update(ctx, user.ID, user.Username, derefStr(user.DisplayName), derefStr(user.Email), user.Status)
 }
 
 func derefStr(s *string) string {

@@ -12,6 +12,7 @@ type UserModel struct {
 	PasswordHash    string  `gorm:"column:password_hash;size:255;not null"`
 	Status          string  `gorm:"size:32;not null;default:ACTIVE"`
 	DisplayName     *string `gorm:"size:128"`
+	Email           *string `gorm:"column:email;size:255;index"`
 	AuthProvider    *string `gorm:"column:auth_provider;size:32"`
 	ExternalSubject *string `gorm:"column:external_subject;size:128;uniqueIndex"`
 	CreatedAt       time.Time

@@ -83,6 +83,7 @@ func (s *Server) createUser(c *gin.Context) {
 	user := &auth.User{
 		Username:    req.Username,
 		DisplayName: req.DisplayName,
+		Email:       req.Email,
 		Role:        req.Role,
 		Status:      req.Status,
 	}

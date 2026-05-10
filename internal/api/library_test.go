@@ -92,7 +92,7 @@ func TestListQuestionsEndpointSupportsFiltersAndPaging(t *testing.T) {
 	require.False(t, body.Data.Items[0].UpdatedAt.IsZero())
 }
 
-func TestListQuestionsEndpointSupportsSorting(t *testing.T) {
+func TestListQuestionsEndpointSupportsUpdatedAtSorting(t *testing.T) {
 	router, service := newLibraryAPIRouter(t)
 
 	_, err := service.CreateQuestion(t.Context(), library.SaveQuestionCommand{
@@ -125,7 +125,7 @@ func TestListQuestionsEndpointSupportsSorting(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/admin/questions?status=published&sort_field=type&sort_order=desc&page=1&page_size=10", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/admin/questions?status=published&sort_field=updated_at&sort_order=desc&page=1&page_size=10", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 
@@ -142,8 +142,8 @@ func TestListQuestionsEndpointSupportsSorting(t *testing.T) {
 	require.Equal(t, 0, body.Code)
 	require.EqualValues(t, 2, body.Data.Total)
 	require.Len(t, body.Data.Items, 2)
-	require.Equal(t, library.QuestionTypeTrueFalse, body.Data.Items[0].Type)
-	require.Equal(t, library.QuestionTypeShortAnswer, body.Data.Items[1].Type)
+	require.Equal(t, "Published true false", body.Data.Items[0].Title)
+	require.Equal(t, "Published answer", body.Data.Items[1].Title)
 }
 
 func TestListQuestionsEndpointNormalizesUnsafeSortAndPaging(t *testing.T) {

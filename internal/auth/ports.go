@@ -10,7 +10,7 @@ type UserStore interface {
 	FindByUsername(ctx context.Context, username string) (*User, error)
 	FindByExternalSubject(ctx context.Context, sub string) (*User, error)
 	Create(ctx context.Context, user *User, passwordHash string) error
-	Update(ctx context.Context, id uint64, username, displayName string, status string) error
+	Update(ctx context.Context, id uint64, username, displayName, email, status string) error
 	Delete(ctx context.Context, id uint64) error
 	List(ctx context.Context, page, pageSize int) ([]User, int64, error)
 	UpdatePassword(ctx context.Context, id uint64, hash string) error

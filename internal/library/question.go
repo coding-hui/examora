@@ -105,7 +105,7 @@ func (s *Service) ListQuestions(ctx context.Context, filter QuestionFilter) ([]Q
 
 func normalizeQuestionSortField(value string) string {
 	switch strings.ToLower(strings.TrimSpace(value)) {
-	case "type", "difficulty", "status", "updated_at":
+	case "updated_at":
 		return strings.ToLower(strings.TrimSpace(value))
 	default:
 		return "updated_at"
