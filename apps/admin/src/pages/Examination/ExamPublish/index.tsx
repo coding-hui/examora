@@ -46,7 +46,14 @@ const ExamPublish: React.FC = () => {
           });
         }
       })
-      .catch(() => message.error("获取考试信息失败"))
+      .catch(() =>
+        message.error(
+          intl.formatMessage({
+            id: "pages.exams.publish.fetchError",
+            defaultMessage: "获取考试信息失败",
+          }),
+        ),
+      )
       .finally(() => setLoading(false));
   }, [examId, form]);
 
@@ -68,23 +75,45 @@ const ExamPublish: React.FC = () => {
             end_time: values.end_time.toISOString(),
             duration_minutes: values.duration_minutes,
           },
-        }
+        },
       );
       if (response.code === 0) {
-        message.success("考试发布成功");
+        message.success(
+          intl.formatMessage({
+            id: "pages.exams.publish.success",
+            defaultMessage: "考试发布成功",
+          }),
+        );
         window.location.href = "/exams";
       } else {
-        message.error(response.message || "发布失败");
+        message.error(
+          response.message ||
+            intl.formatMessage({
+              id: "pages.exams.publish.fail",
+              defaultMessage: "发布失败",
+            }),
+        );
       }
     } catch {
-      message.error("发布考试失败");
+      message.error(
+        intl.formatMessage({
+          id: "pages.exams.publish.error",
+          defaultMessage: "发布考试失败",
+        }),
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Card loading={loading} title="发布考试">
+    <Card
+      loading={loading}
+      title={intl.formatMessage({
+        id: "pages.exams.publish.title",
+        defaultMessage: "发布考试",
+      })}
+    >
       <Form
         form={form}
         layout="vertical"
@@ -102,24 +131,57 @@ const ExamPublish: React.FC = () => {
 
         <Form.Item
           name="duration_minutes"
-          label="考试时长（分钟）"
-          rules={[{ required: true, message: "请输入考试时长" }]}
+          label={intl.formatMessage({
+            id: "pages.exams.publish.durationLabel",
+            defaultMessage: "考试时长（分钟）",
+          })}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: "pages.exams.publish.durationRequired",
+                defaultMessage: "请输入考试时长",
+              }),
+            },
+          ]}
         >
           <InputNumber min={1} max={480} style={{ width: 200 }} />
         </Form.Item>
 
         <Form.Item
           name="start_time"
-          label="开始时间"
-          rules={[{ required: true, message: "请选择开始时间" }]}
+          label={intl.formatMessage({
+            id: "pages.exams.publish.startTimeLabel",
+            defaultMessage: "开始时间",
+          })}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: "pages.exams.publish.startTimeRequired",
+                defaultMessage: "请选择开始时间",
+              }),
+            },
+          ]}
         >
           <DatePicker showTime format="YYYY-MM-DD HH:mm" />
         </Form.Item>
 
         <Form.Item
           name="end_time"
-          label="结束时间"
-          rules={[{ required: true, message: "请选择结束时间" }]}
+          label={intl.formatMessage({
+            id: "pages.exams.publish.endTimeLabel",
+            defaultMessage: "结束时间",
+          })}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: "pages.exams.publish.endTimeRequired",
+                defaultMessage: "请选择结束时间",
+              }),
+            },
+          ]}
         >
           <DatePicker showTime format="YYYY-MM-DD HH:mm" />
         </Form.Item>

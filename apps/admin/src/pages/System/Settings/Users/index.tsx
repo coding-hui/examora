@@ -47,17 +47,8 @@ interface UserFormValues {
   status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
 }
 
-const ROLES = [
-  { label: "管理员", value: "ADMIN" },
-  { label: "教师", value: "TEACHER" },
-  { label: "学生", value: "STUDENT" },
-];
-
-const STATUSES = [
-  { label: "启用", value: "ACTIVE" },
-  { label: "停用", value: "INACTIVE" },
-  { label: "封禁", value: "SUSPENDED" },
-];
+const ROLE_KEYS = ["ADMIN", "TEACHER", "STUDENT"] as const;
+const STATUS_KEYS = ["ACTIVE", "INACTIVE", "SUSPENDED"] as const;
 
 const roleColors: Record<string, string> = {
   ADMIN: "red",
@@ -83,60 +74,66 @@ const UserListContent: React.FC = () => {
   const [editing, setEditing] = useState<User | null>(null);
 
   // i18n label maps
-  const roleLabelMap = useMemo(
-    () =>
-      Object.fromEntries(
-        ROLES.map((r) => [
-          r.value,
-          intl.formatMessage({
-            id: `pages.users.roles.${r.value}`,
-            defaultMessage: r.label,
-          }),
-        ])
-      ),
-    [intl]
+  const roleLabelMap: Record<string, string> = useMemo(
+    () => ({
+      ADMIN: intl.formatMessage({
+        id: "pages.users.roles.ADMIN",
+        defaultMessage: "管理员",
+      }),
+      TEACHER: intl.formatMessage({
+        id: "pages.users.roles.TEACHER",
+        defaultMessage: "教师",
+      }),
+      STUDENT: intl.formatMessage({
+        id: "pages.users.roles.STUDENT",
+        defaultMessage: "学生",
+      }),
+    }),
+    [intl],
   );
 
-  const statusLabelMap = useMemo(
-    () =>
-      Object.fromEntries(
-        STATUSES.map((s) => [
-          s.value,
-          intl.formatMessage({
-            id: `pages.users.statuses.${s.value}`,
-            defaultMessage: s.label,
-          }),
-        ])
-      ),
-    [intl]
+  const statusLabelMap: Record<string, string> = useMemo(
+    () => ({
+      ACTIVE: intl.formatMessage({
+        id: "pages.users.statuses.ACTIVE",
+        defaultMessage: "启用",
+      }),
+      INACTIVE: intl.formatMessage({
+        id: "pages.users.statuses.INACTIVE",
+        defaultMessage: "停用",
+      }),
+      SUSPENDED: intl.formatMessage({
+        id: "pages.users.statuses.SUSPENDED",
+        defaultMessage: "封禁",
+      }),
+    }),
+    [intl],
   );
 
   // i18n'd select options
   const roleOptions = useMemo(
-    () => ROLES.map((r) => ({ ...r, label: roleLabelMap[r.value] })),
-    [roleLabelMap]
+    () => ROLE_KEYS.map((v) => ({ label: roleLabelMap[v], value: v })),
+    [roleLabelMap],
   );
 
   const statusOptions = useMemo(
-    () => STATUSES.map((s) => ({ ...s, label: statusLabelMap[s.value] })),
-    [statusLabelMap]
+    () => STATUS_KEYS.map((v) => ({ label: statusLabelMap[v], value: v })),
+    [statusLabelMap],
   );
 
   // valueEnums for ProTable
   const roleValueEnum = useMemo(
     () =>
-      Object.fromEntries(
-        ROLES.map((r) => [r.value, { text: roleLabelMap[r.value] }])
-      ),
-    [roleLabelMap]
+      Object.fromEntries(ROLE_KEYS.map((v) => [v, { text: roleLabelMap[v] }])),
+    [roleLabelMap],
   );
 
   const statusValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        STATUSES.map((s) => [s.value, { text: statusLabelMap[s.value] }])
+        STATUS_KEYS.map((v) => [v, { text: statusLabelMap[v] }]),
       ),
-    [statusLabelMap]
+    [statusLabelMap],
   );
 
   const openCreate = () => {
@@ -166,7 +163,7 @@ const UserListContent: React.FC = () => {
         {
           method: editing ? "PUT" : "POST",
           data: values,
-        }
+        },
       );
       antdMessage.success(
         editing
@@ -177,7 +174,7 @@ const UserListContent: React.FC = () => {
           : intl.formatMessage({
               id: "pages.users.createSuccess",
               defaultMessage: "用户已创建",
-            })
+            }),
       );
       if (editing) {
         setDrawerOpen(false);
@@ -195,7 +192,7 @@ const UserListContent: React.FC = () => {
           : intl.formatMessage({
               id: "pages.users.createError",
               defaultMessage: "创建用户失败",
-            })
+            }),
       );
     } finally {
       setSaving(false);
@@ -213,7 +210,7 @@ const UserListContent: React.FC = () => {
           id: "pages.users.deleteConfirmContent",
           defaultMessage: "确定要删除用户「{username}」吗？此操作不可撤销。",
         },
-        { username: user.username }
+        { username: user.username },
       ),
       okText: intl.formatMessage({
         id: "pages.users.delete",
@@ -233,7 +230,7 @@ const UserListContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.users.deleteSuccess",
               defaultMessage: "用户已删除",
-            })
+            }),
           );
           actionRef.current?.reload();
         } catch (_error) {
@@ -241,7 +238,7 @@ const UserListContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.users.deleteError",
               defaultMessage: "删除用户失败",
-            })
+            }),
           );
         }
       },
@@ -511,7 +508,7 @@ const UserListContent: React.FC = () => {
               intl.formatMessage({
                 id: "pages.users.fetchError",
                 defaultMessage: "获取用户列表失败",
-              })
+              }),
             );
             return {
               data: [],
@@ -530,7 +527,7 @@ const UserListContent: React.FC = () => {
                 id: "pages.users.total",
                 defaultMessage: "共 {total} 条",
               },
-              { total }
+              { total },
             ),
         }}
         revalidateOnFocus={false}
@@ -585,7 +582,7 @@ const UserListContent: React.FC = () => {
                 intl.formatMessage({
                   id: "pages.users.createSuccess",
                   defaultMessage: "用户已创建",
-                })
+                }),
               );
               setModalOpen(false);
               actionRef.current?.reload();
@@ -594,7 +591,7 @@ const UserListContent: React.FC = () => {
                 intl.formatMessage({
                   id: "pages.users.createError",
                   defaultMessage: "创建用户失败",
-                })
+                }),
               );
             } finally {
               setSaving(false);

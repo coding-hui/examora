@@ -9,7 +9,7 @@ import {
   SaveOutlined,
 } from "@ant-design/icons";
 import { PageContainer } from "@ant-design/pro-components";
-import { history, request } from "@umijs/max";
+import { history, request, useIntl } from "@umijs/max";
 import {
   App as AntdApp,
   Badge,
@@ -176,13 +176,14 @@ const OptionsEdit: React.FC<{
   type: "SINGLE_CHOICE" | "MULTIPLE_CHOICE";
   onAnswerChange: () => void;
 }> = ({ type, onAnswerChange }) => {
+  const intl = useIntl();
   const form = Form.useFormInstance();
   const options: QuestionOption[] =
     Form.useWatch(["content", "options"], form) || [];
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
   return (
@@ -286,12 +287,21 @@ const OptionsEdit: React.FC<{
                           {...restField}
                           name={[name, "text"]}
                           rules={[
-                            { required: true, message: "请输入选项内容" },
+                            {
+                              required: true,
+                              message: intl.formatMessage({
+                                id: "pages.questions.form.options.optionRequired",
+                                defaultMessage: "请输入选项内容",
+                              }),
+                            },
                           ]}
                           style={{ marginBottom: 0, flex: 1 }}
                         >
                           <Input
-                            placeholder="选项内容"
+                            placeholder={intl.formatMessage({
+                              id: "pages.questions.form.options.optionPlaceholder",
+                              defaultMessage: "选项内容",
+                            })}
                             className="qdetail-option-edit-text"
                           />
                         </Form.Item>
@@ -326,7 +336,10 @@ const OptionsEdit: React.FC<{
                     size="small"
                     className="qdetail-option-edit-add"
                   >
-                    添加选项
+                    {intl.formatMessage({
+                      id: "pages.questions.form.options.addOption",
+                      defaultMessage: "添加选项",
+                    })}
                   </Button>
                 )}
               </div>
@@ -387,6 +400,7 @@ const TestCasePreview: React.FC<{
 };
 
 const TestCasesEdit: React.FC = () => {
+  const intl = useIntl();
   const form = Form.useFormInstance();
   const [activeCase, setActiveCase] = useState<number | null>(null);
   const [advancedCase, setAdvancedCase] = useState<number | null>(null);
@@ -441,17 +455,29 @@ const TestCasesEdit: React.FC = () => {
                 }
               >
                 <span className="qdetail-testcase-title">
-                  用例 {(name as number) + 1}
+                  {intl.formatMessage(
+                    {
+                      id: "pages.questions.form.testCase.number",
+                      defaultMessage: "用例 {n}",
+                    },
+                    { n: (name as number) + 1 },
+                  )}
                 </span>
                 <TestCasePreview
                   optionIndex={name as number}
                   fieldName="input"
-                  fallback="无输入"
+                  fallback={intl.formatMessage({
+                    id: "pages.questions.form.testCase.noInput",
+                    defaultMessage: "无输入",
+                  })}
                 />
                 <TestCasePreview
                   optionIndex={name as number}
                   fieldName="expected_output"
-                  fallback="未填写预期输出"
+                  fallback={intl.formatMessage({
+                    id: "pages.questions.form.testCase.noExpected",
+                    defaultMessage: "未填写预期输出",
+                  })}
                 />
               </button>
               <div className="qdetail-testcase-actions">
@@ -462,7 +488,12 @@ const TestCasesEdit: React.FC = () => {
                     valuePropName="checked"
                     noStyle
                   >
-                    <Checkbox>示例</Checkbox>
+                    <Checkbox>
+                      {intl.formatMessage({
+                        id: "pages.questions.form.sample",
+                        defaultMessage: "示例",
+                      })}
+                    </Checkbox>
                   </Form.Item>
                   <Form.Item
                     {...restField}
@@ -470,7 +501,12 @@ const TestCasesEdit: React.FC = () => {
                     valuePropName="checked"
                     noStyle
                   >
-                    <Checkbox>隐藏</Checkbox>
+                    <Checkbox>
+                      {intl.formatMessage({
+                        id: "pages.questions.form.hidden",
+                        defaultMessage: "隐藏",
+                      })}
+                    </Checkbox>
                   </Form.Item>
                 </Space>
                 <Button
@@ -490,20 +526,38 @@ const TestCasesEdit: React.FC = () => {
                       <Form.Item
                         {...restField}
                         name={[name, "input"]}
-                        label="输入"
+                        label={intl.formatMessage({
+                          id: "pages.questions.form.input",
+                          defaultMessage: "标准输入",
+                        })}
                         style={{ marginBottom: 0 }}
                       >
-                        <Input.TextArea rows={2} placeholder="测试输入" />
+                        <Input.TextArea
+                          rows={2}
+                          placeholder={intl.formatMessage({
+                            id: "pages.questions.form.testCase.inputPlaceholder",
+                            defaultMessage: "测试输入",
+                          })}
+                        />
                       </Form.Item>
                     </Col>
                     <Col xs={24} md={12}>
                       <Form.Item
                         {...restField}
                         name={[name, "expected_output"]}
-                        label="预期输出"
+                        label={intl.formatMessage({
+                          id: "pages.questions.form.expectedOutput",
+                          defaultMessage: "预期输出",
+                        })}
                         style={{ marginBottom: 0 }}
                       >
-                        <Input.TextArea rows={2} placeholder="预期输出" />
+                        <Input.TextArea
+                          rows={2}
+                          placeholder={intl.formatMessage({
+                            id: "pages.questions.form.testCase.expectedOutputPlaceholder",
+                            defaultMessage: "预期输出",
+                          })}
+                        />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -512,11 +566,19 @@ const TestCasesEdit: React.FC = () => {
                     className="qdetail-testcase-advanced-toggle"
                     onClick={() =>
                       setAdvancedCase((current) =>
-                        current === name ? null : name
+                        current === name ? null : name,
                       )
                     }
                   >
-                    {advancedCase === name ? "收起高级设置" : "高级设置"}
+                    {advancedCase === name
+                      ? intl.formatMessage({
+                          id: "pages.questions.form.testCase.hideAdvanced",
+                          defaultMessage: "收起高级设置",
+                        })
+                      : intl.formatMessage({
+                          id: "pages.questions.form.testCase.advancedSettings",
+                          defaultMessage: "高级设置",
+                        })}
                   </button>
                   {advancedCase === name && (
                     <div className="qdetail-testcase-advanced">
@@ -562,24 +624,38 @@ const TestCasesEdit: React.FC = () => {
   );
 };
 
-const TrueFalseAnswerEdit: React.FC = () => (
-  <Form.Item name={["answer", "correct"]} className="qdetail-answer-field">
-    <Radio.Group className="qdetail-truefalse-edit">
-      <Radio value={true}>正确</Radio>
-      <Radio value={false}>错误</Radio>
-    </Radio.Group>
-  </Form.Item>
-);
+const TrueFalseAnswerEdit: React.FC = () => {
+  const intl = useIntl();
+  return (
+    <Form.Item name={["answer", "correct"]} className="qdetail-answer-field">
+      <Radio.Group className="qdetail-truefalse-edit">
+        <Radio value={true}>
+          {intl.formatMessage({
+            id: "pages.questions.form.true",
+            defaultMessage: "正确",
+          })}
+        </Radio>
+        <Radio value={false}>
+          {intl.formatMessage({
+            id: "pages.questions.form.false",
+            defaultMessage: "错误",
+          })}
+        </Radio>
+      </Radio.Group>
+    </Form.Item>
+  );
+};
 
 const FillBlankAnswerEdit: React.FC = () => <FillBlankAnswerList />;
 
 const FillBlankAnswerList: React.FC = () => {
+  const intl = useIntl();
   const form = Form.useFormInstance();
   const blanks: string[] = Form.useWatch(["answer", "blanks"], form) || [];
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
   return (
@@ -625,12 +701,21 @@ const FillBlankAnswerList: React.FC = () => {
                           {...restField}
                           name={[name]}
                           rules={[
-                            { required: true, message: "请输入答案内容" },
+                            {
+                              required: true,
+                              message: intl.formatMessage({
+                                id: "pages.questions.form.answer.blankRequired",
+                                defaultMessage: "请输入答案内容",
+                              }),
+                            },
                           ]}
                           style={{ marginBottom: 0, flex: 1 }}
                         >
                           <Input
-                            placeholder="答案内容"
+                            placeholder={intl.formatMessage({
+                              id: "pages.questions.form.answer.blankPlaceholder",
+                              defaultMessage: "答案内容",
+                            })}
                             className="qdetail-blank-edit-input"
                           />
                         </Form.Item>
@@ -666,7 +751,10 @@ const FillBlankAnswerList: React.FC = () => {
                   block
                   className="qdetail-blank-edit-add"
                 >
-                  添加填空
+                  {intl.formatMessage({
+                    id: "pages.questions.form.answer.addBlank",
+                    defaultMessage: "添加填空",
+                  })}
                 </Button>
               </div>
             </SortableContext>
@@ -699,21 +787,28 @@ const FillBlankAnswerList: React.FC = () => {
   );
 };
 
-const ShortAnswerEdit: React.FC = () => (
-  <Form.Item name={["answer", "reference"]} className="qdetail-answer-field">
-    <Input.TextArea
-      rows={4}
-      placeholder="请输入参考答案"
-      className="qdetail-reference-textarea"
-    />
-  </Form.Item>
-);
+const ShortAnswerEdit: React.FC = () => {
+  const intl = useIntl();
+  return (
+    <Form.Item name={["answer", "reference"]} className="qdetail-answer-field">
+      <Input.TextArea
+        rows={4}
+        placeholder={intl.formatMessage({
+          id: "pages.questions.form.answerReferencePlaceholder",
+          defaultMessage: "输入参考答案或评分要点",
+        })}
+        className="qdetail-reference-textarea"
+      />
+    </Form.Item>
+  );
+};
 
 /* ============================================================
    Main Component
    ============================================================ */
 
 const QuestionsDetailContent: React.FC = () => {
+  const intl = useIntl();
   const { message } = AntdApp.useApp();
   const [form] = Form.useForm();
   const questionId = history.location.pathname.split("/").filter(Boolean).pop();
@@ -734,11 +829,16 @@ const QuestionsDetailContent: React.FC = () => {
     setLoading(true);
     try {
       const response = await request<QuestionEnvelope>(
-        `/api/admin/questions/${questionId}`
+        `/api/admin/questions/${questionId}`,
       );
       setQuestion(response.data);
     } catch (_error) {
-      message.error("获取题目详情失败");
+      message.error(
+        intl.formatMessage({
+          id: "pages.questions.detailError",
+          defaultMessage: "获取题目详情失败",
+        }),
+      );
     } finally {
       setLoading(false);
     }
@@ -800,9 +900,14 @@ const QuestionsDetailContent: React.FC = () => {
         setSaving(true);
         const response = await request<QuestionEnvelope>(
           "/api/admin/questions",
-          { method: "POST", data: payload }
+          { method: "POST", data: payload },
         );
-        message.success("创建成功");
+        message.success(
+          intl.formatMessage({
+            id: "pages.questions.createSuccess",
+            defaultMessage: "创建成功",
+          }),
+        );
         history.push(`/content/library/questions/${response.data.id}`);
         return;
       }
@@ -824,12 +929,27 @@ const QuestionsDetailContent: React.FC = () => {
         method: "PUT",
         data: payload,
       });
-      message.success("保存成功");
+      message.success(
+        intl.formatMessage({
+          id: "pages.questions.saveSuccess",
+          defaultMessage: "保存成功",
+        }),
+      );
       setIsDirty(false);
       fetchQuestion();
     } catch (error) {
       if ((error as { errorFields?: unknown[] }).errorFields) return;
-      message.error(isNew ? "创建失败" : "保存失败");
+      message.error(
+        isNew
+          ? intl.formatMessage({
+              id: "pages.questions.createError",
+              defaultMessage: "创建失败",
+            })
+          : intl.formatMessage({
+              id: "pages.questions.saveError",
+              defaultMessage: "保存失败",
+            }),
+      );
     } finally {
       setSaving(false);
     }
@@ -871,7 +991,12 @@ const QuestionsDetailContent: React.FC = () => {
         method: "DELETE",
         skipErrorHandler: true,
       });
-      message.success("题目已删除");
+      message.success(
+        intl.formatMessage({
+          id: "pages.questions.deleteSuccess",
+          defaultMessage: "题目已删除",
+        }),
+      );
       history.push("/content/library/questions");
     } catch (error) {
       const maybe = error as {
@@ -881,17 +1006,33 @@ const QuestionsDetailContent: React.FC = () => {
       const code = maybe.info?.errorCode || maybe.response?.status;
       message.error(
         code === 40900 || code === 409
-          ? "该题已被试卷引用，不能删除"
-          : "删除题目失败"
+          ? intl.formatMessage({
+              id: "pages.questions.deleteRefError",
+              defaultMessage: "该题已被试卷引用，不能删除",
+            })
+          : intl.formatMessage({
+              id: "pages.questions.deleteError",
+              defaultMessage: "删除题目失败",
+            }),
       );
     }
   };
 
   const pageTitle = isNew
-    ? "新建题目"
+    ? intl.formatMessage({
+        id: "pages.questions.pageTitleNew",
+        defaultMessage: "新建题目",
+      })
     : loading
-    ? "加载中..."
-    : question?.title || "题目详情";
+      ? intl.formatMessage({
+          id: "pages.questions.loading",
+          defaultMessage: "加载中...",
+        })
+      : question?.title ||
+        intl.formatMessage({
+          id: "pages.questions.pageTitleDetail",
+          defaultMessage: "题目详情",
+        });
   const isProgramming = effectiveType === "PROGRAMMING";
 
   const metaInfoBar =
@@ -927,7 +1068,11 @@ const QuestionsDetailContent: React.FC = () => {
           </>
         )}
         <span className="qdetail-meta-badge">
-          更新于 {dayjs(question.updated_at).format("YYYY-MM-DD HH:mm")}
+          {intl.formatMessage({
+            id: "pages.questions.updatedAt",
+            defaultMessage: "更新于",
+          })}{" "}
+          {dayjs(question.updated_at).format("YYYY-MM-DD HH:mm")}
         </span>
       </Space>
     ) : null;
@@ -941,7 +1086,12 @@ const QuestionsDetailContent: React.FC = () => {
     >
       {!loading && !question && !isNew ? (
         <div className="qdetail-wrap">
-          <Empty description="题目不存在" />
+          <Empty
+            description={intl.formatMessage({
+              id: "pages.questions.emptyState",
+              defaultMessage: "题目不存在",
+            })}
+          />
         </div>
       ) : question || isNew ? (
         <>
@@ -962,19 +1112,37 @@ const QuestionsDetailContent: React.FC = () => {
               </div>
               {!isNew && (
                 <Popconfirm
-                  title="删除题目"
-                  description="确定删除该题目？"
-                  okText="删除"
-                  cancelText="取消"
+                  title={intl.formatMessage({
+                    id: "pages.questions.deleteTitle",
+                    defaultMessage: "删除题目",
+                  })}
+                  description={intl.formatMessage({
+                    id: "pages.questions.deleteDescription",
+                    defaultMessage: "确定删除该题目？",
+                  })}
+                  okText={intl.formatMessage({
+                    id: "pages.questions.delete",
+                    defaultMessage: "删除",
+                  })}
+                  cancelText={intl.formatMessage({
+                    id: "pages.questions.cancel",
+                    defaultMessage: "取消",
+                  })}
                   okButtonProps={{ danger: true }}
                   onConfirm={deleteQuestion}
                 >
                   <Button
                     danger
                     icon={<DeleteOutlined />}
-                    aria-label="删除题目"
+                    aria-label={intl.formatMessage({
+                      id: "pages.questions.deleteTitle",
+                      defaultMessage: "删除题目",
+                    })}
                   >
-                    删除
+                    {intl.formatMessage({
+                      id: "pages.questions.delete",
+                      defaultMessage: "删除",
+                    })}
                   </Button>
                 </Popconfirm>
               )}
@@ -992,14 +1160,30 @@ const QuestionsDetailContent: React.FC = () => {
                 {/* ===== Type (create mode only) ===== */}
                 {isNew && (
                   <div className="qdetail-section">
-                    <SectionTitle>题型</SectionTitle>
+                    <SectionTitle>
+                      {intl.formatMessage({
+                        id: "pages.questions.form.type",
+                        defaultMessage: "题型",
+                      })}
+                    </SectionTitle>
                     <Form.Item
                       name="type"
-                      rules={[{ required: true, message: "请选择题型" }]}
+                      rules={[
+                        {
+                          required: true,
+                          message: intl.formatMessage({
+                            id: "pages.questions.form.typeRequired",
+                            defaultMessage: "请选择题型",
+                          }),
+                        },
+                      ]}
                       style={{ marginBottom: 0 }}
                     >
                       <Select
-                        placeholder="请选择题型"
+                        placeholder={intl.formatMessage({
+                          id: "pages.questions.form.typeRequired",
+                          defaultMessage: "请选择题型",
+                        })}
                         options={QUESTION_TYPE_OPTIONS}
                         onChange={() => {
                           // Reset answer fields when type changes
@@ -1015,23 +1199,50 @@ const QuestionsDetailContent: React.FC = () => {
                 {/* ===== Basic Info ===== */}
                 {effectiveType && (
                   <div className="qdetail-section">
-                    <SectionTitle>基本信息</SectionTitle>
+                    <SectionTitle>
+                      {intl.formatMessage({
+                        id: "pages.questions.form.section.basicInfo",
+                        defaultMessage: "基本信息",
+                      })}
+                    </SectionTitle>
                     <Form.Item
                       name="title"
-                      label="标题"
-                      rules={[{ required: true, message: "请输入题目标题" }]}
+                      label={intl.formatMessage({
+                        id: "pages.questions.form.title",
+                        defaultMessage: "标题",
+                      })}
+                      rules={[
+                        {
+                          required: true,
+                          message: intl.formatMessage({
+                            id: "pages.questions.form.titleRequired",
+                            defaultMessage: "请输入标题",
+                          }),
+                        },
+                      ]}
                     >
-                      <Input placeholder="请输入题目标题" />
+                      <Input
+                        placeholder={intl.formatMessage({
+                          id: "pages.questions.form.titlePlaceholder",
+                          defaultMessage: "输入题目标题",
+                        })}
+                      />
                     </Form.Item>
                     <Row gutter={[12, 8]}>
                       <Col xs={12} sm={8} md={6} lg={4}>
                         <Form.Item
                           name="difficulty"
-                          label="难度"
+                          label={intl.formatMessage({
+                            id: "pages.questions.form.difficulty",
+                            defaultMessage: "难度",
+                          })}
                           style={{ marginBottom: 0 }}
                         >
                           <Select
-                            placeholder="难度"
+                            placeholder={intl.formatMessage({
+                              id: "pages.questions.form.difficultyPlaceholder",
+                              defaultMessage: "选择难度",
+                            })}
                             options={DIFFICULTY_OPTIONS}
                             size="small"
                           />
@@ -1040,11 +1251,17 @@ const QuestionsDetailContent: React.FC = () => {
                       <Col xs={12} sm={8} md={6} lg={4}>
                         <Form.Item
                           name="status"
-                          label="状态"
+                          label={intl.formatMessage({
+                            id: "pages.questions.form.status",
+                            defaultMessage: "状态",
+                          })}
                           style={{ marginBottom: 0 }}
                         >
                           <Select
-                            placeholder="状态"
+                            placeholder={intl.formatMessage({
+                              id: "pages.questions.form.status",
+                              defaultMessage: "状态",
+                            })}
                             options={QUESTION_STATUS_OPTIONS}
                             size="small"
                           />
@@ -1057,15 +1274,31 @@ const QuestionsDetailContent: React.FC = () => {
                 {/* ===== Question Body ===== */}
                 {effectiveType && (
                   <div className="qdetail-section">
-                    <SectionTitle>题干</SectionTitle>
+                    <SectionTitle>
+                      {intl.formatMessage({
+                        id: "pages.questions.form.contentText",
+                        defaultMessage: "题干",
+                      })}
+                    </SectionTitle>
                     <Form.Item
                       name={["content", "text"]}
-                      rules={[{ required: true, message: "请输入题干" }]}
+                      rules={[
+                        {
+                          required: true,
+                          message: intl.formatMessage({
+                            id: "pages.questions.form.contentTextRequired",
+                            defaultMessage: "请输入题干",
+                          }),
+                        },
+                      ]}
                       style={{ marginBottom: 0 }}
                     >
                       <Input.TextArea
                         rows={4}
-                        placeholder="请输入题干内容"
+                        placeholder={intl.formatMessage({
+                          id: "pages.questions.form.contentTextPlaceholder",
+                          defaultMessage: "输入题干内容",
+                        })}
                         className="qdetail-body-textarea"
                       />
                     </Form.Item>
@@ -1076,7 +1309,12 @@ const QuestionsDetailContent: React.FC = () => {
                 {(effectiveType === "SINGLE_CHOICE" ||
                   effectiveType === "MULTIPLE_CHOICE") && (
                   <div className="qdetail-section">
-                    <SectionTitle>选项</SectionTitle>
+                    <SectionTitle>
+                      {intl.formatMessage({
+                        id: "pages.questions.form.options",
+                        defaultMessage: "选项",
+                      })}
+                    </SectionTitle>
                     <OptionsEdit
                       type={effectiveType}
                       onAnswerChange={handleValuesChange}
@@ -1089,7 +1327,12 @@ const QuestionsDetailContent: React.FC = () => {
                   effectiveType !== "SINGLE_CHOICE" &&
                   effectiveType !== "MULTIPLE_CHOICE" && (
                     <div className="qdetail-section">
-                      <SectionTitle>参考答案</SectionTitle>
+                      <SectionTitle>
+                        {intl.formatMessage({
+                          id: "pages.questions.form.answerReference",
+                          defaultMessage: "参考答案",
+                        })}
+                      </SectionTitle>
                       {effectiveType === "TRUE_FALSE" && (
                         <TrueFalseAnswerEdit />
                       )}
@@ -1099,7 +1342,11 @@ const QuestionsDetailContent: React.FC = () => {
                       {effectiveType === "SHORT_ANSWER" && <ShortAnswerEdit />}
                       {effectiveType === "PROGRAMMING" && (
                         <div className="qdetail-answer-hint">
-                          编程题无固定标准答案，以测试用例判分为准。
+                          {intl.formatMessage({
+                            id: "pages.questions.form.programmingHint",
+                            defaultMessage:
+                              "编程题无固定标准答案，以测试用例判分为准。",
+                          })}
                         </div>
                       )}
                     </div>
@@ -1108,21 +1355,37 @@ const QuestionsDetailContent: React.FC = () => {
                 {/* ===== Programming ===== */}
                 {effectiveType === "PROGRAMMING" && (
                   <div className="qdetail-section">
-                    <SectionTitle>编程配置</SectionTitle>
+                    <SectionTitle>
+                      {intl.formatMessage({
+                        id: "pages.questions.form.section.programmingConfig",
+                        defaultMessage: "编程配置",
+                      })}
+                    </SectionTitle>
                     <Row className="qdetail-program-config" gutter={[12, 8]}>
                       <Col xs={24} md={10} lg={8}>
                         <Form.Item
                           name="language"
-                          label="语言"
+                          label={intl.formatMessage({
+                            id: "pages.questions.form.language",
+                            defaultMessage: "语言",
+                          })}
                           style={{ marginBottom: 0 }}
                         >
-                          <Input placeholder="如 Go" />
+                          <Input
+                            placeholder={intl.formatMessage({
+                              id: "pages.questions.form.languagePlaceholder",
+                              defaultMessage: "选择语言",
+                            })}
+                          />
                         </Form.Item>
                       </Col>
                       <Col xs={12} md={7} lg={5}>
                         <Form.Item
                           name="time_limit_ms"
-                          label="时间限制"
+                          label={intl.formatMessage({
+                            id: "pages.questions.form.timeLimit",
+                            defaultMessage: "时间限制(ms)",
+                          })}
                           style={{ marginBottom: 0 }}
                         >
                           <InputNumber
@@ -1135,7 +1398,10 @@ const QuestionsDetailContent: React.FC = () => {
                       <Col xs={12} md={7} lg={5}>
                         <Form.Item
                           name="memory_limit_mb"
-                          label="内存限制"
+                          label={intl.formatMessage({
+                            id: "pages.questions.form.memoryLimit",
+                            defaultMessage: "内存限制(MB)",
+                          })}
                           style={{ marginBottom: 0 }}
                         >
                           <InputNumber
@@ -1148,18 +1414,27 @@ const QuestionsDetailContent: React.FC = () => {
                     </Row>
 
                     <SectionTitle style={{ marginTop: 20 }}>
-                      代码模板
+                      {intl.formatMessage({
+                        id: "pages.questions.form.starterCode",
+                        defaultMessage: "代码模板",
+                      })}
                     </SectionTitle>
                     <Form.Item name="starter_code" style={{ marginBottom: 0 }}>
                       <Input.TextArea
                         rows={6}
-                        placeholder="请输入代码模板"
+                        placeholder={intl.formatMessage({
+                          id: "pages.questions.form.starterCodePlaceholder",
+                          defaultMessage: "可选，输入候选人初始代码",
+                        })}
                         className="qdetail-code-textarea"
                       />
                     </Form.Item>
 
                     <SectionTitle style={{ marginTop: 20 }}>
-                      测试用例
+                      {intl.formatMessage({
+                        id: "pages.questions.form.testCase",
+                        defaultMessage: "测试用例",
+                      })}
                     </SectionTitle>
                     <TestCasesEdit />
                   </div>
@@ -1170,9 +1445,16 @@ const QuestionsDetailContent: React.FC = () => {
               {!isNew && question && (
                 <div className="qdetail-footer-meta-bar">
                   <span className="qdetail-footer-meta">
-                    创建于{" "}
+                    {intl.formatMessage({
+                      id: "pages.questions.createdAt",
+                      defaultMessage: "创建于",
+                    })}{" "}
                     {dayjs(question.created_at).format("YYYY-MM-DD HH:mm")}
-                    &nbsp;·&nbsp; 更新于{" "}
+                    &nbsp;·&nbsp;{" "}
+                    {intl.formatMessage({
+                      id: "pages.questions.updatedAt",
+                      defaultMessage: "更新于",
+                    })}{" "}
                     {dayjs(question.updated_at).format("YYYY-MM-DD HH:mm")}
                   </span>
                 </div>
@@ -1183,7 +1465,15 @@ const QuestionsDetailContent: React.FC = () => {
             {isDirty && (
               <div className="qdetail-sticky-footer">
                 <span className="qdetail-dirty-text">
-                  {isNew ? "题目尚未保存" : "有未保存修改"}
+                  {isNew
+                    ? intl.formatMessage({
+                        id: "pages.questions.unsavedNew",
+                        defaultMessage: "题目尚未保存",
+                      })
+                    : intl.formatMessage({
+                        id: "pages.questions.unsavedEdit",
+                        defaultMessage: "有未保存修改",
+                      })}
                 </span>
                 <Space>
                   <Button
@@ -1192,9 +1482,22 @@ const QuestionsDetailContent: React.FC = () => {
                     loading={saving}
                     onClick={saveQuestion}
                   >
-                    {isNew ? "创建" : "保存"}
+                    {isNew
+                      ? intl.formatMessage({
+                          id: "pages.questions.create",
+                          defaultMessage: "新建题目",
+                        })
+                      : intl.formatMessage({
+                          id: "pages.questions.save",
+                          defaultMessage: "保存",
+                        })}
                   </Button>
-                  <Button onClick={cancelEdit}>还原修改</Button>
+                  <Button onClick={cancelEdit}>
+                    {intl.formatMessage({
+                      id: "pages.questions.revertChanges",
+                      defaultMessage: "还原修改",
+                    })}
+                  </Button>
                 </Space>
               </div>
             )}
