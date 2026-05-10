@@ -68,7 +68,7 @@ const TagSelect: FC<TagSelectProps> & {
       value: props.value,
       defaultValue: props.defaultValue,
       onChange: props.onChange,
-    },
+    }
   );
 
   const isTagSelectOption = (node: TagSelectOptionElement) =>
@@ -79,7 +79,7 @@ const TagSelect: FC<TagSelectProps> & {
   // Memoize all tags to avoid recalculating on every render
   const allTags = useMemo(() => {
     const childrenArray = React.Children.toArray(
-      children,
+      children
     ) as TagSelectOptionElement[];
     return childrenArray
       .filter((child) => isTagSelectOption(child))

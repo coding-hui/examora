@@ -299,7 +299,7 @@ const useShadcnTheme = (): ConfigProviderProps => {
 
   const algorithm = useMemo(
     () => (isDark ? theme.darkAlgorithm : theme.defaultAlgorithm),
-    [isDark],
+    [isDark]
   );
 
   return useMemo<ConfigProviderProps>(
@@ -319,7 +319,7 @@ const useShadcnTheme = (): ConfigProviderProps => {
         },
       },
     }),
-    [algorithm, isDark, preference.colorPrimary],
+    [algorithm, isDark, preference.colorPrimary]
   );
 };
 

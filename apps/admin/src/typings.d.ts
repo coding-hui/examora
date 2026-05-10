@@ -68,13 +68,13 @@ declare module "@umijs/max" {
             loading: boolean;
             initialState: InitDataType["initialState"];
             setInitialState: InitDataType["setInitialState"];
-          },
+          }
         ) => React.ReactNode)
       | false;
     rightRender?: (
       initialState: InitDataType["initialState"],
       setInitialState: InitDataType["setInitialState"],
-      runtimeConfig: RunTimeLayoutConfig,
+      runtimeConfig: RunTimeLayoutConfig
     ) => React.ReactNode;
   };
 
@@ -101,7 +101,7 @@ declare module "@umijs/max" {
   export interface IntlShape {
     formatMessage: (
       id: { id: string; defaultMessage?: string },
-      values?: Record<string, unknown>,
+      values?: Record<string, unknown>
     ) => string;
   }
   export function useIntl(): IntlShape;

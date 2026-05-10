@@ -65,22 +65,21 @@ const AvatarList: React.FC<AvatarListProps> & {
   const numOfChildren = React.Children.count(children);
   const numToShow = maxLength >= numOfChildren ? numOfChildren : maxLength;
   const childrenArray = React.Children.toArray(
-    children,
+    children
   ) as React.ReactElement<AvatarItemProps>[];
   const childrenWithProps = childrenArray.slice(0, numToShow).map((child) =>
     React.cloneElement(child, {
       size,
-    }),
+    })
   );
   if (numToShow < numOfChildren) {
     const cls = avatarSizeToClassName(styles, size);
     childrenWithProps.push(
       <li key="exceed" className={cls}>
-        <Avatar
-          size={size}
-          style={excessItemsStyle}
-        >{`+${numOfChildren - maxLength}`}</Avatar>
-      </li>,
+        <Avatar size={size} style={excessItemsStyle}>{`+${
+          numOfChildren - maxLength
+        }`}</Avatar>
+      </li>
     );
   }
   return (

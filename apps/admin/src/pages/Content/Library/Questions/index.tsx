@@ -211,9 +211,9 @@ const QuestionsPageContent: React.FC = () => {
             id: `pages.questions.types.${t.value}`,
             defaultMessage: t.label,
           }),
-        ]),
+        ])
       ),
-    [intl],
+    [intl]
   );
 
   const difficultyLabelMap = useMemo(
@@ -225,9 +225,9 @@ const QuestionsPageContent: React.FC = () => {
             id: `pages.questions.difficulty.${d.value}`,
             defaultMessage: d.label,
           }),
-        ]),
+        ])
       ),
-    [intl],
+    [intl]
   );
 
   const statusLabelMap = useMemo(
@@ -239,9 +239,9 @@ const QuestionsPageContent: React.FC = () => {
             id: `pages.questions.status.${s.value}`,
             defaultMessage: s.label,
           }),
-        ]),
+        ])
       ),
-    [intl],
+    [intl]
   );
 
   const notSetLabel = intl.formatMessage({
@@ -257,27 +257,27 @@ const QuestionsPageContent: React.FC = () => {
   // i18n'd select options
   const typeOptions = useMemo(
     () => QUESTION_TYPES.map((t) => ({ ...t, label: typeLabelMap[t.value] })),
-    [typeLabelMap],
+    [typeLabelMap]
   );
 
   const difficultyOptions = useMemo(
     () =>
       DIFFICULTIES.map((d) => ({ ...d, label: difficultyLabelMap[d.value] })),
-    [difficultyLabelMap],
+    [difficultyLabelMap]
   );
 
   const statusOptions = useMemo(
     () => STATUSES.map((s) => ({ ...s, label: statusLabelMap[s.value] })),
-    [statusLabelMap],
+    [statusLabelMap]
   );
 
   // valueEnums for ProTable
   const typeValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        QUESTION_TYPES.map((t) => [t.value, { text: typeLabelMap[t.value] }]),
+        QUESTION_TYPES.map((t) => [t.value, { text: typeLabelMap[t.value] }])
       ),
-    [typeLabelMap],
+    [typeLabelMap]
   );
 
   const difficultyValueEnum = useMemo(
@@ -286,17 +286,17 @@ const QuestionsPageContent: React.FC = () => {
         DIFFICULTIES.map((d) => [
           d.value,
           { text: difficultyLabelMap[d.value] },
-        ]),
+        ])
       ),
-    [difficultyLabelMap],
+    [difficultyLabelMap]
   );
 
   const statusValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        STATUSES.map((s) => [s.value, { text: statusLabelMap[s.value] }]),
+        STATUSES.map((s) => [s.value, { text: statusLabelMap[s.value] }])
       ),
-    [statusLabelMap],
+    [statusLabelMap]
   );
 
   const answerOptions = useMemo(
@@ -305,7 +305,7 @@ const QuestionsPageContent: React.FC = () => {
         label: `${item.key}. ${item.text}`,
         value: item.key,
       })),
-    [optionsText],
+    [optionsText]
   );
 
   const fillQuestionForm = (question?: AdminQuestion) => {
@@ -343,7 +343,7 @@ const QuestionsPageContent: React.FC = () => {
         memory_limit_mb:
           item.memory_limit_mb || question?.memory_limit_mb || 256,
         sort_order: item.sort_order ?? index,
-      })),
+      }))
     );
   };
 
@@ -359,7 +359,7 @@ const QuestionsPageContent: React.FC = () => {
     try {
       setSaving(false);
       const response = await request<{ code: number; data: AdminQuestion }>(
-        `/api/admin/questions/${record.id}`,
+        `/api/admin/questions/${record.id}`
       );
       const detail = response.data;
       setEditing(detail);
@@ -371,7 +371,7 @@ const QuestionsPageContent: React.FC = () => {
         intl.formatMessage({
           id: "pages.questions.detailError",
           defaultMessage: "获取题目详情失败",
-        }),
+        })
       );
     }
   };
@@ -434,7 +434,7 @@ const QuestionsPageContent: React.FC = () => {
           intl.formatMessage({
             id: "pages.questions.needTestCase",
             defaultMessage: "请至少添加一个测试用例",
-          }),
+          })
         );
         return;
       }
@@ -446,7 +446,7 @@ const QuestionsPageContent: React.FC = () => {
           intl.formatMessage({
             id: "pages.questions.needExpectedOutput",
             defaultMessage: "请填写每个测试用例的预期输出",
-          }),
+          })
         );
         return;
       }
@@ -457,7 +457,7 @@ const QuestionsPageContent: React.FC = () => {
         {
           method: editing ? "PUT" : "POST",
           data: payload,
-        },
+        }
       );
       message.success(
         editing
@@ -468,7 +468,7 @@ const QuestionsPageContent: React.FC = () => {
           : intl.formatMessage({
               id: "pages.questions.createSuccess",
               defaultMessage: "题目已创建",
-            }),
+            })
       );
       setDrawerOpen(false);
       actionRef.current?.reload();
@@ -483,7 +483,7 @@ const QuestionsPageContent: React.FC = () => {
             : intl.formatMessage({
                 id: "pages.questions.createError",
                 defaultMessage: "创建题目失败",
-              }),
+              })
         );
       }
     } finally {
@@ -502,7 +502,7 @@ const QuestionsPageContent: React.FC = () => {
           id: "pages.questions.deleteConfirmContent",
           defaultMessage: "确定要删除题目「{title}」吗？此操作不可撤销。",
         },
-        { title: question.title },
+        { title: question.title }
       ),
       okText: intl.formatMessage({
         id: "pages.questions.delete",
@@ -523,7 +523,7 @@ const QuestionsPageContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.questions.deleteSuccess",
               defaultMessage: "题目已删除",
-            }),
+            })
           );
           actionRef.current?.reload();
         } catch (error) {
@@ -532,7 +532,7 @@ const QuestionsPageContent: React.FC = () => {
               intl.formatMessage({
                 id: "pages.questions.deleteRefError",
                 defaultMessage: "该题已被试卷引用，不能删除",
-              }),
+              })
             );
             return;
           }
@@ -540,7 +540,7 @@ const QuestionsPageContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.questions.deleteError",
               defaultMessage: "删除题目失败",
-            }),
+            })
           );
         }
       },
@@ -566,12 +566,12 @@ const QuestionsPageContent: React.FC = () => {
   const updateTestCase = <K extends keyof AdminTestCase>(
     index: number,
     key: K,
-    value: AdminTestCase[K],
+    value: AdminTestCase[K]
   ) => {
     setTestCases((items) =>
       items.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [key]: value } : item,
-      ),
+        itemIndex === index ? { ...item, [key]: value } : item
+      )
     );
   };
 
@@ -579,7 +579,7 @@ const QuestionsPageContent: React.FC = () => {
     setTestCases((items) =>
       items
         .filter((_, itemIndex) => itemIndex !== index)
-        .map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
+        .map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
     );
   };
 
@@ -1048,7 +1048,7 @@ const QuestionsPageContent: React.FC = () => {
                   id: "pages.questions.form.testCase",
                   defaultMessage: "测试用例 {index}",
                 },
-                { index: index + 1 },
+                { index: index + 1 }
               )}
               extra={
                 <Button
@@ -1090,7 +1090,7 @@ const QuestionsPageContent: React.FC = () => {
                       updateTestCase(
                         index,
                         "expected_output",
-                        event.target.value,
+                        event.target.value
                       )
                     }
                   />
@@ -1280,7 +1280,7 @@ const QuestionsPageContent: React.FC = () => {
               intl.formatMessage({
                 id: "pages.questions.fetchError",
                 defaultMessage: "获取题目列表失败",
-              }),
+              })
             );
             return { data: [], total: 0, success: false };
           }
@@ -1295,7 +1295,7 @@ const QuestionsPageContent: React.FC = () => {
                 id: "pages.questions.total",
                 defaultMessage: "共 {total} 条",
               },
-              { total },
+              { total }
             ),
         }}
         revalidateOnFocus={false}

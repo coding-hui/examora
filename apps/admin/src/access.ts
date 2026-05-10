@@ -4,7 +4,7 @@
 export default function access(
   initialState:
     | { currentUser?: API.CurrentUser; forbidden?: boolean }
-    | undefined,
+    | undefined
 ) {
   const { currentUser, forbidden } = initialState ?? {};
 

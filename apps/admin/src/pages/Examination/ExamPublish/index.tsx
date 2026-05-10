@@ -68,7 +68,7 @@ const ExamPublish: React.FC = () => {
             end_time: values.end_time.toISOString(),
             duration_minutes: values.duration_minutes,
           },
-        },
+        }
       );
       if (response.code === 0) {
         message.success("考试发布成功");

@@ -27,8 +27,25 @@ import {
   Space,
   Tag,
 } from "antd";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import dayjs from "dayjs";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./index.less";
 
 /* ============================================================
@@ -141,21 +158,38 @@ const SectionTitle: React.FC<{
   </h3>
 );
 
-const setRowDragImage = (event: React.DragEvent<HTMLElement>) => {
-  const source = event.currentTarget;
-  const clone = source.cloneNode(true) as HTMLElement;
-  const rect = source.getBoundingClientRect();
+interface SortableItemWrapperProps {
+  id: string;
+  children: (handlers: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    listeners: any;
+    setActivatorNodeRef: (node: HTMLElement | null) => void;
+  }) => React.ReactNode;
+}
 
-  clone.classList.add("qdetail-row-drag-image");
-  clone.style.width = `${rect.width}px`;
-  clone.style.position = "fixed";
-  clone.style.top = "-10000px";
-  clone.style.left = "-10000px";
-  clone.style.pointerEvents = "none";
-  document.body.appendChild(clone);
+const SortableItemWrapper: React.FC<SortableItemWrapperProps> = ({
+  id,
+  children,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id });
 
-  event.dataTransfer.setDragImage(clone, 12, rect.height / 2);
-  window.setTimeout(() => clone.remove(), 0);
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      {children({ listeners, setActivatorNodeRef })}
+    </div>
+  );
 };
 
 const OptionAnswerControl: React.FC<{
@@ -214,95 +248,197 @@ const OptionsEdit: React.FC<{
   type: "SINGLE_CHOICE" | "MULTIPLE_CHOICE";
   onAnswerChange: () => void;
 }> = ({ type, onAnswerChange }) => {
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const form = Form.useFormInstance();
+  const options: QuestionOption[] =
+    Form.useWatch(["content", "options"], form) || [];
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   return (
     <Form.List name={["content", "options"]}>
-      {(fields, { add, remove, move }) => (
-        <div className="qdetail-options-edit">
-          {fields.map(({ key, name, ...restField }) => (
-            <div
-              key={key}
-              className="qdetail-option-edit-row"
-              draggable
-              onDragStart={(event) => {
-                const target = event.target as HTMLElement;
-                if (!target.closest(".qdetail-edit-row-drag")) {
-                  event.preventDefault();
-                  return;
-                }
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", String(name));
-                setRowDragImage(event);
-                setDraggingIndex(name as number);
-              }}
-              onDragEnd={() => setDraggingIndex(null)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={() => {
-                if (draggingIndex === null || draggingIndex === name) return;
-                move(draggingIndex, name);
-                setDraggingIndex(null);
-              }}
+      {(fields, { add, remove, move }) => {
+        const items = fields.map((f) => String(f.key));
+
+        const handleDragStart = (event: DragStartEvent) =>
+          setActiveId(event.active.id as string);
+        const handleDragEnd = (event: DragEndEvent) => {
+          setActiveId(null);
+          const { active, over } = event;
+          if (over && active.id !== over.id) {
+            const oldIndex = items.indexOf(active.id as string);
+            const newIndex = items.indexOf(over.id as string);
+            move(oldIndex, newIndex);
+            // Reassign sequential keys (A-H) after reorder
+            setTimeout(() => {
+              const reordered: QuestionOption[] =
+                form.getFieldValue(["content", "options"]) || [];
+              const SEQ = "ABCDEFGH";
+              // Capture answer by matching old key → text
+              const choice = form.getFieldValue(["answer", "choice"]) as
+                | string
+                | undefined;
+              const choices =
+                (form.getFieldValue(["answer", "choices"]) as
+                  | string[]
+                  | undefined) || [];
+              const selectedText = choice
+                ? reordered.find((o) => o.key === choice)?.text
+                : undefined;
+              const selectedTexts =
+                type === "MULTIPLE_CHOICE"
+                  ? choices
+                      .map((c) => reordered.find((o) => o.key === c)?.text)
+                      .filter(Boolean)
+                  : [];
+              // Reassign keys
+              reordered.forEach((_, i) => {
+                form.setFieldValue(["content", "options", i, "key"], SEQ[i]);
+              });
+              // Restore answer by matching text → index → new key
+              if (selectedText) {
+                const idx = reordered.findIndex((o) => o.text === selectedText);
+                if (idx >= 0)
+                  form.setFieldValue(["answer", "choice"], SEQ[idx]);
+              }
+              if (selectedTexts.length > 0) {
+                const newKeys = selectedTexts
+                  .map((t) => {
+                    const idx = reordered.findIndex((o) => o.text === t);
+                    return idx >= 0 ? SEQ[idx] : "";
+                  })
+                  .filter(Boolean);
+                form.setFieldValue(["answer", "choices"], newKeys);
+              }
+            }, 0);
+          }
+        };
+
+        const activeIndex = activeId ? items.indexOf(activeId) : -1;
+
+        return (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={items}
+              strategy={verticalListSortingStrategy}
             >
-              <span className="qdetail-edit-row-index">
-                #{(name as number) + 1}
-              </span>
-              <OptionAnswerControl
-                type={type}
-                optionIndex={name as number}
-                onAnswerChange={onAnswerChange}
-              />
-              <Form.Item
-                {...restField}
-                name={[name, "key"]}
-                rules={[{ required: true, message: "" }]}
-                style={{ marginBottom: 0 }}
-              >
-                <Input placeholder="A" className="qdetail-option-edit-key" />
-              </Form.Item>
-              <Form.Item
-                {...restField}
-                name={[name, "text"]}
-                rules={[{ required: true, message: "请输入选项内容" }]}
-                style={{ marginBottom: 0, flex: 1 }}
-              >
-                <Input
-                  placeholder="选项内容"
-                  className="qdetail-option-edit-text"
-                />
-              </Form.Item>
-              <button
-                type="button"
-                className="qdetail-edit-row-drag"
-                aria-label={`拖拽排序选项 ${(name as number) + 1}`}
-              >
-                <HolderOutlined />
-              </button>
-              <Button
-                type="text"
-                danger
-                size="small"
-                icon={<MinusCircleOutlined />}
-                aria-label={`删除选项 ${(name as number) + 1}`}
-                onClick={() => remove(name)}
-                className="qdetail-option-edit-del"
-              />
-            </div>
-          ))}
-          {fields.length < 8 && (
-            <Button
-              type="dashed"
-              onClick={() => add()}
-              block
-              icon={<PlusOutlined />}
-              size="small"
-              className="qdetail-option-edit-add"
-            >
-              添加选项
-            </Button>
-          )}
-        </div>
-      )}
+              <div className="qdetail-options-edit">
+                {fields.map(({ key, name, ...restField }) => (
+                  <SortableItemWrapper key={key} id={String(key)}>
+                    {({ listeners, setActivatorNodeRef }) => (
+                      <div className="qdetail-option-edit-row">
+                        <span className="qdetail-edit-row-index">
+                          #{(name as number) + 1}
+                        </span>
+                        <OptionAnswerControl
+                          type={type}
+                          optionIndex={name as number}
+                          onAnswerChange={onAnswerChange}
+                        />
+                        <Form.Item
+                          {...restField}
+                          name={[name, "key"]}
+                          rules={[{ required: true, message: "" }]}
+                          style={{ marginBottom: 0 }}
+                        >
+                          <Input
+                            placeholder="A"
+                            className="qdetail-option-edit-key"
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "text"]}
+                          rules={[
+                            { required: true, message: "请输入选项内容" },
+                          ]}
+                          style={{ marginBottom: 0, flex: 1 }}
+                        >
+                          <Input
+                            placeholder="选项内容"
+                            className="qdetail-option-edit-text"
+                          />
+                        </Form.Item>
+                        <button
+                          type="button"
+                          className="qdetail-edit-row-drag"
+                          ref={setActivatorNodeRef}
+                          {...listeners}
+                          aria-label={`拖拽排序选项 ${(name as number) + 1}`}
+                        >
+                          <HolderOutlined />
+                        </button>
+                        <Button
+                          type="text"
+                          danger
+                          size="small"
+                          icon={<MinusCircleOutlined />}
+                          aria-label={`删除选项 ${(name as number) + 1}`}
+                          onClick={() => remove(name)}
+                          className="qdetail-option-edit-del"
+                        />
+                      </div>
+                    )}
+                  </SortableItemWrapper>
+                ))}
+                {fields.length < 8 && (
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                    size="small"
+                    className="qdetail-option-edit-add"
+                  >
+                    添加选项
+                  </Button>
+                )}
+              </div>
+            </SortableContext>
+            <DragOverlay>
+              {activeId !== null && activeIndex >= 0 && fields[activeIndex] && (
+                <div className="qdetail-option-edit-row qdetail-drag-overlay">
+                  <span className="qdetail-edit-row-index">
+                    #{activeIndex + 1}
+                  </span>
+                  <span
+                    style={{
+                      width: 42,
+                      textAlign: "center",
+                      fontWeight: 600,
+                      fontSize: 14,
+                      lineHeight: "32px",
+                    }}
+                  >
+                    {options[activeIndex]?.key || ""}
+                  </span>
+                  <span
+                    style={{
+                      flex: 1,
+                      padding: "4px 11px",
+                      fontSize: 14,
+                      lineHeight: "24px",
+                    }}
+                  >
+                    {options[activeIndex]?.text || ""}
+                  </span>
+                  <span className="qdetail-edit-row-drag">
+                    <HolderOutlined />
+                  </span>
+                </div>
+              )}
+            </DragOverlay>
+          </DndContext>
+        );
+      }}
     </Form.List>
   );
 };
@@ -448,7 +584,7 @@ const TestCasesEdit: React.FC = () => {
                     className="qdetail-testcase-advanced-toggle"
                     onClick={() =>
                       setAdvancedCase((current) =>
-                        current === name ? null : name,
+                        current === name ? null : name
                       )
                     }
                   >
@@ -510,80 +646,127 @@ const TrueFalseAnswerEdit: React.FC = () => (
 const FillBlankAnswerEdit: React.FC = () => <FillBlankAnswerList />;
 
 const FillBlankAnswerList: React.FC = () => {
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const form = Form.useFormInstance();
+  const blanks: string[] = Form.useWatch(["answer", "blanks"], form) || [];
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   return (
     <Form.List name={["answer", "blanks"]}>
-      {(fields, { add, remove, move }) => (
-        <div className="qdetail-blank-edit">
-          {fields.map(({ key, name, ...restField }) => (
-            <div
-              key={key}
-              className="qdetail-blank-edit-row"
-              draggable
-              onDragStart={(event) => {
-                const target = event.target as HTMLElement;
-                if (!target.closest(".qdetail-edit-row-drag")) {
-                  event.preventDefault();
-                  return;
-                }
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", String(name));
-                setRowDragImage(event);
-                setDraggingIndex(name as number);
-              }}
-              onDragEnd={() => setDraggingIndex(null)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={() => {
-                if (draggingIndex === null || draggingIndex === name) return;
-                move(draggingIndex, name);
-                setDraggingIndex(null);
-              }}
-            >
-              <span className="qdetail-edit-row-index">
-                #{(name as number) + 1}
-              </span>
-              <Form.Item
-                {...restField}
-                name={[name]}
-                rules={[{ required: true, message: "请输入答案内容" }]}
-                style={{ marginBottom: 0, flex: 1 }}
-              >
-                <Input
-                  placeholder="答案内容"
-                  className="qdetail-blank-edit-input"
-                />
-              </Form.Item>
-              <button
-                type="button"
-                className="qdetail-edit-row-drag"
-                aria-label={`拖拽排序第 ${(name as number) + 1} 空答案`}
-              >
-                <HolderOutlined />
-              </button>
-              <Button
-                type="text"
-                danger
-                size="small"
-                icon={<MinusCircleOutlined />}
-                aria-label={`删除第 ${(name as number) + 1} 空答案`}
-                onClick={() => remove(name)}
-                className="qdetail-blank-edit-del"
-              />
-            </div>
-          ))}
-          <Button
-            type="dashed"
-            onClick={() => add()}
-            icon={<PlusOutlined />}
-            size="small"
-            block
-            className="qdetail-blank-edit-add"
+      {(fields, { add, remove, move }) => {
+        const items = fields.map((f) => String(f.key));
+
+        const handleDragStart = (event: DragStartEvent) =>
+          setActiveId(event.active.id as string);
+        const handleDragEnd = (event: DragEndEvent) => {
+          setActiveId(null);
+          const { active, over } = event;
+          if (over && active.id !== over.id) {
+            const oldIndex = items.indexOf(active.id as string);
+            const newIndex = items.indexOf(over.id as string);
+            move(oldIndex, newIndex);
+          }
+        };
+
+        const activeIndex = activeId ? items.indexOf(activeId) : -1;
+
+        return (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
           >
-            添加填空
-          </Button>
-        </div>
-      )}
+            <SortableContext
+              items={items}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="qdetail-blank-edit">
+                {fields.map(({ key, name, ...restField }) => (
+                  <SortableItemWrapper key={key} id={String(key)}>
+                    {({ listeners, setActivatorNodeRef }) => (
+                      <div className="qdetail-blank-edit-row">
+                        <span className="qdetail-edit-row-index">
+                          #{(name as number) + 1}
+                        </span>
+                        <Form.Item
+                          {...restField}
+                          name={[name]}
+                          rules={[
+                            { required: true, message: "请输入答案内容" },
+                          ]}
+                          style={{ marginBottom: 0, flex: 1 }}
+                        >
+                          <Input
+                            placeholder="答案内容"
+                            className="qdetail-blank-edit-input"
+                          />
+                        </Form.Item>
+                        <button
+                          type="button"
+                          className="qdetail-edit-row-drag"
+                          ref={setActivatorNodeRef}
+                          {...listeners}
+                          aria-label={`拖拽排序第 ${
+                            (name as number) + 1
+                          } 空答案`}
+                        >
+                          <HolderOutlined />
+                        </button>
+                        <Button
+                          type="text"
+                          danger
+                          size="small"
+                          icon={<MinusCircleOutlined />}
+                          aria-label={`删除第 ${(name as number) + 1} 空答案`}
+                          onClick={() => remove(name)}
+                          className="qdetail-blank-edit-del"
+                        />
+                      </div>
+                    )}
+                  </SortableItemWrapper>
+                ))}
+                <Button
+                  type="dashed"
+                  onClick={() => add()}
+                  icon={<PlusOutlined />}
+                  size="small"
+                  block
+                  className="qdetail-blank-edit-add"
+                >
+                  添加填空
+                </Button>
+              </div>
+            </SortableContext>
+            <DragOverlay>
+              {activeId !== null && activeIndex >= 0 && fields[activeIndex] && (
+                <div className="qdetail-blank-edit-row qdetail-drag-overlay">
+                  <span className="qdetail-edit-row-index">
+                    #{activeIndex + 1}
+                  </span>
+                  <span
+                    style={{
+                      flex: 1,
+                      padding: "4px 11px",
+                      fontSize: 14,
+                      lineHeight: "24px",
+                    }}
+                  >
+                    {blanks[activeIndex] || ""}
+                  </span>
+                  <span className="qdetail-edit-row-drag">
+                    <HolderOutlined />
+                  </span>
+                </div>
+              )}
+            </DragOverlay>
+          </DndContext>
+        );
+      }}
     </Form.List>
   );
 };
@@ -616,7 +799,7 @@ const QuestionsDetailContent: React.FC = () => {
     setLoading(true);
     try {
       const response = await request<QuestionEnvelope>(
-        `/api/admin/questions/${questionId}`,
+        `/api/admin/questions/${questionId}`
       );
       setQuestion(response.data);
     } catch (_error) {
@@ -720,7 +903,7 @@ const QuestionsDetailContent: React.FC = () => {
       message.error(
         code === 40900 || code === 409
           ? "该题已被试卷引用，不能删除"
-          : "删除题目失败",
+          : "删除题目失败"
       );
     }
   };
@@ -734,7 +917,9 @@ const QuestionsDetailContent: React.FC = () => {
       <Tag className="question-type-tag">{QUESTION_TYPES[question.type]}</Tag>
       {question.difficulty && (
         <span
-          className={`question-diff-tag ${DIFFICULTY_TAGS[question.difficulty] || ""}`}
+          className={`question-diff-tag ${
+            DIFFICULTY_TAGS[question.difficulty] || ""
+          }`}
         >
           {DIFFICULTIES[question.difficulty] || question.difficulty}
         </span>

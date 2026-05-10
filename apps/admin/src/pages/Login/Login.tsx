@@ -69,7 +69,7 @@ const Login: React.FC = () => {
           "/api/auth/config",
           {
             method: "GET",
-          },
+          }
         );
         setAuthConfig(unwrapData(response));
       } catch (err) {
