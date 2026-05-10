@@ -1,4 +1,4 @@
-import { request, useIntl } from '@umijs/max';
+import { request, useIntl } from "@umijs/max";
 import {
   App as AntdApp,
   Button,
@@ -6,9 +6,9 @@ import {
   DatePicker,
   Form,
   InputNumber,
-} from 'antd';
-import type dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+} from "antd";
+import type dayjs from "dayjs";
+import React, { useEffect, useState } from "react";
 
 interface Exam {
   id: number;
@@ -28,7 +28,7 @@ const ExamPublish: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   // Get exam ID from URL path: /exams/:id/publish
-  const pathParts = window.location.pathname.split('/');
+  const pathParts = window.location.pathname.split("/");
   const examId = pathParts[pathParts.length - 2]; // 'publish' is last, id is second to last
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const ExamPublish: React.FC = () => {
 
     setLoading(true);
     request<{ code: number; data: Exam }>(`/api/admin/exams/${examId}`, {
-      method: 'GET',
+      method: "GET",
     })
       .then((response) => {
         if (response.data) {
@@ -46,7 +46,7 @@ const ExamPublish: React.FC = () => {
           });
         }
       })
-      .catch(() => message.error('获取考试信息失败'))
+      .catch(() => message.error("获取考试信息失败"))
       .finally(() => setLoading(false));
   }, [examId, form]);
 
@@ -62,7 +62,7 @@ const ExamPublish: React.FC = () => {
       const response = await request<{ code: number; message: string }>(
         `/api/admin/exams/${examId}/publish`,
         {
-          method: 'POST',
+          method: "POST",
           data: {
             start_time: values.start_time.toISOString(),
             end_time: values.end_time.toISOString(),
@@ -71,13 +71,13 @@ const ExamPublish: React.FC = () => {
         },
       );
       if (response.code === 0) {
-        message.success('考试发布成功');
-        window.location.href = '/exams';
+        message.success("考试发布成功");
+        window.location.href = "/exams";
       } else {
-        message.error(response.message || '发布失败');
+        message.error(response.message || "发布失败");
       }
     } catch {
-      message.error('发布考试失败');
+      message.error("发布考试失败");
     } finally {
       setSubmitting(false);
     }
@@ -103,7 +103,7 @@ const ExamPublish: React.FC = () => {
         <Form.Item
           name="duration_minutes"
           label="考试时长（分钟）"
-          rules={[{ required: true, message: '请输入考试时长' }]}
+          rules={[{ required: true, message: "请输入考试时长" }]}
         >
           <InputNumber min={1} max={480} style={{ width: 200 }} />
         </Form.Item>
@@ -111,7 +111,7 @@ const ExamPublish: React.FC = () => {
         <Form.Item
           name="start_time"
           label="开始时间"
-          rules={[{ required: true, message: '请选择开始时间' }]}
+          rules={[{ required: true, message: "请选择开始时间" }]}
         >
           <DatePicker showTime format="YYYY-MM-DD HH:mm" />
         </Form.Item>
@@ -119,7 +119,7 @@ const ExamPublish: React.FC = () => {
         <Form.Item
           name="end_time"
           label="结束时间"
-          rules={[{ required: true, message: '请选择结束时间' }]}
+          rules={[{ required: true, message: "请选择结束时间" }]}
         >
           <DatePicker showTime format="YYYY-MM-DD HH:mm" />
         </Form.Item>
@@ -127,17 +127,17 @@ const ExamPublish: React.FC = () => {
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={submitting}>
             {intl.formatMessage({
-              id: 'common.publish',
-              defaultMessage: '发布',
+              id: "common.publish",
+              defaultMessage: "发布",
             })}
           </Button>
           <Button
             className="ml-4"
-            onClick={() => (window.location.href = '/exams')}
+            onClick={() => (window.location.href = "/exams")}
           >
             {intl.formatMessage({
-              id: 'common.cancel',
-              defaultMessage: '取消',
+              id: "common.cancel",
+              defaultMessage: "取消",
             })}
           </Button>
         </Form.Item>

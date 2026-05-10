@@ -1,46 +1,46 @@
 import {
   type Settings as LayoutSettings,
   SettingDrawer,
-} from '@ant-design/pro-components';
-import type { RunTimeLayoutConfig } from '@umijs/max';
-import { history, Link } from '@umijs/max';
-import { Avatar, Button, ConfigProvider, Result } from 'antd';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import React from 'react';
-import type { AuthMeData } from '@/auth/token';
+} from "@ant-design/pro-components";
+import type { RunTimeLayoutConfig } from "@umijs/max";
+import { history, Link } from "@umijs/max";
+import { Avatar, Button, ConfigProvider, Result } from "antd";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import React from "react";
+import type { AuthMeData } from "@/auth/token";
 import {
   clearAuthStorage,
   getAccessToken,
   setLocalProfile,
-} from '@/auth/token';
-import { AvatarDropdown, Footer, SelectLang } from '@/components';
+} from "@/auth/token";
+import { AvatarDropdown, Footer, SelectLang } from "@/components";
 import {
   loadThemePreference,
   saveThemePreference,
   toLayoutSettings,
-} from '@/theme/preference';
-import useShadcnTheme from '@/theme/shadcnTheme';
-import defaultSettings from '../config/defaultSettings';
-import { errorConfig } from './request';
+} from "@/theme/preference";
+import useShadcnTheme from "@/theme/shadcnTheme";
+import defaultSettings from "../config/defaultSettings";
+import { errorConfig } from "./request";
 
 // Initialize dayjs plugins globally
 dayjs.extend(relativeTime);
 
-const isDev = process.env.NODE_ENV === 'development';
-const loginPath = '/login';
+const isDev = process.env.NODE_ENV === "development";
+const loginPath = "/login";
 
 // 生成随机颜色的函数
 const getRandomColor = (name: string): string => {
   const colors = [
-    '#18181b',
-    '#262626',
-    '#3f3f46',
-    '#525252',
-    '#16a34a',
-    '#ea580c',
-    '#dc2626',
-    '#404040',
+    "#18181b",
+    "#262626",
+    "#3f3f46",
+    "#525252",
+    "#16a34a",
+    "#ea580c",
+    "#dc2626",
+    "#404040",
   ];
   // 基于名字生成一致性随机颜色
   let hash = 0;
@@ -52,7 +52,7 @@ const getRandomColor = (name: string): string => {
 
 // 获取名字首字母（最多两个）
 const getInitials = (name: string): string => {
-  if (!name) return '?';
+  if (!name) return "?";
   if (name.length === 1) return name.charAt(0).toUpperCase();
   return name.substring(0, 2).toUpperCase();
 };
@@ -86,7 +86,7 @@ export async function getInitialState(): Promise<{
     if (!token) return null;
 
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch("/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -101,7 +101,7 @@ export async function getInitialState(): Promise<{
 
       // 403 Forbidden - user lacks admin role
       if (httpStatus === 403 || errorCode === 40300) {
-        console.warn('User does not have admin access (403)');
+        console.warn("User does not have admin access (403)");
         return null;
       }
 
@@ -131,7 +131,7 @@ export async function getInitialState(): Promise<{
       // If null, user lacks admin role (403)
       isForbidden = userProfile === null;
     } catch (_error: any) {
-      console.error('Failed to fetch user info:', _error);
+      console.error("Failed to fetch user info:", _error);
       isForbidden = false;
     }
 
@@ -181,7 +181,7 @@ export const layout: RunTimeLayoutConfig = ({
         const userName =
           initialState?.currentUser?.display_name ||
           initialState?.currentUser?.username ||
-          '?';
+          "?";
         const initials = getInitials(userName);
         const bgColor = getRandomColor(userName);
 
@@ -190,7 +190,7 @@ export const layout: RunTimeLayoutConfig = ({
             <Avatar
               style={{
                 backgroundColor: bgColor,
-                cursor: 'pointer',
+                cursor: "pointer",
                 fontSize: 12,
               }}
               size={28}
@@ -249,7 +249,7 @@ export const layout: RunTimeLayoutConfig = ({
  * @doc https://umijs.org/docs/max/request#配置
  */
 export const request: any = {
-  baseURL: isDev ? '' : 'https://exam.micromoving.net',
+  baseURL: isDev ? "" : "https://exam.micromoving.net",
   ...errorConfig,
 };
 
@@ -261,15 +261,15 @@ const ForbiddenPage: React.FC = () => {
     setLoading(true);
     try {
       const token = getAccessToken();
-      await fetch('/api/auth/logout', {
-        method: 'POST',
+      await fetch("/api/auth/logout", {
+        method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
     } catch (_) {
       // ignore logout errors
     }
     clearAuthStorage();
-    window.location.href = '/login';
+    window.location.href = "/login";
   };
 
   return (

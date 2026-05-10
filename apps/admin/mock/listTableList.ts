@@ -1,6 +1,6 @@
-import { parse } from 'node:url';
-import dayjs from 'dayjs';
-import type { Request, Response } from 'express';
+import { parse } from "node:url";
+import dayjs from "dayjs";
+import type { Request, Response } from "express";
 
 // mock tableListDataSource
 const genList = (current: number, pageSize: number) => {
@@ -11,18 +11,18 @@ const genList = (current: number, pageSize: number) => {
     tableListDataSource.push({
       key: index,
       disabled: i % 6 === 0,
-      href: 'https://ant.design',
+      href: "https://ant.design",
       avatar: [
-        'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
-        'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
+        "https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png",
+        "https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png",
       ][i % 2],
       name: `TradeCode ${index}`,
-      owner: '曲丽丽',
-      desc: '这是一段描述',
+      owner: "曲丽丽",
+      desc: "这是一段描述",
       callNo: Math.floor(Math.random() * 1000),
       status: Math.floor(Math.random() * 10) % 4,
-      updatedAt: dayjs().format('YYYY-MM-DD'),
-      createdAt: dayjs().format('YYYY-MM-DD'),
+      updatedAt: dayjs().format("YYYY-MM-DD"),
+      createdAt: dayjs().format("YYYY-MM-DD"),
       progress: Math.ceil(Math.random() * 100),
     });
   }
@@ -34,7 +34,10 @@ let tableListDataSource = genList(1, 100);
 
 function getRule(req: Request, res: Response, u: string) {
   let realUrl = u;
-  if (!realUrl || Object.prototype.toString.call(realUrl) !== '[object String]') {
+  if (
+    !realUrl ||
+    Object.prototype.toString.call(realUrl) !== "[object String]"
+  ) {
     realUrl = req.url;
   }
   const { current = 1, pageSize = 10 } = req.query;
@@ -55,7 +58,7 @@ function getRule(req: Request, res: Response, u: string) {
       (Object.keys(sorter) as Array<keyof API.RuleListItem>).forEach((key) => {
         const nextSort = next?.[key] as number;
         const preSort = prev?.[key] as number;
-        if (sorter[key] === 'descend') {
+        if (sorter[key] === "descend") {
           if (preSort - nextSort > 0) {
             sortNumber += -1;
           } else {
@@ -78,21 +81,25 @@ function getRule(req: Request, res: Response, u: string) {
     };
     if (Object.keys(filter).length > 0) {
       dataSource = dataSource.filter((item) => {
-        return (Object.keys(filter) as Array<keyof API.RuleListItem>).some((key) => {
-          if (!filter[key]) {
-            return true;
-          }
-          if (filter[key].includes(`${item[key]}`)) {
-            return true;
-          }
-          return false;
-        });
+        return (Object.keys(filter) as Array<keyof API.RuleListItem>).some(
+          (key) => {
+            if (!filter[key]) {
+              return true;
+            }
+            if (filter[key].includes(`${item[key]}`)) {
+              return true;
+            }
+            return false;
+          },
+        );
       });
     }
   }
 
   if (params.name) {
-    dataSource = dataSource.filter((data) => data?.name?.includes(params.name || ''));
+    dataSource = dataSource.filter((data) =>
+      data?.name?.includes(params.name || ""),
+    );
   }
   const result = {
     data: dataSource,
@@ -110,26 +117,28 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
   const { method, name, desc, key } = body;
 
   switch (method) {
-    case 'delete':
-      tableListDataSource = tableListDataSource.filter((item) => key.indexOf(item.key) === -1);
+    case "delete":
+      tableListDataSource = tableListDataSource.filter(
+        (item) => key.indexOf(item.key) === -1,
+      );
       break;
-    case 'post':
+    case "post":
       (() => {
         const i = Math.ceil(Math.random() * 10000);
         const newRule: API.RuleListItem = {
           key: tableListDataSource.length,
-          href: 'https://ant.design',
+          href: "https://ant.design",
           avatar: [
-            'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
-            'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
+            "https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png",
+            "https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png",
           ][i % 2],
           name,
-          owner: '曲丽丽',
+          owner: "曲丽丽",
           desc,
           callNo: Math.floor(Math.random() * 1000),
           status: Math.floor(Math.random() * 10) % 2,
-          updatedAt: dayjs().format('YYYY-MM-DD'),
-          createdAt: dayjs().format('YYYY-MM-DD'),
+          updatedAt: dayjs().format("YYYY-MM-DD"),
+          createdAt: dayjs().format("YYYY-MM-DD"),
           progress: Math.ceil(Math.random() * 100),
         };
         tableListDataSource.unshift(newRule);
@@ -137,7 +146,7 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
       })();
       return;
 
-    case 'update':
+    case "update":
       (() => {
         let newRule = {};
         tableListDataSource = tableListDataSource.map((item) => {
@@ -165,6 +174,6 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
 }
 
 export default {
-  'GET /api/rule': getRule,
-  'POST /api/rule': postRule,
+  "GET /api/rule": getRule,
+  "POST /api/rule": postRule,
 };

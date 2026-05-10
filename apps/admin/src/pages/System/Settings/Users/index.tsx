@@ -92,9 +92,9 @@ const UserListContent: React.FC = () => {
             id: `pages.users.roles.${r.value}`,
             defaultMessage: r.label,
           }),
-        ])
+        ]),
       ),
-    [intl]
+    [intl],
   );
 
   const statusLabelMap = useMemo(
@@ -106,37 +106,37 @@ const UserListContent: React.FC = () => {
             id: `pages.users.statuses.${s.value}`,
             defaultMessage: s.label,
           }),
-        ])
+        ]),
       ),
-    [intl]
+    [intl],
   );
 
   // i18n'd select options
   const roleOptions = useMemo(
     () => ROLES.map((r) => ({ ...r, label: roleLabelMap[r.value] })),
-    [roleLabelMap]
+    [roleLabelMap],
   );
 
   const statusOptions = useMemo(
     () => STATUSES.map((s) => ({ ...s, label: statusLabelMap[s.value] })),
-    [statusLabelMap]
+    [statusLabelMap],
   );
 
   // valueEnums for ProTable
   const roleValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        ROLES.map((r) => [r.value, { text: roleLabelMap[r.value] }])
+        ROLES.map((r) => [r.value, { text: roleLabelMap[r.value] }]),
       ),
-    [roleLabelMap]
+    [roleLabelMap],
   );
 
   const statusValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        STATUSES.map((s) => [s.value, { text: statusLabelMap[s.value] }])
+        STATUSES.map((s) => [s.value, { text: statusLabelMap[s.value] }]),
       ),
-    [statusLabelMap]
+    [statusLabelMap],
   );
 
   const openCreate = () => {
@@ -166,7 +166,7 @@ const UserListContent: React.FC = () => {
         {
           method: editing ? "PUT" : "POST",
           data: values,
-        }
+        },
       );
       antdMessage.success(
         editing
@@ -177,7 +177,7 @@ const UserListContent: React.FC = () => {
           : intl.formatMessage({
               id: "pages.users.createSuccess",
               defaultMessage: "用户已创建",
-            })
+            }),
       );
       if (editing) {
         setDrawerOpen(false);
@@ -195,7 +195,7 @@ const UserListContent: React.FC = () => {
           : intl.formatMessage({
               id: "pages.users.createError",
               defaultMessage: "创建用户失败",
-            })
+            }),
       );
     } finally {
       setSaving(false);
@@ -213,7 +213,7 @@ const UserListContent: React.FC = () => {
           id: "pages.users.deleteConfirmContent",
           defaultMessage: "确定要删除用户「{username}」吗？此操作不可撤销。",
         },
-        { username: user.username }
+        { username: user.username },
       ),
       okText: intl.formatMessage({
         id: "pages.users.delete",
@@ -233,7 +233,7 @@ const UserListContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.users.deleteSuccess",
               defaultMessage: "用户已删除",
-            })
+            }),
           );
           actionRef.current?.reload();
         } catch (_error) {
@@ -241,7 +241,7 @@ const UserListContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.users.deleteError",
               defaultMessage: "删除用户失败",
-            })
+            }),
           );
         }
       },
@@ -511,7 +511,7 @@ const UserListContent: React.FC = () => {
               intl.formatMessage({
                 id: "pages.users.fetchError",
                 defaultMessage: "获取用户列表失败",
-              })
+              }),
             );
             return {
               data: [],
@@ -530,7 +530,7 @@ const UserListContent: React.FC = () => {
                 id: "pages.users.total",
                 defaultMessage: "共 {total} 条",
               },
-              { total }
+              { total },
             ),
         }}
         revalidateOnFocus={false}
@@ -585,7 +585,7 @@ const UserListContent: React.FC = () => {
                 intl.formatMessage({
                   id: "pages.users.createSuccess",
                   defaultMessage: "用户已创建",
-                })
+                }),
               );
               setModalOpen(false);
               actionRef.current?.reload();
@@ -594,7 +594,7 @@ const UserListContent: React.FC = () => {
                 intl.formatMessage({
                   id: "pages.users.createError",
                   defaultMessage: "创建用户失败",
-                })
+                }),
               );
             } finally {
               setSaving(false);

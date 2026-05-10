@@ -1,5 +1,5 @@
-import type { Request, Response } from 'express';
-import { fakeList } from './utils';
+import type { Request, Response } from "express";
+import { fakeList } from "./utils";
 
 function getFakeList(req: Request, res: Response) {
   const params: any = req.query;
@@ -15,5 +15,5 @@ function getFakeList(req: Request, res: Response) {
 }
 
 export default {
-  'GET /api/fake_list': getFakeList,
+  "GET /api/fake_list": getFakeList,
 };

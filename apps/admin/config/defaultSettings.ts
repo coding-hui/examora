@@ -1,4 +1,4 @@
-import type { ProLayoutProps } from '@ant-design/pro-components';
+import type { ProLayoutProps } from "@ant-design/pro-components";
 
 /**
  * @name Examora Pro Layout Settings
@@ -8,19 +8,19 @@ const Settings: ProLayoutProps & {
   pwa?: boolean;
   logo?: string;
 } = {
-  navTheme: 'light',
-  colorPrimary: '#262626',
-  layout: 'mix',
-  contentWidth: 'Fluid',
+  navTheme: "light",
+  colorPrimary: "#262626",
+  layout: "mix",
+  contentWidth: "Fluid",
   fixedHeader: true,
   fixSiderbar: true,
   splitMenus: false,
-  siderMenuType: 'group',
+  siderMenuType: "group",
   colorWeak: false,
-  title: 'Examora',
+  title: "Examora",
   pwa: false,
-  logo: '/logo.svg',
-  iconfontUrl: '',
+  logo: "/logo.svg",
+  iconfontUrl: "",
   menu: {
     collapsedWidth: 64,
   },

@@ -1,7 +1,7 @@
-import { PageContainer } from '@ant-design/pro-components';
-import { history } from '@umijs/max';
-import { Button, Card, Result } from 'antd';
-import React from 'react';
+import { PageContainer } from "@ant-design/pro-components";
+import { history } from "@umijs/max";
+import { Button, Card, Result } from "antd";
+import React from "react";
 
 const Index: React.FC = () => {
   return (
@@ -12,7 +12,7 @@ const Index: React.FC = () => {
           title="即将上线"
           subTitle="该功能正在开发中，敬请期待。"
           extra={
-            <Button type="primary" onClick={() => history.push('/')}>
+            <Button type="primary" onClick={() => history.push("/")}>
               返回首页
             </Button>
           }

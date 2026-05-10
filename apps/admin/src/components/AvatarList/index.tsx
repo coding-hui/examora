@@ -1,9 +1,9 @@
-import { Avatar, Tooltip } from 'antd';
-import { clsx } from 'clsx';
-import React from 'react';
-import useStyles from './index.style';
+import { Avatar, Tooltip } from "antd";
+import { clsx } from "clsx";
+import React from "react";
+import useStyles from "./index.style";
 
-export declare type SizeType = number | 'small' | 'default' | 'large';
+export declare type SizeType = number | "small" | "default" | "large";
 
 export type AvatarItemProps = {
   tips: React.ReactNode;
@@ -24,11 +24,11 @@ export type AvatarListProps = {
     | React.ReactElement<AvatarItemProps>[];
 };
 
-const avatarSizeToClassName = (styles: any, size?: SizeType | 'mini') =>
+const avatarSizeToClassName = (styles: any, size?: SizeType | "mini") =>
   clsx(styles.avatarItem, {
-    [styles.avatarItemLarge]: size === 'large',
-    [styles.avatarItemSmall]: size === 'small',
-    [styles.avatarItemMini]: size === 'mini',
+    [styles.avatarItemLarge]: size === "large",
+    [styles.avatarItemSmall]: size === "small",
+    [styles.avatarItemMini]: size === "mini",
   });
 
 const Item: React.FC<AvatarItemProps> = ({
@@ -47,7 +47,7 @@ const Item: React.FC<AvatarItemProps> = ({
             src={src}
             size={size}
             style={{
-              cursor: 'pointer',
+              cursor: "pointer",
             }}
           />
         </Tooltip>

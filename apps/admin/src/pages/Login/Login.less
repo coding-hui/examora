@@ -25,12 +25,17 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  content: '';
+  content: "";
   background:
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 32px 32px;
-  mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.88) 42%, transparent 100%);
+  mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    rgba(0, 0, 0, 0.88) 42%,
+    transparent 100%
+  );
 }
 
 .examora-login__brand > * {
@@ -154,7 +159,11 @@
   align-items: center;
   justify-content: center;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(250, 250, 250, 0.96)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.86),
+      rgba(250, 250, 250, 0.96)
+    ),
     #fafafa;
   padding: 48px 32px;
 }

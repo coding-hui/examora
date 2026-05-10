@@ -4,8 +4,8 @@ import {
   LockOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
-} from '@ant-design/icons';
-import { request, useIntl } from '@umijs/max';
+} from "@ant-design/icons";
+import { request, useIntl } from "@umijs/max";
 import {
   Alert,
   App as AntdApp,
@@ -14,16 +14,16 @@ import {
   Form,
   Input,
   Typography,
-} from 'antd';
-import { useEffect, useState } from 'react';
-import type { AuthConfig, LoginResponse } from '@/auth/token';
-import { setAccessToken, setLocalProfile } from '@/auth/token';
-import './Login.less';
+} from "antd";
+import { useEffect, useState } from "react";
+import type { AuthConfig, LoginResponse } from "@/auth/token";
+import { setAccessToken, setLocalProfile } from "@/auth/token";
+import "./Login.less";
 
 const { Text, Title } = Typography;
 
 const fallbackAuthConfig: AuthConfig = {
-  auth_mode: 'local',
+  auth_mode: "local",
   logto_enabled: false,
   has_local_users: true,
 };
@@ -46,8 +46,8 @@ const getRequestErrorMessage = (err: any): string | undefined => {
 const unwrapData = <T,>(response: T | ApiEnvelope<T>): T => {
   if (
     response &&
-    typeof response === 'object' &&
-    'data' in response &&
+    typeof response === "object" &&
+    "data" in response &&
     (response as ApiEnvelope<T>).data
   ) {
     return (response as ApiEnvelope<T>).data as T;
@@ -66,25 +66,25 @@ const Login: React.FC = () => {
     const loadConfig = async () => {
       try {
         const response = await request<AuthConfig | ApiEnvelope<AuthConfig>>(
-          '/api/auth/config',
+          "/api/auth/config",
           {
-            method: 'GET',
+            method: "GET",
           },
         );
         setAuthConfig(unwrapData(response));
       } catch (err) {
-        console.error('Failed to fetch auth config:', err);
+        console.error("Failed to fetch auth config:", err);
         setAuthConfig(fallbackAuthConfig);
       }
     };
     void loadConfig();
 
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
+    const token = params.get("token");
     if (token) {
       setAccessToken(token);
-      message.success(intl.formatMessage({ id: 'pages.login.ssoSuccess' }));
-      window.location.href = '/';
+      message.success(intl.formatMessage({ id: "pages.login.ssoSuccess" }));
+      window.location.href = "/";
     }
   }, []);
 
@@ -98,8 +98,8 @@ const Login: React.FC = () => {
     try {
       const response = await request<
         LoginResponse | ApiEnvelope<LoginResponse>
-      >('/api/auth/login', {
-        method: 'POST',
+      >("/api/auth/login", {
+        method: "POST",
         data: values,
         skipErrorHandler: true,
       });
@@ -110,17 +110,17 @@ const Login: React.FC = () => {
         if (loginResult.user) {
           setLocalProfile(loginResult.user);
         }
-        message.success(intl.formatMessage({ id: 'pages.login.success' }));
-        window.location.href = '/';
+        message.success(intl.formatMessage({ id: "pages.login.success" }));
+        window.location.href = "/";
         return;
       }
 
-      setError(intl.formatMessage({ id: 'pages.login.error.missingToken' }));
+      setError(intl.formatMessage({ id: "pages.login.error.missingToken" }));
     } catch (err: any) {
-      console.error('Login failed:', err);
+      console.error("Login failed:", err);
       const errorMsg =
         getRequestErrorMessage(err) ||
-        intl.formatMessage({ id: 'pages.login.error.failed' });
+        intl.formatMessage({ id: "pages.login.error.failed" });
       setError(errorMsg);
       message.error(errorMsg);
     } finally {
@@ -129,7 +129,7 @@ const Login: React.FC = () => {
   };
 
   const handleLogtoLogin = () => {
-    window.location.href = '/api/auth/logto/login';
+    window.location.href = "/api/auth/logto/login";
   };
 
   return (
@@ -142,13 +142,13 @@ const Login: React.FC = () => {
 
         <div className="examora-login__brand-copy">
           <Text className="examora-login__eyebrow">
-            {intl.formatMessage({ id: 'pages.login.brand.eyebrow' })}
+            {intl.formatMessage({ id: "pages.login.brand.eyebrow" })}
           </Text>
           <Title level={1}>
-            {intl.formatMessage({ id: 'pages.login.brand.headline' })}
+            {intl.formatMessage({ id: "pages.login.brand.headline" })}
           </Title>
           <Text className="examora-login__lead">
-            {intl.formatMessage({ id: 'pages.login.brand.description' })}
+            {intl.formatMessage({ id: "pages.login.brand.description" })}
           </Text>
         </div>
 
@@ -159,10 +159,10 @@ const Login: React.FC = () => {
             </div>
             <div>
               <span className="examora-login__signal-title">
-                {intl.formatMessage({ id: 'pages.login.brand.signal1.title' })}
+                {intl.formatMessage({ id: "pages.login.brand.signal1.title" })}
               </span>
               <span className="examora-login__signal-desc">
-                {intl.formatMessage({ id: 'pages.login.brand.signal1.desc' })}
+                {intl.formatMessage({ id: "pages.login.brand.signal1.desc" })}
               </span>
             </div>
           </li>
@@ -172,10 +172,10 @@ const Login: React.FC = () => {
             </div>
             <div>
               <span className="examora-login__signal-title">
-                {intl.formatMessage({ id: 'pages.login.brand.signal2.title' })}
+                {intl.formatMessage({ id: "pages.login.brand.signal2.title" })}
               </span>
               <span className="examora-login__signal-desc">
-                {intl.formatMessage({ id: 'pages.login.brand.signal2.desc' })}
+                {intl.formatMessage({ id: "pages.login.brand.signal2.desc" })}
               </span>
             </div>
           </li>
@@ -185,10 +185,10 @@ const Login: React.FC = () => {
             </div>
             <div>
               <span className="examora-login__signal-title">
-                {intl.formatMessage({ id: 'pages.login.brand.signal3.title' })}
+                {intl.formatMessage({ id: "pages.login.brand.signal3.title" })}
               </span>
               <span className="examora-login__signal-desc">
-                {intl.formatMessage({ id: 'pages.login.brand.signal3.desc' })}
+                {intl.formatMessage({ id: "pages.login.brand.signal3.desc" })}
               </span>
             </div>
           </li>
@@ -199,12 +199,12 @@ const Login: React.FC = () => {
         <div className="examora-login__card">
           <div className="examora-login__card-header">
             <Text className="examora-login__section-label">
-              {intl.formatMessage({ id: 'pages.login.sectionLabel' })}
+              {intl.formatMessage({ id: "pages.login.sectionLabel" })}
             </Text>
             <Title level={2}>
-              {intl.formatMessage({ id: 'pages.login.title' })}
+              {intl.formatMessage({ id: "pages.login.title" })}
             </Title>
-            <Text>{intl.formatMessage({ id: 'pages.login.subtitle' })}</Text>
+            <Text>{intl.formatMessage({ id: "pages.login.subtitle" })}</Text>
           </div>
 
           {error && (
@@ -224,13 +224,13 @@ const Login: React.FC = () => {
             size="large"
           >
             <Form.Item
-              label={intl.formatMessage({ id: 'pages.login.username.label' })}
+              label={intl.formatMessage({ id: "pages.login.username.label" })}
               name="username"
               rules={[
                 {
                   required: true,
                   message: intl.formatMessage({
-                    id: 'pages.login.username.required',
+                    id: "pages.login.username.required",
                   }),
                 },
               ]}
@@ -239,19 +239,19 @@ const Login: React.FC = () => {
                 autoComplete="username"
                 prefix={<UserOutlined />}
                 placeholder={intl.formatMessage({
-                  id: 'pages.login.username.placeholder',
+                  id: "pages.login.username.placeholder",
                 })}
               />
             </Form.Item>
 
             <Form.Item
-              label={intl.formatMessage({ id: 'pages.login.password.label' })}
+              label={intl.formatMessage({ id: "pages.login.password.label" })}
               name="password"
               rules={[
                 {
                   required: true,
                   message: intl.formatMessage({
-                    id: 'pages.login.password.required',
+                    id: "pages.login.password.required",
                   }),
                 },
               ]}
@@ -260,7 +260,7 @@ const Login: React.FC = () => {
                 autoComplete="current-password"
                 prefix={<LockOutlined />}
                 placeholder={intl.formatMessage({
-                  id: 'pages.login.password.placeholder',
+                  id: "pages.login.password.placeholder",
                 })}
               />
             </Form.Item>
@@ -273,24 +273,24 @@ const Login: React.FC = () => {
               className="examora-login__submit"
             >
               {isLoading
-                ? intl.formatMessage({ id: 'pages.login.submitting' })
-                : intl.formatMessage({ id: 'pages.login.submit' })}
+                ? intl.formatMessage({ id: "pages.login.submitting" })
+                : intl.formatMessage({ id: "pages.login.submit" })}
             </Button>
           </Form>
 
           {authConfig?.logto_enabled && (
             <div className="examora-login__sso">
               <Divider plain>
-                {intl.formatMessage({ id: 'pages.login.or' })}
+                {intl.formatMessage({ id: "pages.login.or" })}
               </Divider>
               <Button block size="large" onClick={handleLogtoLogin}>
-                {intl.formatMessage({ id: 'pages.login.sso' })}
+                {intl.formatMessage({ id: "pages.login.sso" })}
               </Button>
             </div>
           )}
 
           <Text className="examora-login__footnote">
-            {intl.formatMessage({ id: 'pages.login.footnote' })}
+            {intl.formatMessage({ id: "pages.login.footnote" })}
           </Text>
         </div>
       </section>

@@ -1,10 +1,10 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { PageContainer } from '@ant-design/pro-components';
-import { request, useIntl } from '@umijs/max';
-import { App as AntdApp, Button, Card, Table, Tag } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import { PlusOutlined } from "@ant-design/icons";
+import { PageContainer } from "@ant-design/pro-components";
+import { request, useIntl } from "@umijs/max";
+import { App as AntdApp, Button, Card, Table, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import dayjs from "dayjs";
+import React, { useEffect, useState } from "react";
 
 interface Exam {
   id: number;
@@ -31,13 +31,13 @@ const ExamList: React.FC = () => {
       const response = await request<{
         code: number;
         data: { items: Exam[]; total: number };
-      }>('/api/admin/exams', { params: { page: 1, page_size: 100 } });
+      }>("/api/admin/exams", { params: { page: 1, page_size: 100 } });
       if (response.data) {
         setExams(response.data.items || []);
         setTotal(response.data.total || 0);
       }
     } catch (_error) {
-      message.error('获取考试列表失败');
+      message.error("获取考试列表失败");
     } finally {
       setLoading(false);
     }
@@ -48,65 +48,65 @@ const ExamList: React.FC = () => {
   }, []);
 
   const statusColors: Record<string, string> = {
-    DRAFT: 'default',
-    PUBLISHED: 'green',
-    RUNNING: 'blue',
-    CLOSED: 'red',
-    ARCHIVED: 'gray',
+    DRAFT: "default",
+    PUBLISHED: "green",
+    RUNNING: "blue",
+    CLOSED: "red",
+    ARCHIVED: "gray",
   };
 
   const columns: ColumnsType<Exam> = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
       width: 80,
     },
     {
-      title: '考试名称',
-      dataIndex: 'title',
-      key: 'title',
+      title: "考试名称",
+      dataIndex: "title",
+      key: "title",
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
+      title: "状态",
+      dataIndex: "status",
+      key: "status",
       render: (status: string) => (
-        <Tag color={statusColors[status] || 'default'}>{status}</Tag>
+        <Tag color={statusColors[status] || "default"}>{status}</Tag>
       ),
     },
     {
-      title: '时长(分钟)',
-      dataIndex: 'duration_minutes',
-      key: 'duration_minutes',
+      title: "时长(分钟)",
+      dataIndex: "duration_minutes",
+      key: "duration_minutes",
       width: 100,
     },
     {
-      title: '开始时间',
-      dataIndex: 'start_time',
-      key: 'start_time',
+      title: "开始时间",
+      dataIndex: "start_time",
+      key: "start_time",
       render: (time: string) =>
-        time ? dayjs(time).format('YYYY-MM-DD HH:mm') : '-',
+        time ? dayjs(time).format("YYYY-MM-DD HH:mm") : "-",
     },
     {
-      title: '结束时间',
-      dataIndex: 'end_time',
-      key: 'end_time',
+      title: "结束时间",
+      dataIndex: "end_time",
+      key: "end_time",
       render: (time: string) =>
-        time ? dayjs(time).format('YYYY-MM-DD HH:mm') : '-',
+        time ? dayjs(time).format("YYYY-MM-DD HH:mm") : "-",
     },
     {
-      title: '创建时间',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm'),
+      title: "创建时间",
+      dataIndex: "created_at",
+      key: "created_at",
+      render: (time: string) => dayjs(time).format("YYYY-MM-DD HH:mm"),
     },
     {
-      title: '操作',
-      key: 'action',
+      title: "操作",
+      key: "action",
       width: 120,
       render: (_, record) =>
-        record.status === 'DRAFT' && (
+        record.status === "DRAFT" && (
           <Button
             type="link"
             onClick={() =>
@@ -122,8 +122,8 @@ const ExamList: React.FC = () => {
   return (
     <PageContainer
       title={intl.formatMessage({
-        id: 'menu.exams',
-        defaultMessage: '考试管理',
+        id: "menu.exams",
+        defaultMessage: "考试管理",
       })}
       content="创建和管理考试，设置考试时间、时长和参与考生，支持线上监考。"
     >
@@ -133,11 +133,11 @@ const ExamList: React.FC = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => (window.location.href = '/exams/create')}
+            onClick={() => (window.location.href = "/exams/create")}
           >
             {intl.formatMessage({
-              id: 'common.create',
-              defaultMessage: '创建考试',
+              id: "common.create",
+              defaultMessage: "创建考试",
             })}
           </Button>
         </div>

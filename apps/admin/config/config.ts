@@ -1,25 +1,25 @@
 // https://umijs.org/config/
 // @ts-nocheck
 
-import { join } from 'node:path';
-import { defineConfig } from '@umijs/max';
-import defaultSettings from './defaultSettings';
-import proxy from './proxy';
+import { join } from "node:path";
+import { defineConfig } from "@umijs/max";
+import defaultSettings from "./defaultSettings";
+import proxy from "./proxy";
 
-import routes from './routes';
+import routes from "./routes";
 
-const { UMI_ENV = 'dev' } = process.env;
+const { UMI_ENV = "dev" } = process.env;
 
 /**
  * @name 使用公共路径
  * @description 部署时的路径，如果部署在非根目录下，需要配置这个变量
  * @doc https://umijs.org/docs/api/config#publicpath
  */
-const PUBLIC_PATH: string = '/';
+const PUBLIC_PATH: string = "/";
 
 export default defineConfig({
   alias: {
-    '@root': join(__dirname, '..'),
+    "@root": join(__dirname, ".."),
   },
   /**
    * @name 开启 hash 模式
@@ -98,7 +98,7 @@ export default defineConfig({
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
-  title: 'Examora',
+  title: "Examora",
   layout: {
     locale: true,
     ...defaultSettings,
@@ -109,8 +109,8 @@ export default defineConfig({
    * @doc https://umijs.org/docs/max/moment2dayjs
    */
   moment2dayjs: {
-    preset: 'antd',
-    plugins: ['duration', 'relativeTime'],
+    preset: "antd",
+    plugins: ["duration", "relativeTime"],
   },
   /**
    * @name 国际化插件
@@ -118,7 +118,7 @@ export default defineConfig({
    */
   locale: {
     // default zh-CN
-    default: 'zh-CN',
+    default: "zh-CN",
     antd: true,
     // default true, when it is true, will use `navigator.language` overwrite default
     baseNavigator: true,
@@ -151,7 +151,7 @@ export default defineConfig({
    */
   headScripts: [
     // 解决首次加载时白屏的问题
-    { src: join(PUBLIC_PATH, 'scripts/loading.js'), async: true },
+    { src: join(PUBLIC_PATH, "scripts/loading.js"), async: true },
   ],
 
   //================ pro 插件配置 =================
@@ -164,9 +164,9 @@ export default defineConfig({
   request: {},
   esbuildMinifyIIFE: true,
   define: {
-    'process.env.CI': process.env.CI,
-    'process.env.COMMIT_HASH': process.env.COMMIT_HASH || '',
-    'process.env.CF_PAGES_COMMIT_SHA': process.env.CF_PAGES_COMMIT_SHA || '',
-    __APP_VERSION__: JSON.stringify(require('./../package.json').version),
+    "process.env.CI": process.env.CI,
+    "process.env.COMMIT_HASH": process.env.COMMIT_HASH || "",
+    "process.env.CF_PAGES_COMMIT_SHA": process.env.CF_PAGES_COMMIT_SHA || "",
+    __APP_VERSION__: JSON.stringify(require("./../package.json").version),
   },
 });
