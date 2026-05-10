@@ -59,3 +59,7 @@ docker-compose.override.yml
 .tech/
 /.claude/
 /.codex/
+
+# Local data
+*.rdb
+design-system/
