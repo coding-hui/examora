@@ -62,14 +62,14 @@ html.examora-dark .question-type-icon {
   outline-offset: 2px;
 }
 
-.question-actions-cell {
-  display: flex;
-  align-items: center;
-}
-
 .question-actions-cell a {
   color: var(--examora-text);
   transition: color 150ms ease;
+}
+
+.question-actions-cell > a:first-child {
+  display: inline-block;
+  min-width: 72px;
 }
 
 .question-actions-cell a:hover {
