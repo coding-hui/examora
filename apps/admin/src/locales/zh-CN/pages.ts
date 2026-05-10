@@ -238,6 +238,10 @@ export default {
   "pages.questions.deleteDescription": "确定删除该题目？",
   "pages.questions.publish": "发布",
   "pages.questions.unpublish": "下架",
+  "pages.questions.publishConfirmTitle": "确认发布",
+  "pages.questions.publishConfirmContent": "确定要发布题目「{title}」吗？",
+  "pages.questions.unpublishConfirmTitle": "确认下架",
+  "pages.questions.unpublishConfirmContent": "确定要下架题目「{title}」吗？",
   "pages.questions.statusUpdateSuccess": "状态已更新为「{status}」",
   "pages.questions.statusUpdateError": "状态更新失败",
   // Exam pages

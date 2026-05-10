@@ -256,6 +256,12 @@ export default {
     "Are you sure you want to delete this question?",
   "pages.questions.publish": "Publish",
   "pages.questions.unpublish": "Unpublish",
+  "pages.questions.publishConfirmTitle": "Confirm Publish",
+  "pages.questions.publishConfirmContent":
+    'Are you sure you want to publish "{title}"?',
+  "pages.questions.unpublishConfirmTitle": "Confirm Unpublish",
+  "pages.questions.unpublishConfirmContent":
+    'Are you sure you want to unpublish "{title}"?',
   "pages.questions.statusUpdateSuccess": 'Status updated to "{status}"',
   "pages.questions.statusUpdateError": "Failed to update status",
   // Exam pages

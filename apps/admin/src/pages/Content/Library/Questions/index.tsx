@@ -207,42 +207,73 @@ const QuestionsPageContent: React.FC = () => {
     });
   };
 
-  const toggleStatus = async (question: AdminQuestion) => {
+  const confirmToggleStatus = (question: AdminQuestion) => {
     const next = question.status === "DRAFT" ? "PUBLISHED" : "DRAFT";
-    const label =
-      next === "PUBLISHED"
-        ? intl.formatMessage({
-            id: "pages.questions.status.PUBLISHED",
-            defaultMessage: "已发布",
-          })
-        : intl.formatMessage({
-            id: "pages.questions.status.DRAFT",
-            defaultMessage: "草稿",
+    const isPublishing = next === "PUBLISHED";
+    const label = isPublishing
+      ? intl.formatMessage({
+          id: "pages.questions.status.PUBLISHED",
+          defaultMessage: "已发布",
+        })
+      : intl.formatMessage({
+          id: "pages.questions.status.DRAFT",
+          defaultMessage: "草稿",
+        });
+    Modal.confirm({
+      title: intl.formatMessage({
+        id: isPublishing
+          ? "pages.questions.publishConfirmTitle"
+          : "pages.questions.unpublishConfirmTitle",
+        defaultMessage: isPublishing ? "确认发布" : "确认下架",
+      }),
+      content: intl.formatMessage(
+        {
+          id: isPublishing
+            ? "pages.questions.publishConfirmContent"
+            : "pages.questions.unpublishConfirmContent",
+          defaultMessage: isPublishing
+            ? "确定要发布题目「{title}」吗？"
+            : "确定要下架题目「{title}」吗？",
+        },
+        { title: question.title },
+      ),
+      okText: intl.formatMessage({
+        id: isPublishing
+          ? "pages.questions.publish"
+          : "pages.questions.unpublish",
+        defaultMessage: isPublishing ? "发布" : "下架",
+      }),
+      cancelText: intl.formatMessage({
+        id: "pages.questions.cancel",
+        defaultMessage: "取消",
+      }),
+      onOk: async () => {
+        try {
+          await request(`/api/admin/questions/${question.id}`, {
+            method: "PATCH",
+            data: { status: next },
+            skipErrorHandler: true,
           });
-    try {
-      await request(`/api/admin/questions/${question.id}`, {
-        method: "PATCH",
-        data: { status: next },
-        skipErrorHandler: true,
-      });
-      message.success(
-        intl.formatMessage(
-          {
-            id: "pages.questions.statusUpdateSuccess",
-            defaultMessage: "状态已更新为「{status}」",
-          },
-          { status: label },
-        ),
-      );
-      actionRef.current?.reload();
-    } catch {
-      message.error(
-        intl.formatMessage({
-          id: "pages.questions.statusUpdateError",
-          defaultMessage: "状态更新失败",
-        }),
-      );
-    }
+          message.success(
+            intl.formatMessage(
+              {
+                id: "pages.questions.statusUpdateSuccess",
+                defaultMessage: "状态已更新为「{status}」",
+              },
+              { status: label },
+            ),
+          );
+          actionRef.current?.reload();
+        } catch {
+          message.error(
+            intl.formatMessage({
+              id: "pages.questions.statusUpdateError",
+              defaultMessage: "状态更新失败",
+            }),
+          );
+        }
+      },
+    });
   };
 
   const columns: ProColumns<AdminQuestion>[] = [
@@ -385,7 +416,7 @@ const QuestionsPageContent: React.FC = () => {
           className="question-actions-cell"
           onClick={(e) => e.stopPropagation()}
         >
-          <a onClick={() => toggleStatus(question)}>
+          <a onClick={() => confirmToggleStatus(question)}>
             {question.status === "DRAFT"
               ? intl.formatMessage({
                   id: "pages.questions.publish",
