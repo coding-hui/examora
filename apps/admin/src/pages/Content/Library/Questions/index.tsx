@@ -27,82 +27,14 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import React, { useMemo, useRef, useState } from "react";
+import type { AdminQuestion, QuestionType } from "@examora/types";
+import {
+  DIFFICULTY_OPTIONS,
+  QUESTION_STATUS_BADGE,
+  QUESTION_STATUS_OPTIONS,
+  QUESTION_TYPE_OPTIONS,
+} from "@examora/types";
 import "./index.less";
-
-type QuestionType =
-  | "SINGLE_CHOICE"
-  | "MULTIPLE_CHOICE"
-  | "TRUE_FALSE"
-  | "FILL_BLANK"
-  | "SHORT_ANSWER"
-  | "PROGRAMMING";
-
-type QuestionStatus = "DRAFT" | "PUBLISHED";
-
-interface QuestionOption {
-  key: string;
-  text: string;
-}
-
-interface AdminTestCase {
-  client_key?: string;
-  id?: number;
-  question_id?: number;
-  input: string;
-  expected_output: string;
-  time_limit_ms: number;
-  memory_limit_mb: number;
-  is_sample: boolean;
-  is_hidden: boolean;
-  sort_order: number;
-}
-
-interface AdminQuestion {
-  id: number;
-  type: QuestionType;
-  title: string;
-  content: {
-    text?: string;
-    options?: QuestionOption[];
-    [key: string]: unknown;
-  };
-  answer?: Record<string, unknown> | null;
-  difficulty?: string;
-  language?: string;
-  starter_code?: string;
-  time_limit_ms: number;
-  memory_limit_mb: number;
-  status: QuestionStatus;
-  test_cases?: AdminTestCase[];
-  created_by: number;
-  created_at: string;
-  updated_at: string;
-}
-
-const QUESTION_TYPES: Array<{ label: string; value: QuestionType }> = [
-  { label: "单选题", value: "SINGLE_CHOICE" },
-  { label: "多选题", value: "MULTIPLE_CHOICE" },
-  { label: "判断题", value: "TRUE_FALSE" },
-  { label: "填空题", value: "FILL_BLANK" },
-  { label: "简答题", value: "SHORT_ANSWER" },
-  { label: "编程题", value: "PROGRAMMING" },
-];
-
-const DIFFICULTIES = [
-  { label: "简单", value: "EASY" },
-  { label: "中等", value: "MEDIUM" },
-  { label: "困难", value: "HARD" },
-];
-
-const STATUSES: Array<{ label: string; value: QuestionStatus }> = [
-  { label: "草稿", value: "DRAFT" },
-  { label: "已发布", value: "PUBLISHED" },
-];
-
-const STATUS_BADGE: Record<QuestionStatus, "default" | "success"> = {
-  DRAFT: "default",
-  PUBLISHED: "success",
-};
 
 const DIFFICULTY_CLASS: Record<string, string> = {
   EASY: "question-diff-tag-easy",
@@ -128,43 +60,43 @@ const QuestionsPageContent: React.FC = () => {
   const typeLabelMap = useMemo(
     () =>
       Object.fromEntries(
-        QUESTION_TYPES.map((t) => [
+        QUESTION_TYPE_OPTIONS.map((t) => [
           t.value,
           intl.formatMessage({
             id: `pages.questions.types.${t.value}`,
             defaultMessage: t.label,
           }),
-        ]),
+        ])
       ),
-    [intl],
+    [intl]
   );
 
   const difficultyLabelMap = useMemo(
     () =>
       Object.fromEntries(
-        DIFFICULTIES.map((d) => [
+        DIFFICULTY_OPTIONS.map((d) => [
           d.value,
           intl.formatMessage({
             id: `pages.questions.difficulty.${d.value}`,
             defaultMessage: d.label,
           }),
-        ]),
+        ])
       ),
-    [intl],
+    [intl]
   );
 
   const statusLabelMap = useMemo(
     () =>
       Object.fromEntries(
-        STATUSES.map((s) => [
+        QUESTION_STATUS_OPTIONS.map((s) => [
           s.value,
           intl.formatMessage({
             id: `pages.questions.status.${s.value}`,
             defaultMessage: s.label,
           }),
-        ]),
+        ])
       ),
-    [intl],
+    [intl]
   );
 
   const notSetLabel = intl.formatMessage({
@@ -181,28 +113,34 @@ const QuestionsPageContent: React.FC = () => {
   const typeValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        QUESTION_TYPES.map((t) => [t.value, { text: typeLabelMap[t.value] }]),
+        QUESTION_TYPE_OPTIONS.map((t) => [
+          t.value,
+          { text: typeLabelMap[t.value] },
+        ])
       ),
-    [typeLabelMap],
+    [typeLabelMap]
   );
 
   const difficultyValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        DIFFICULTIES.map((d) => [
+        DIFFICULTY_OPTIONS.map((d) => [
           d.value,
           { text: difficultyLabelMap[d.value] },
-        ]),
+        ])
       ),
-    [difficultyLabelMap],
+    [difficultyLabelMap]
   );
 
   const statusValueEnum = useMemo(
     () =>
       Object.fromEntries(
-        STATUSES.map((s) => [s.value, { text: statusLabelMap[s.value] }]),
+        QUESTION_STATUS_OPTIONS.map((s) => [
+          s.value,
+          { text: statusLabelMap[s.value] },
+        ])
       ),
-    [statusLabelMap],
+    [statusLabelMap]
   );
 
   const confirmDelete = (question: AdminQuestion) => {
@@ -216,7 +154,7 @@ const QuestionsPageContent: React.FC = () => {
           id: "pages.questions.deleteConfirmContent",
           defaultMessage: "确定要删除题目「{title}」吗？此操作不可撤销。",
         },
-        { title: question.title },
+        { title: question.title }
       ),
       okText: intl.formatMessage({
         id: "pages.questions.delete",
@@ -237,7 +175,7 @@ const QuestionsPageContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.questions.deleteSuccess",
               defaultMessage: "题目已删除",
-            }),
+            })
           );
           actionRef.current?.reload();
         } catch (error) {
@@ -254,7 +192,7 @@ const QuestionsPageContent: React.FC = () => {
               intl.formatMessage({
                 id: "pages.questions.deleteRefError",
                 defaultMessage: "该题已被试卷引用，不能删除",
-              }),
+              })
             );
             return;
           }
@@ -262,7 +200,7 @@ const QuestionsPageContent: React.FC = () => {
             intl.formatMessage({
               id: "pages.questions.deleteError",
               defaultMessage: "删除题目失败",
-            }),
+            })
           );
         }
       },
@@ -315,7 +253,7 @@ const QuestionsPageContent: React.FC = () => {
               </button>
             </Tooltip>
             <div className="question-title-desc">
-              {question.content?.text || noContentLabel}
+              {(question.content?.text as string) || noContentLabel}
             </div>
           </div>
         </div>
@@ -373,7 +311,7 @@ const QuestionsPageContent: React.FC = () => {
       render: (_: unknown, question: AdminQuestion) => (
         <Badge
           className="question-status-badge"
-          status={STATUS_BADGE[question.status]}
+          status={QUESTION_STATUS_BADGE[question.status]}
           text={statusLabelMap[question.status] || question.status}
         />
       ),
@@ -560,7 +498,7 @@ const QuestionsPageContent: React.FC = () => {
               intl.formatMessage({
                 id: "pages.questions.fetchError",
                 defaultMessage: "获取题目列表失败",
-              }),
+              })
             );
             return { data: [], total: 0, success: false };
           }
@@ -575,7 +513,7 @@ const QuestionsPageContent: React.FC = () => {
                 id: "pages.questions.total",
                 defaultMessage: "共 {total} 条",
               },
-              { total },
+              { total }
             ),
         }}
         revalidateOnFocus={false}

@@ -8,6 +8,52 @@ export type QuestionType =
   | "SHORT_ANSWER"
   | "PROGRAMMING";
 
+// ---- Question type labels / options ----
+export const QUESTION_TYPE_OPTIONS: { label: string; value: QuestionType }[] = [
+  { label: "单选题", value: "SINGLE_CHOICE" },
+  { label: "多选题", value: "MULTIPLE_CHOICE" },
+  { label: "判断题", value: "TRUE_FALSE" },
+  { label: "填空题", value: "FILL_BLANK" },
+  { label: "简答题", value: "SHORT_ANSWER" },
+  { label: "编程题", value: "PROGRAMMING" },
+];
+
+export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
+  SINGLE_CHOICE: "单选题",
+  MULTIPLE_CHOICE: "多选题",
+  TRUE_FALSE: "判断题",
+  FILL_BLANK: "填空题",
+  SHORT_ANSWER: "简答题",
+  PROGRAMMING: "编程题",
+};
+
+export const DIFFICULTY_OPTIONS = [
+  { label: "简单", value: "EASY" },
+  { label: "中等", value: "MEDIUM" },
+  { label: "困难", value: "HARD" },
+];
+
+export const DIFFICULTY_LABELS: Record<string, string> = {
+  EASY: "简单",
+  MEDIUM: "中等",
+  HARD: "困难",
+};
+
+export const QUESTION_STATUS_OPTIONS = [
+  { label: "草稿", value: "DRAFT" },
+  { label: "已发布", value: "PUBLISHED" },
+];
+
+export const QUESTION_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "草稿",
+  PUBLISHED: "已发布",
+};
+
+export const QUESTION_STATUS_BADGE: Record<string, "default" | "success"> = {
+  DRAFT: "default",
+  PUBLISHED: "success",
+};
+
 export type ExamStatus =
   | "DRAFT"
   | "PUBLISHED"

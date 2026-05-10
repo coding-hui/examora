@@ -46,57 +46,20 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import dayjs from "dayjs";
 import React, { useEffect, useMemo, useState } from "react";
+import type { AdminQuestion, QuestionType } from "@examora/types";
+import {
+  DIFFICULTY_LABELS,
+  DIFFICULTY_OPTIONS,
+  QUESTION_STATUS_LABELS,
+  QUESTION_STATUS_OPTIONS,
+  QUESTION_TYPE_LABELS,
+  QUESTION_TYPE_OPTIONS,
+} from "@examora/types";
 import "./index.less";
-
-/* ============================================================
-   Types
-   ============================================================ */
-
-type QuestionType =
-  | "SINGLE_CHOICE"
-  | "MULTIPLE_CHOICE"
-  | "TRUE_FALSE"
-  | "FILL_BLANK"
-  | "SHORT_ANSWER"
-  | "PROGRAMMING";
-
-type QuestionStatus = "DRAFT" | "PUBLISHED";
 
 interface QuestionOption {
   key: string;
   text: string;
-}
-
-interface AdminTestCase {
-  id?: number;
-  input: string;
-  expected_output: string;
-  time_limit_ms: number;
-  memory_limit_mb: number;
-  is_sample: boolean;
-  is_hidden: boolean;
-  sort_order: number;
-}
-
-interface AdminQuestion {
-  id: number;
-  type: QuestionType;
-  title: string;
-  content: {
-    text?: string;
-    options?: QuestionOption[];
-    [key: string]: unknown;
-  };
-  answer?: Record<string, unknown> | null;
-  difficulty?: string;
-  language?: string;
-  starter_code?: string;
-  time_limit_ms: number;
-  memory_limit_mb: number;
-  status: QuestionStatus;
-  test_cases?: AdminTestCase[];
-  created_at: string;
-  updated_at: string;
 }
 
 interface QuestionEnvelope {
@@ -104,46 +67,11 @@ interface QuestionEnvelope {
   data: AdminQuestion;
 }
 
-/* ============================================================
-   Constants
-   ============================================================ */
-
-const QUESTION_TYPES: Record<QuestionType, string> = {
-  SINGLE_CHOICE: "单选题",
-  MULTIPLE_CHOICE: "多选题",
-  TRUE_FALSE: "判断题",
-  FILL_BLANK: "填空题",
-  SHORT_ANSWER: "简答题",
-  PROGRAMMING: "编程题",
-};
-
-const DIFFICULTIES: Record<string, string> = {
-  EASY: "简单",
-  MEDIUM: "中等",
-  HARD: "困难",
-};
-
 const DIFFICULTY_TAGS: Record<string, string> = {
   EASY: "qdiff-easy",
   MEDIUM: "qdiff-medium",
   HARD: "qdiff-hard",
 };
-
-const STATUS_LABELS: Record<QuestionStatus, string> = {
-  DRAFT: "草稿",
-  PUBLISHED: "已发布",
-};
-
-const DIFFICULTY_OPTIONS = [
-  { label: "简单", value: "EASY" },
-  { label: "中等", value: "MEDIUM" },
-  { label: "困难", value: "HARD" },
-];
-
-const STATUS_OPTIONS = [
-  { label: "草稿", value: "DRAFT" },
-  { label: "已发布", value: "PUBLISHED" },
-];
 
 /* ============================================================
    Sub-components
@@ -254,7 +182,7 @@ const OptionsEdit: React.FC<{
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
   return (
@@ -584,7 +512,7 @@ const TestCasesEdit: React.FC = () => {
                     className="qdetail-testcase-advanced-toggle"
                     onClick={() =>
                       setAdvancedCase((current) =>
-                        current === name ? null : name,
+                        current === name ? null : name
                       )
                     }
                   >
@@ -651,7 +579,7 @@ const FillBlankAnswerList: React.FC = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
   return (
@@ -806,7 +734,7 @@ const QuestionsDetailContent: React.FC = () => {
     setLoading(true);
     try {
       const response = await request<QuestionEnvelope>(
-        `/api/admin/questions/${questionId}`,
+        `/api/admin/questions/${questionId}`
       );
       setQuestion(response.data);
     } catch (_error) {
@@ -872,7 +800,7 @@ const QuestionsDetailContent: React.FC = () => {
         setSaving(true);
         const response = await request<QuestionEnvelope>(
           "/api/admin/questions",
-          { method: "POST", data: payload },
+          { method: "POST", data: payload }
         );
         message.success("创建成功");
         history.push(`/content/library/questions/${response.data.id}`);
@@ -954,7 +882,7 @@ const QuestionsDetailContent: React.FC = () => {
       message.error(
         code === 40900 || code === 409
           ? "该题已被试卷引用，不能删除"
-          : "删除题目失败",
+          : "删除题目失败"
       );
     }
   };
@@ -962,27 +890,29 @@ const QuestionsDetailContent: React.FC = () => {
   const pageTitle = isNew
     ? "新建题目"
     : loading
-      ? "加载中..."
-      : question?.title || "题目详情";
+    ? "加载中..."
+    : question?.title || "题目详情";
   const isProgramming = effectiveType === "PROGRAMMING";
 
   const metaInfoBar =
     question && !isNew ? (
       <Space wrap size={[8, 8]} className="qdetail-meta-row">
         <code className="qdetail-id-code">#{question.id}</code>
-        <Tag className="question-type-tag">{QUESTION_TYPES[question.type]}</Tag>
+        <Tag className="question-type-tag">
+          {QUESTION_TYPE_LABELS[question.type]}
+        </Tag>
         {question.difficulty && (
           <span
             className={`question-diff-tag ${
               DIFFICULTY_TAGS[question.difficulty] || ""
             }`}
           >
-            {DIFFICULTIES[question.difficulty] || question.difficulty}
+            {DIFFICULTY_LABELS[question.difficulty] || question.difficulty}
           </span>
         )}
         <Badge
           status={question.status === "PUBLISHED" ? "success" : "default"}
-          text={STATUS_LABELS[question.status]}
+          text={QUESTION_STATUS_LABELS[question.status]}
         />
         {isProgramming && (
           <>
@@ -1070,9 +1000,7 @@ const QuestionsDetailContent: React.FC = () => {
                     >
                       <Select
                         placeholder="请选择题型"
-                        options={Object.entries(QUESTION_TYPES).map(
-                          ([value, label]) => ({ value, label }),
-                        )}
+                        options={QUESTION_TYPE_OPTIONS}
                         onChange={() => {
                           // Reset answer fields when type changes
                           form.setFieldValue("answer", undefined);
@@ -1117,7 +1045,7 @@ const QuestionsDetailContent: React.FC = () => {
                         >
                           <Select
                             placeholder="状态"
-                            options={STATUS_OPTIONS}
+                            options={QUESTION_STATUS_OPTIONS}
                             size="small"
                           />
                         </Form.Item>

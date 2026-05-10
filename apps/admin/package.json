@@ -44,6 +44,7 @@
     "@logto/browser": "^3.0.13",
     "@logto/react": "^4.0.14",
     "@rc-component/util": "^1.9.0",
+    "@examora/types": "workspace:*",
     "@tanstack/react-query": "^5.97.0",
     "antd": "^6.3.6",
     "antd-style": "^4.1.0",
