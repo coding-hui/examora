@@ -170,8 +170,66 @@ html.examora-dark .question-status-badge .ant-badge-status-text {
 }
 
 /* ============================================================
-   Question Detail Page Styles  (Exam Paper Card Style)
+   Question Detail Page Styles
    ============================================================ */
+
+.qdetail-page {
+  background: var(--examora-bg);
+}
+
+.qdetail-page .ant-pro-page-container-children-container {
+  padding-block-start: 0;
+}
+
+/* --- Light page header: full width background, centered content --- */
+.qdetail-hero {
+  width: 100%;
+  margin: -16px 0 16px;
+  padding: 20px 0 0;
+  background: var(--examora-bg);
+}
+
+.qdetail-hero-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 18px;
+  border-bottom: 1px solid var(--examora-border-secondary);
+}
+
+.qdetail-hero-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.qdetail-back.ant-btn {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.qdetail-hero-title-block {
+  min-width: 0;
+}
+
+.qdetail-hero-title {
+  margin: 0 0 10px;
+  overflow: hidden;
+  color: var(--examora-text);
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 30px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qdetail-meta-row {
+  color: var(--examora-text);
+}
 
 /* --- Wrapper: centered --- */
 .qdetail-wrap {
@@ -180,15 +238,13 @@ html.examora-dark .question-status-badge .ant-badge-status-text {
   padding: 0 24px 40px;
 }
 
-/* --- Paper card (the exam sheet) --- */
+/* --- Paper card (main editing surface) --- */
 .qdetail-paper {
   background: var(--examora-card-bg, #ffffff);
-  border-radius: 12px;
-  padding: 40px 56px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-html.examora-dark .qdetail-paper {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--examora-card-border);
+  border-radius: 8px;
+  padding: 28px 36px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 /* --- Meta badges (shared with list page) --- */
@@ -198,13 +254,14 @@ html.examora-dark .qdetail-paper {
   font-size: 12px;
   font-weight: 500;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: #6b7280;
-  background: #f3f4f6;
+  color: var(--examora-text-secondary, #525252);
+  background: var(--examora-bg-elevated, #ffffff);
+  border: 1px solid var(--examora-border-secondary);
   border-radius: 6px;
 }
 html.examora-dark .qdetail-id-code {
-  color: #a1a1aa;
-  background: #27272a;
+  color: var(--examora-text-secondary, #a1a1aa);
+  background: var(--examora-bg-elevated, #27272a);
 }
 
 .qdetail-meta-badge {
@@ -213,10 +270,7 @@ html.examora-dark .qdetail-id-code {
   gap: 4px;
   font-size: 13px;
   font-weight: 500;
-  color: #6b7280;
-}
-html.examora-dark .qdetail-meta-badge {
-  color: #a1a1aa;
+  color: var(--examora-text-secondary, #525252);
 }
 
 .qdetail-meta-badge .anticon {
@@ -261,24 +315,21 @@ html.examora-dark .qdetail-meta-badge {
 }
 html.examora-dark .qdiff-easy {
   color: #86efac;
-  background: #14532d;
+  background: rgba(20, 83, 45, 0.52);
 }
 html.examora-dark .qdiff-medium {
   color: #fcd34d;
-  background: #78350f;
+  background: rgba(120, 53, 15, 0.52);
 }
 html.examora-dark .qdiff-hard {
   color: #fca5a5;
-  background: #7f1d1d;
+  background: rgba(127, 29, 29, 0.52);
 }
 
 /* --- Section: flat with bottom border inside paper --- */
 .qdetail-section {
-  padding: 20px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-html.examora-dark .qdetail-section {
-  border-bottom-color: #27272a;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--examora-border-secondary);
 }
 
 .qdetail-section:first-child {
@@ -294,18 +345,15 @@ html.examora-dark .qdetail-section {
   margin: 0 0 12px;
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--examora-text-secondary, #525252);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   line-height: 1.4;
 }
-html.examora-dark .qdetail-section-title {
-  color: #a1a1aa;
-}
 
 /* --- Title input --- */
 .qdetail-title-input {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -326,20 +374,34 @@ html.examora-dark .qdetail-section-title {
 .qdetail-option-edit-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 0;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 6px;
   transition: background 150ms ease;
 }
 .qdetail-option-edit-row:hover {
-  background: #fafafa;
-  border-radius: 6px;
+  background: var(--examora-bg);
 }
-html.examora-dark .qdetail-option-edit-row:hover {
-  background: #27272a;
+
+.qdetail-row-drag-image {
+  background: var(--examora-card-bg);
+  border: 1px dashed var(--examora-text-secondary, #525252);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.qdetail-edit-row-index {
+  width: 28px;
+  color: var(--examora-text-secondary, #525252);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 32px;
+  text-align: left;
+  flex: 0 0 auto;
 }
 
 .qdetail-option-edit-key {
-  width: 36px;
+  width: 42px;
   text-align: center;
   font-weight: 600;
   border-radius: 6px;
@@ -347,6 +409,31 @@ html.examora-dark .qdetail-option-edit-row:hover {
 
 .qdetail-option-edit-text {
   flex: 1;
+}
+
+.qdetail-edit-row-drag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--examora-text-secondary, #525252);
+  cursor: grab;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  opacity: 0.45;
+  transition: opacity 150ms ease;
+  flex: 0 0 auto;
+}
+
+.qdetail-edit-row-drag:active {
+  cursor: grabbing;
+}
+
+.qdetail-option-edit-row:hover .qdetail-edit-row-drag,
+.qdetail-blank-edit-row:hover .qdetail-edit-row-drag {
+  opacity: 1;
 }
 
 .qdetail-option-edit-del {
@@ -358,7 +445,15 @@ html.examora-dark .qdetail-option-edit-row:hover {
 }
 
 .qdetail-option-edit-add {
-  margin-top: 4px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.qdetail-option-edit-row > .ant-radio-wrapper,
+.qdetail-option-edit-row > .ant-checkbox-wrapper {
+  flex: 0 0 auto;
+  margin-inline-end: 0;
+  width: 20px;
 }
 
 /* --- Answer options --- */
@@ -377,11 +472,7 @@ html.examora-dark .qdetail-option-edit-row:hover {
 }
 .qdetail-answer-radio:hover,
 .qdetail-answer-checkbox:hover {
-  background: #f8fafc;
-}
-html.examora-dark .qdetail-answer-radio:hover,
-html.examora-dark .qdetail-answer-checkbox:hover {
-  background: #27272a;
+  background: var(--examora-bg);
 }
 
 .qdetail-answer-key {
@@ -392,25 +483,35 @@ html.examora-dark .qdetail-answer-checkbox:hover {
   height: 26px;
   font-size: 12px;
   font-weight: 700;
-  color: #6b7280;
-  background: #f3f4f6;
+  color: var(--examora-text-secondary, #525252);
+  background: var(--examora-bg);
   border-radius: 6px;
   margin-right: 8px;
-}
-html.examora-dark .qdetail-answer-key {
-  color: #a1a1aa;
-  background: #27272a;
 }
 
 .qdetail-answer-text {
   font-size: 14px;
-  color: #374151;
-}
-html.examora-dark .qdetail-answer-text {
-  color: #d4d4d8;
+  color: var(--examora-text);
 }
 
 /* --- Blank edit --- */
+.qdetail-answer-field.ant-form-item {
+  margin-bottom: 0;
+}
+
+.qdetail-truefalse-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.qdetail-reference-textarea {
+  max-width: 760px;
+  font-size: 14px;
+  line-height: 1.7;
+  border-radius: 6px;
+}
+
 .qdetail-blank-edit {
   display: flex;
   flex-direction: column;
@@ -421,18 +522,31 @@ html.examora-dark .qdetail-answer-text {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background 150ms ease;
 }
 
-.qdetail-blank-edit-label {
-  width: 44px;
-  font-size: 13px;
-  color: #6b7280;
-  text-align: right;
-  flex-shrink: 0;
+.qdetail-blank-edit-row:hover {
+  background: var(--examora-bg);
 }
 
 .qdetail-blank-edit-input {
-  width: 280px;
+  width: 100%;
+}
+
+.qdetail-blank-edit-del {
+  opacity: 0.4;
+  transition: opacity 150ms ease;
+}
+
+.qdetail-blank-edit-row:hover .qdetail-blank-edit-del {
+  opacity: 1;
+}
+
+.qdetail-blank-edit-add {
+  margin-top: 6px;
+  margin-bottom: 8px;
 }
 
 /* --- Code textarea --- */
@@ -443,18 +557,135 @@ html.examora-dark .qdetail-answer-text {
   border-radius: 6px;
 }
 
-/* --- Test case edit card --- */
-.qdetail-testcase-edit-card {
-  border: 1px solid #e5e7eb;
+.qdetail-program-config {
+  max-width: 760px;
 }
-html.examora-dark .qdetail-testcase-edit-card {
-  border-color: #27272a;
+
+.qdetail-testcase-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-html.examora-dark .qdetail-testcase-edit-card .ant-card-head {
-  border-bottom-color: #27272a;
+
+.qdetail-testcase-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 2px;
 }
-html.examora-dark .qdetail-testcase-edit-card .ant-card-head-title {
-  color: #d4d4d8;
+
+.qdetail-testcase-count {
+  color: var(--examora-text-secondary, #525252);
+  font-size: 13px;
+}
+
+.qdetail-testcase-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--examora-border-secondary);
+}
+
+.qdetail-testcase-item {
+  overflow: hidden;
+  border: 1px solid var(--examora-border);
+  border-radius: 8px;
+  background: var(--examora-card-bg);
+}
+
+.qdetail-testcase-item-active {
+  border-style: dashed;
+  border-color: var(--examora-text-secondary, #525252);
+  background: var(--examora-bg-container);
+}
+
+.qdetail-testcase-summary {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.qdetail-testcase-summary:hover {
+  background: var(--examora-bg);
+}
+
+.qdetail-testcase-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qdetail-testcase-item {
+  position: relative;
+  padding-right: 168px;
+}
+
+.qdetail-testcase-title {
+  color: var(--examora-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.qdetail-testcase-preview {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--examora-text-secondary, #525252);
+  font-size: 13px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qdetail-testcase-delete {
+  opacity: 0.55;
+  transition: opacity 150ms ease;
+}
+
+.qdetail-testcase-item:hover .qdetail-testcase-delete {
+  opacity: 1;
+}
+
+.qdetail-testcase-advanced-toggle {
+  width: fit-content;
+  padding: 0;
+  color: var(--examora-text-secondary, #525252);
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  transition: color 150ms ease;
+}
+
+.qdetail-testcase-advanced-toggle:hover,
+.qdetail-testcase-advanced-toggle:focus-visible {
+  color: var(--examora-text);
+}
+
+.qdetail-testcase-advanced-toggle:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid rgba(22, 119, 255, 0.28);
+  outline-offset: 2px;
+}
+
+.qdetail-testcase-advanced {
+  padding-top: 10px;
+  border-top: 1px dashed var(--examora-border);
 }
 
 /* --- Footer meta (inside paper bottom) --- */
@@ -463,18 +694,12 @@ html.examora-dark .qdetail-testcase-edit-card .ant-card-head-title {
   align-items: center;
   justify-content: flex-end;
   padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-html.examora-dark .qdetail-footer-meta-bar {
-  border-top-color: #27272a;
+  border-top: 1px solid var(--examora-border-secondary);
 }
 
 .qdetail-footer-meta {
   font-size: 12px;
-  color: #9ca3af;
-}
-html.examora-dark .qdetail-footer-meta {
-  color: #6b7280;
+  color: var(--examora-text-secondary, #525252);
 }
 
 /* --- Sticky footer actions (fixed to viewport bottom) --- */
@@ -483,50 +708,96 @@ html.examora-dark .qdetail-footer-meta {
   bottom: 12px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 16px;
-  padding: 14px 56px;
+  padding: 12px 16px;
   margin-top: 24px;
-  background: rgba(255, 255, 255, 0.98);
+  background: color-mix(in srgb, var(--examora-card-bg) 96%, transparent);
   backdrop-filter: blur(8px);
-  border: 1px solid #f0f0f0;
-  border-radius: 12px;
+  border: 1px solid var(--examora-card-border);
+  border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   z-index: 100;
   flex-wrap: wrap;
 }
 html.examora-dark .qdetail-sticky-footer {
-  background: rgba(24, 24, 27, 0.98);
-  border-color: #27272a;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.qdetail-dirty-text {
+  color: var(--examora-text-secondary, #525252);
+  font-size: 13px;
 }
 
 /* --- Answer hint --- */
 .qdetail-answer-hint {
   font-size: 14px;
-  color: #9ca3af;
-}
-html.examora-dark .qdetail-answer-hint {
-  color: #6b7280;
+  color: var(--examora-text-secondary, #525252);
 }
 
 /* --- Responsive --- */
 @media (max-width: 768px) {
+  .qdetail-hero {
+    margin-top: -16px;
+    padding: 16px 0 0;
+  }
+  .qdetail-hero-inner {
+    flex-direction: column;
+    padding: 0 16px 16px;
+  }
+  .qdetail-hero-main {
+    width: 100%;
+  }
+  .qdetail-hero-title {
+    font-size: 19px;
+    line-height: 27px;
+    white-space: normal;
+  }
   .qdetail-wrap {
-    padding: 0 12px 32px;
+    padding: 0 16px 32px;
   }
   .qdetail-paper {
-    padding: 24px;
-    border-radius: 10px;
+    padding: 20px;
+    border-radius: 8px;
   }
   .qdetail-sticky-footer {
-    padding: 12px 24px;
-    border-radius: 0 0 10px 10px;
+    align-items: stretch;
+    padding: 12px;
+  }
+  .qdetail-sticky-footer .ant-space {
+    width: 100%;
+    justify-content: flex-end;
   }
   .qdetail-section {
-    padding: 14px 0;
+    padding: 18px 0;
   }
   .qdetail-title-input {
     font-size: 16px;
+  }
+  .qdetail-blank-edit-row {
+    align-items: flex-start;
+  }
+  .qdetail-blank-edit-input {
+    width: 100%;
+  }
+  .qdetail-testcase-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .qdetail-testcase-item {
+    padding-right: 0;
+  }
+  .qdetail-testcase-summary {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding-right: 12px;
+  }
+  .qdetail-testcase-actions {
+    position: static;
+    justify-content: space-between;
+    padding: 0 12px 10px;
+  }
+  .qdetail-testcase-fields {
+    padding: 10px 12px 12px;
   }
 }
