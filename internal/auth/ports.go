@@ -17,7 +17,7 @@ type UserStore interface {
 	UpdateStatus(ctx context.Context, id uint64, status string) error
 	HasUsers(ctx context.Context) (bool, error)
 	LinkExternalSubject(ctx context.Context, userID uint64, sub string) error
-	EnsureDefaultAdmin(ctx context.Context, defaultPWHash string) (uint64, error)
+	EnsureDefaultAdmin(ctx context.Context, admin DefaultAdmin, defaultPWHash string) (uint64, error)
 	VerifyPassword(ctx context.Context, username, password string) (*User, bool, error)
 }
 

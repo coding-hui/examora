@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -93,23 +94,25 @@ func (r *UserStore) LinkExternalSubject(ctx context.Context, userID uint64, sub 
 		}).Error
 }
 
-func (r *UserStore) EnsureDefaultAdmin(ctx context.Context, defaultPWHash string) (uint64, error) {
-	hasUsers, err := r.HasUsers(ctx)
-	if err != nil {
+func (r *UserStore) EnsureDefaultAdmin(ctx context.Context, admin auth.DefaultAdmin, defaultPWHash string) (uint64, error) {
+	if existing, err := r.FindByUsername(ctx, admin.Username); err == nil {
+		return existing.ID, nil
+	} else if err != nil && !errors.Is(err, auth.ErrUserNotFound) {
 		return 0, err
 	}
-	if hasUsers {
-		return 0, nil
-	}
 
-	adminName := "Administrator"
 	authProv := "local"
 	row := &database.UserModel{
-		Username:     "admin",
+		Username:     admin.Username,
 		PasswordHash: defaultPWHash,
 		Status:       "ACTIVE",
-		DisplayName:  &adminName,
 		AuthProvider: &authProv,
+	}
+	if admin.DisplayName != "" {
+		row.DisplayName = &admin.DisplayName
+	}
+	if admin.Email != "" {
+		row.Email = &admin.Email
 	}
 	if err := transaction.DBFromContext(ctx, r.db).Create(row).Error; err != nil {
 		return 0, err

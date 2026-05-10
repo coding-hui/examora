@@ -151,6 +151,7 @@ The main environment variables are documented in `.env.example`.
 | `SANDBOX_ADDR` | Sandbox runner URL used by judge services |
 | `LOGTO_ENABLED`, `LOGTO_ENDPOINT`, `LOGTO_APP_ID`, `LOGTO_API_AUDIENCE` | Logto authentication settings |
 | `JWT_SECRET` | Local JWT signing secret for development auth flows |
+| `ADMIN_DEFAULT_USERNAME`, `ADMIN_DEFAULT_DISPLAY_NAME`, `ADMIN_DEFAULT_EMAIL`, `ADMIN_DEFAULT_PASSWORD` | Default super admin created on startup and protected from deletion |
 
 Do not commit real `.env` files or production credentials.
 

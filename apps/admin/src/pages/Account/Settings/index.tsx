@@ -1,78 +1,132 @@
-import { PageContainer, ProCard } from '@ant-design/pro-components';
-import { useModel } from '@umijs/max';
-import { Descriptions, Space, Tabs, Tag, Typography } from 'antd';
-import React from 'react';
+import { GridContent } from "@ant-design/pro-components";
+import { Menu } from "antd";
+import React, { useLayoutEffect, useRef, useState } from "react";
+import { useIntl } from "@umijs/max";
+import BaseView from "./components/base";
+import BindingView from "./components/binding";
+import NotificationView from "./components/notification";
+import SecurityView from "./components/security";
+import useStyles from "./style";
 
-const { Text } = Typography;
+type SettingsStateKeys = "base" | "security" | "binding" | "notification";
+type SettingsState = {
+  mode: "inline" | "horizontal";
+  selectKey: SettingsStateKeys;
+};
 
-const AccountSettings: React.FC = () => {
-  const { initialState } = useModel('@@initialState');
-  const user = initialState?.currentUser;
+const SettingsContent: React.FC<{ selectKey: SettingsStateKeys }> = ({
+  selectKey,
+}) => {
+  switch (selectKey) {
+    case "base":
+      return <BaseView />;
+    case "security":
+      return <SecurityView />;
+    case "binding":
+      return <BindingView />;
+    case "notification":
+      return <NotificationView />;
+    default:
+      return null;
+  }
+};
+
+const Settings: React.FC = () => {
+  const intl = useIntl();
+  const { styles } = useStyles();
+  const menuMap: Record<string, string> = {
+    base: intl.formatMessage({
+      id: "pages.account.settings.menu.base",
+      defaultMessage: "基本设置",
+    }),
+    security: intl.formatMessage({
+      id: "pages.account.settings.menu.security",
+      defaultMessage: "安全设置",
+    }),
+    binding: intl.formatMessage({
+      id: "pages.account.settings.menu.binding",
+      defaultMessage: "账号绑定",
+    }),
+    notification: intl.formatMessage({
+      id: "pages.account.settings.menu.notification",
+      defaultMessage: "新消息通知",
+    }),
+  };
+  const [initConfig, setInitConfig] = useState<SettingsState>({
+    mode: "inline",
+    selectKey: "base",
+  });
+  const dom = useRef<HTMLDivElement>(null);
+
+  const resize = () => {
+    requestAnimationFrame(() => {
+      if (!dom.current) {
+        return;
+      }
+      let mode: "inline" | "horizontal" = "inline";
+      const { offsetWidth } = dom.current;
+      if (offsetWidth < 641 && offsetWidth > 400) {
+        mode = "horizontal";
+      }
+      if (window.innerWidth < 768 && offsetWidth > 400) {
+        mode = "horizontal";
+      }
+      setInitConfig((prev) => ({
+        ...prev,
+        mode: mode as SettingsState["mode"],
+      }));
+    });
+  };
+
+  const resizeRef = useRef(resize);
+  resizeRef.current = resize;
+
+  useLayoutEffect(() => {
+    const handler = () => resizeRef.current();
+    window.addEventListener("resize", handler);
+    handler();
+    return () => {
+      window.removeEventListener("resize", handler);
+    };
+  }, []);
+
+  const getMenu = () => {
+    return Object.keys(menuMap).map((item) => ({
+      key: item,
+      label: menuMap[item],
+    }));
+  };
 
   return (
-    <PageContainer title="个人设置" content="管理当前账号信息与本地界面偏好。">
-      <ProCard variant="outlined">
-        <Tabs
-          tabPlacement="start"
-          items={[
-            {
-              key: 'profile',
-              label: '基础资料',
-              children: (
-                <Space
-                  orientation="vertical"
-                  size={16}
-                  style={{ width: '100%' }}
-                >
-                  <Text type="secondary">
-                    账号资料来自认证服务，当前页面仅展示后台可读取的信息。
-                  </Text>
-                  <Descriptions
-                    column={1}
-                    items={[
-                      {
-                        key: 'username',
-                        label: '用户名',
-                        children: user?.username || '-',
-                      },
-                      {
-                        key: 'displayName',
-                        label: '显示名称',
-                        children: user?.display_name || '-',
-                      },
-                      {
-                        key: 'roles',
-                        label: '角色',
-                        children: user?.roles?.length
-                          ? user.roles.map((role: string) => (
-                              <Tag key={role}>{role}</Tag>
-                            ))
-                          : '-',
-                      },
-                    ]}
-                  />
-                </Space>
-              ),
-            },
-            {
-              key: 'appearance',
-              label: '界面偏好',
-              children: (
-                <Space orientation="vertical" size={12}>
-                  <Text type="secondary">
-                    界面偏好请使用右侧悬浮的官方主题配置面板进行调整。
-                  </Text>
-                  <Text type="secondary">
-                    配置会保存在当前浏览器，并在刷新后继续生效。
-                  </Text>
-                </Space>
-              ),
-            },
-          ]}
-        />
-      </ProCard>
-    </PageContainer>
+    <GridContent>
+      <div
+        className={styles.main}
+        ref={(ref) => {
+          if (ref) {
+            dom.current = ref;
+          }
+        }}
+      >
+        <div className={styles.leftMenu}>
+          <Menu
+            mode={initConfig.mode}
+            selectedKeys={[initConfig.selectKey]}
+            onClick={({ key }) => {
+              setInitConfig((prev) => ({
+                ...prev,
+                selectKey: key as SettingsStateKeys,
+              }));
+            }}
+            items={getMenu()}
+          />
+        </div>
+        <div className={styles.right}>
+          <div className={styles.title}>{menuMap[initConfig.selectKey]}</div>
+          <SettingsContent selectKey={initConfig.selectKey} />
+        </div>
+      </div>
+    </GridContent>
   );
 };
 
-export default AccountSettings;
+export default Settings;

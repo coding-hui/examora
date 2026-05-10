@@ -4,6 +4,12 @@ import "errors"
 
 var ErrUserNotFound = errors.New("user not found")
 
+type DefaultAdmin struct {
+	Username    string
+	DisplayName string
+	Email       string
+}
+
 type User struct {
 	ID              uint64  `json:"id"`
 	Username        string  `json:"username"`

@@ -16,13 +16,14 @@ import (
 )
 
 type Service struct {
-	cfg           config.Config
-	userRepo      UserStore
-	jwtService    *authtoken.JWTService
-	pwdService    *authtoken.PasswordService
-	casbin        *casbin.Enforcer
-	blacklist     *authtoken.BlacklistService
-	logtoVerifier LogtoVerifier
+	cfg            config.Config
+	userRepo       UserStore
+	jwtService     *authtoken.JWTService
+	pwdService     *authtoken.PasswordService
+	casbin         *casbin.Enforcer
+	blacklist      *authtoken.BlacklistService
+	logtoVerifier  LogtoVerifier
+	defaultAdminID uint64
 }
 
 type LogtoVerifier interface {
@@ -59,10 +60,16 @@ func (u *Service) init(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("hash default admin password: %w", err)
 	}
-	adminID, err := u.userRepo.EnsureDefaultAdmin(ctx, adminHash)
+	adminID, err := u.userRepo.EnsureDefaultAdmin(ctx, DefaultAdmin{
+		Username:    u.cfg.AdminDefaultUsername,
+		DisplayName: u.cfg.AdminDefaultDisplayName,
+		Email:       u.cfg.AdminDefaultEmail,
+	}, adminHash)
 	if err != nil {
 		return fmt.Errorf("ensure default admin: %w", err)
-	} else if adminID > 0 {
+	}
+	if adminID > 0 {
+		u.defaultAdminID = adminID
 		if _, err := authcasbin.AddRoleForUser(u.casbin, adminID, "admin"); err != nil {
 			return fmt.Errorf("add default admin role: %w", err)
 		}
@@ -260,6 +267,13 @@ func derefStr(s *string) string {
 }
 
 func (u *Service) DeleteUser(ctx context.Context, id uint64) error {
+	user, err := u.userRepo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if id == u.defaultAdminID || user.Username == u.cfg.AdminDefaultUsername {
+		return response.Forbidden("default super admin cannot be deleted")
+	}
 	return u.userRepo.Delete(ctx, id)
 }
 

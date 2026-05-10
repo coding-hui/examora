@@ -52,3 +52,25 @@ func TestLoadDefaultsRedisAddrToIPv4Localhost(t *testing.T) {
 		t.Fatalf("RedisAddr = %q, want 127.0.0.1:6379", cfg.RedisAddr)
 	}
 }
+
+func TestLoadDefaultAdminConfig(t *testing.T) {
+	t.Setenv("ADMIN_DEFAULT_USERNAME", "root")
+	t.Setenv("ADMIN_DEFAULT_DISPLAY_NAME", "Root Admin")
+	t.Setenv("ADMIN_DEFAULT_EMAIL", "root@example.com")
+	t.Setenv("ADMIN_DEFAULT_PASSWORD", "secret")
+
+	cfg := Load()
+
+	if cfg.AdminDefaultUsername != "root" {
+		t.Fatalf("AdminDefaultUsername = %q, want root", cfg.AdminDefaultUsername)
+	}
+	if cfg.AdminDefaultDisplayName != "Root Admin" {
+		t.Fatalf("AdminDefaultDisplayName = %q, want Root Admin", cfg.AdminDefaultDisplayName)
+	}
+	if cfg.AdminDefaultEmail != "root@example.com" {
+		t.Fatalf("AdminDefaultEmail = %q, want root@example.com", cfg.AdminDefaultEmail)
+	}
+	if cfg.AdminDefaultPW != "secret" {
+		t.Fatalf("AdminDefaultPW = %q, want secret", cfg.AdminDefaultPW)
+	}
+}

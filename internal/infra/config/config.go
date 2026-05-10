@@ -30,29 +30,36 @@ type Config struct {
 	JWTSecret          string
 	JWTAccessTokenTTL  time.Duration
 	JWTRefreshTokenTTL time.Duration
-	AdminDefaultPW     string
+
+	AdminDefaultUsername    string
+	AdminDefaultDisplayName string
+	AdminDefaultEmail       string
+	AdminDefaultPW          string
 }
 
 func Load() Config {
 	redisAddr, redisPassword, redisDB := redisConfig()
 	return Config{
-		AppEnv:             get("APP_ENV", "development"),
-		AppHost:            get("APP_HOST", get("API_HOST", "0.0.0.0")),
-		AppPort:            get("APP_PORT", get("API_PORT", "8080")),
-		LogLevel:           get("LOG_LEVEL", "info"),
-		DatabaseDSN:        get("DATABASE_DSN", "./examora.db"),
-		RedisAddr:          redisAddr,
-		RedisPassword:      redisPassword,
-		RedisDB:            redisDB,
-		LogtoEnabled:       getBool("LOGTO_ENABLED", false),
-		LogtoEndpoint:      strings.TrimRight(get("LOGTO_ENDPOINT", "https://auth.micromoving.net"), "/"),
-		LogtoAppID:         get("LOGTO_APP_ID", ""),
-		LogtoAPIAudience:   get("LOGTO_API_AUDIENCE", get("LOGTO_APP_ID", "https://auth.micromoving.net")),
-		SandboxAddr:        get("SANDBOX_ADDR", "http://localhost:8081"),
-		JWTSecret:          get("JWT_SECRET", "examora-local-jwt-secret-change-in-production"),
-		JWTAccessTokenTTL:  time.Duration(getInt("JWT_ACCESS_TOKEN_TTL", 7200)) * time.Second,
-		JWTRefreshTokenTTL: time.Duration(getInt("JWT_REFRESH_TOKEN_TTL", 604800)) * time.Second,
-		AdminDefaultPW:     get("ADMIN_DEFAULT_PASSWORD", "examora-admin-2024"),
+		AppEnv:                  get("APP_ENV", "development"),
+		AppHost:                 get("APP_HOST", get("API_HOST", "0.0.0.0")),
+		AppPort:                 get("APP_PORT", get("API_PORT", "8080")),
+		LogLevel:                get("LOG_LEVEL", "info"),
+		DatabaseDSN:             get("DATABASE_DSN", "./examora.db"),
+		RedisAddr:               redisAddr,
+		RedisPassword:           redisPassword,
+		RedisDB:                 redisDB,
+		LogtoEnabled:            getBool("LOGTO_ENABLED", false),
+		LogtoEndpoint:           strings.TrimRight(get("LOGTO_ENDPOINT", "https://auth.micromoving.net"), "/"),
+		LogtoAppID:              get("LOGTO_APP_ID", ""),
+		LogtoAPIAudience:        get("LOGTO_API_AUDIENCE", get("LOGTO_APP_ID", "https://auth.micromoving.net")),
+		SandboxAddr:             get("SANDBOX_ADDR", "http://localhost:8081"),
+		JWTSecret:               get("JWT_SECRET", "examora-local-jwt-secret-change-in-production"),
+		JWTAccessTokenTTL:       time.Duration(getInt("JWT_ACCESS_TOKEN_TTL", 7200)) * time.Second,
+		JWTRefreshTokenTTL:      time.Duration(getInt("JWT_REFRESH_TOKEN_TTL", 604800)) * time.Second,
+		AdminDefaultUsername:    strings.TrimSpace(get("ADMIN_DEFAULT_USERNAME", "admin")),
+		AdminDefaultDisplayName: strings.TrimSpace(get("ADMIN_DEFAULT_DISPLAY_NAME", "Administrator")),
+		AdminDefaultEmail:       strings.TrimSpace(get("ADMIN_DEFAULT_EMAIL", "")),
+		AdminDefaultPW:          get("ADMIN_DEFAULT_PASSWORD", "examora-admin-2024"),
 	}
 }
 

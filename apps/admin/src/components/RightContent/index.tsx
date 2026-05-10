@@ -1,57 +1,52 @@
-import { SelectLang as UmiSelectLang } from '@umijs/max';
+import { GlobalOutlined } from "@ant-design/icons";
+import { Dropdown } from "antd";
+import React from "react";
+import {
+  getLocale,
+  setLocale,
+  getAllLocales,
+} from "@@/plugin-locale/localeExports";
+import { createStyles } from "antd-style";
 
-export type SiderTheme = 'light' | 'dark';
+const useStyles = createStyles(() => ({
+  trigger: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    cursor: "pointer",
+    fontSize: 18,
+    color: "inherit",
+    transition: "background 0.2s",
+    "&:hover": { background: "rgba(0,0,0,0.04)" },
+  },
+}));
 
-export const SelectLang: React.FC = () => (
-  <UmiSelectLang
-    style={{
-      padding: '8px 12px',
-      borderRadius: 6,
-      background: 'transparent',
-      border: '1px solid #e4e4e7',
-      color: 'inherit',
-      fontSize: 12,
-      height: 28,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}
-  />
-);
+const localeLabels: Record<string, string> = {
+  "zh-CN": "简体中文",
+  "en-US": "English",
+};
 
-export const Question: React.FC = () => {
+export const SelectLang: React.FC = () => {
+  const { styles } = useStyles();
+
   return (
-    <a
-      href="https://pro.ant.design/docs/getting-started"
-      target="_blank"
-      rel="noreferrer"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '4px',
-        height: '22px',
-        width: '22px',
-        color: 'inherit',
-        borderRadius: 6,
-        transition: 'background 0.2s ease',
+    <Dropdown
+      menu={{
+        selectedKeys: [getLocale()],
+        onClick: ({ key }) => setLocale(key, false),
+        items: getAllLocales().map((loc) => ({
+          key: loc,
+          label: localeLabels[loc] || loc,
+        })),
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#f4f4f5';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent';
-      }}
+      trigger={["click"]}
     >
-      <img
-        src="/logo.svg"
-        alt="Help"
-        style={{
-          width: 20,
-          height: 20,
-          objectFit: 'contain',
-        }}
-      />
-    </a>
+      <span className={styles.trigger}>
+        <GlobalOutlined />
+      </span>
+    </Dropdown>
   );
 };
+
+export type SiderTheme = "light" | "dark";

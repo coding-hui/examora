@@ -2,51 +2,52 @@ import {
   CheckSquareOutlined,
   CodeOutlined,
   DeleteOutlined,
+  DownOutlined,
   EditOutlined,
   FileTextOutlined,
   FormOutlined,
-  MoreOutlined,
   PlusOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
-import { PageContainer } from '@ant-design/pro-components';
-import { history, request } from '@umijs/max';
+} from "@ant-design/icons";
+import {
+  type ActionType,
+  PageContainer,
+  type ProColumns,
+  ProTable,
+} from "@ant-design/pro-components";
+import { history, request, useIntl } from "@umijs/max";
 import {
   App as AntdApp,
   Badge,
   Button,
   Card,
   Col,
+  Divider,
   Drawer,
   Dropdown,
-  Empty,
   Form,
   Input,
   InputNumber,
   Modal,
-  Pagination,
   Row,
   Select,
   Space,
   Switch,
-  Table,
   Tag,
   Tooltip,
-} from 'antd';
-import type { ColumnsType, TableProps } from 'antd/es/table';
-import dayjs from 'dayjs';
-import React, { useEffect, useMemo, useState } from 'react';
-import './index.less';
+} from "antd";
+import dayjs from "dayjs";
+import React, { useMemo, useRef, useState } from "react";
+import "./index.less";
 
 type QuestionType =
-  | 'SINGLE_CHOICE'
-  | 'MULTIPLE_CHOICE'
-  | 'TRUE_FALSE'
-  | 'FILL_BLANK'
-  | 'SHORT_ANSWER'
-  | 'PROGRAMMING';
+  | "SINGLE_CHOICE"
+  | "MULTIPLE_CHOICE"
+  | "TRUE_FALSE"
+  | "FILL_BLANK"
+  | "SHORT_ANSWER"
+  | "PROGRAMMING";
 
-type QuestionStatus = 'DRAFT' | 'PUBLISHED';
+type QuestionStatus = "DRAFT" | "PUBLISHED";
 
 interface QuestionOption {
   key: string;
@@ -88,36 +89,6 @@ interface AdminQuestion {
   updated_at: string;
 }
 
-interface PageEnvelope {
-  code: number;
-  data: {
-    items: AdminQuestion[];
-    total: number;
-    page: number;
-    page_size: number;
-  };
-}
-
-interface QuestionEnvelope {
-  code: number;
-  data: AdminQuestion;
-}
-
-interface FilterValues {
-  keyword?: string;
-  type?: QuestionType;
-  difficulty?: string;
-  status?: QuestionStatus;
-}
-
-type QuestionSortField = 'updated_at';
-type QuestionSortOrder = 'asc' | 'desc';
-
-interface QuestionSort {
-  field: QuestionSortField;
-  order: QuestionSortOrder;
-}
-
 interface QuestionFormValues {
   type: QuestionType;
   status: QuestionStatus;
@@ -127,7 +98,7 @@ interface QuestionFormValues {
   options_text?: string;
   answer_single?: string;
   answer_multiple?: string[];
-  answer_true_false?: 'true' | 'false';
+  answer_true_false?: "true" | "false";
   answer_blanks?: string;
   answer_reference?: string;
   language?: string;
@@ -137,74 +108,55 @@ interface QuestionFormValues {
 }
 
 const QUESTION_TYPES: Array<{ label: string; value: QuestionType }> = [
-  { label: '单选题', value: 'SINGLE_CHOICE' },
-  { label: '多选题', value: 'MULTIPLE_CHOICE' },
-  { label: '判断题', value: 'TRUE_FALSE' },
-  { label: '填空题', value: 'FILL_BLANK' },
-  { label: '简答题', value: 'SHORT_ANSWER' },
-  { label: '编程题', value: 'PROGRAMMING' },
+  { label: "单选题", value: "SINGLE_CHOICE" },
+  { label: "多选题", value: "MULTIPLE_CHOICE" },
+  { label: "判断题", value: "TRUE_FALSE" },
+  { label: "填空题", value: "FILL_BLANK" },
+  { label: "简答题", value: "SHORT_ANSWER" },
+  { label: "编程题", value: "PROGRAMMING" },
 ];
 
 const DIFFICULTIES = [
-  { label: '简单', value: 'EASY' },
-  { label: '中等', value: 'MEDIUM' },
-  { label: '困难', value: 'HARD' },
+  { label: "简单", value: "EASY" },
+  { label: "中等", value: "MEDIUM" },
+  { label: "困难", value: "HARD" },
 ];
 
 const STATUSES: Array<{ label: string; value: QuestionStatus }> = [
-  { label: '草稿', value: 'DRAFT' },
-  { label: '已发布', value: 'PUBLISHED' },
+  { label: "草稿", value: "DRAFT" },
+  { label: "已发布", value: "PUBLISHED" },
 ];
 
 const LANGUAGES = [
-  { label: 'Go', value: 'GO' },
-  { label: 'Python', value: 'PYTHON' },
-  { label: 'JavaScript', value: 'JAVASCRIPT' },
-  { label: 'Java', value: 'JAVA' },
-  { label: 'C++', value: 'CPP' },
+  { label: "Go", value: "GO" },
+  { label: "Python", value: "PYTHON" },
+  { label: "JavaScript", value: "JAVASCRIPT" },
+  { label: "Java", value: "JAVA" },
+  { label: "C++", value: "CPP" },
 ];
 
-const STATUS_BADGE: Record<QuestionStatus, 'default' | 'success'> = {
-  DRAFT: 'default',
-  PUBLISHED: 'success',
+const STATUS_BADGE: Record<QuestionStatus, "default" | "success"> = {
+  DRAFT: "default",
+  PUBLISHED: "success",
 };
 
 const DIFFICULTY_CLASS: Record<string, string> = {
-  EASY: 'question-diff-tag-easy',
-  MEDIUM: 'question-diff-tag-medium',
-  HARD: 'question-diff-tag-hard',
+  EASY: "question-diff-tag-easy",
+  MEDIUM: "question-diff-tag-medium",
+  HARD: "question-diff-tag-hard",
 };
 
-const typeLabel = (type: QuestionType) =>
-  QUESTION_TYPES.find((item) => item.value === type)?.label || type;
-
-const statusLabel = (status: QuestionStatus) =>
-  STATUSES.find((item) => item.value === status)?.label || status;
-
-const difficultyLabel = (difficulty?: string) =>
-  DIFFICULTIES.find((item) => item.value === difficulty)?.label ||
-  difficulty ||
-  '未设置';
-
-const filterOptions = <T extends string>(
-  items: Array<{ label: string; value: T }>,
-) => items.map((item) => ({ text: item.label, value: item.value }));
-
-const selectedTableFilter = <T extends string>(
-  value?: Array<React.Key | boolean> | null,
-): T | undefined => {
-  const selected = value?.[0];
-  return selected === undefined || typeof selected === 'boolean'
-    ? undefined
-    : (String(selected) as T);
+const questionTypeIcon = (type: QuestionType) => {
+  if (type === "PROGRAMMING") return <CodeOutlined />;
+  if (type === "MULTIPLE_CHOICE" || type === "TRUE_FALSE")
+    return <CheckSquareOutlined />;
+  if (type === "FILL_BLANK" || type === "SHORT_ANSWER") return <FormOutlined />;
+  return <FileTextOutlined />;
 };
-
-const antdSortOrder = (order: QuestionSortOrder) =>
-  order === 'asc' ? 'ascend' : 'descend';
 
 const parseOptions = (value?: string): QuestionOption[] =>
-  (value || '')
-    .split('\n')
+  (value || "")
+    .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
@@ -216,13 +168,16 @@ const parseOptions = (value?: string): QuestionOption[] =>
     });
 
 const optionsToText = (options?: QuestionOption[]) =>
-  (options || []).map((item) => `${item.key}. ${item.text}`).join('\n');
+  (options || []).map((item) => `${item.key}. ${item.text}`).join("\n");
 
 const splitLines = (value?: string) =>
-  (value || '')
-    .split('\n')
+  (value || "")
+    .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+
+const newTestCaseKey = () =>
+  `case-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 const errorCode = (error: unknown): number | undefined => {
   const maybe = error as {
@@ -232,43 +187,117 @@ const errorCode = (error: unknown): number | undefined => {
   return maybe.info?.errorCode || maybe.response?.status;
 };
 
-const newTestCaseKey = () =>
-  `case-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-const questionTypeIcon = (type: QuestionType) => {
-  if (type === 'PROGRAMMING') {
-    return <CodeOutlined />;
-  }
-  if (type === 'MULTIPLE_CHOICE' || type === 'TRUE_FALSE') {
-    return <CheckSquareOutlined />;
-  }
-  if (type === 'FILL_BLANK' || type === 'SHORT_ANSWER') {
-    return <FormOutlined />;
-  }
-  return <FileTextOutlined />;
-};
-
 const QuestionsPageContent: React.FC = () => {
+  const intl = useIntl();
   const { message } = AntdApp.useApp();
-  const [filterForm] = Form.useForm<FilterValues>();
   const [questionForm] = Form.useForm<QuestionFormValues>();
-  const [questions, setQuestions] = useState<AdminQuestion[]>([]);
+  const actionRef = useRef<ActionType>(null);
   const [testCases, setTestCases] = useState<AdminTestCase[]>([]);
-  const [filters, setFilters] = useState<FilterValues>({});
-  const [sortState, setSortState] = useState<QuestionSort>({
-    field: 'updated_at',
-    order: 'desc',
-  });
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<AdminQuestion | null>(null);
 
-  const questionType = Form.useWatch('type', questionForm);
-  const optionsText = Form.useWatch('options_text', questionForm);
+  const questionType = Form.useWatch("type", questionForm);
+  const optionsText = Form.useWatch("options_text", questionForm);
+
+  // i18n label maps
+  const typeLabelMap = useMemo(
+    () =>
+      Object.fromEntries(
+        QUESTION_TYPES.map((t) => [
+          t.value,
+          intl.formatMessage({
+            id: `pages.questions.types.${t.value}`,
+            defaultMessage: t.label,
+          }),
+        ])
+      ),
+    [intl]
+  );
+
+  const difficultyLabelMap = useMemo(
+    () =>
+      Object.fromEntries(
+        DIFFICULTIES.map((d) => [
+          d.value,
+          intl.formatMessage({
+            id: `pages.questions.difficulty.${d.value}`,
+            defaultMessage: d.label,
+          }),
+        ])
+      ),
+    [intl]
+  );
+
+  const statusLabelMap = useMemo(
+    () =>
+      Object.fromEntries(
+        STATUSES.map((s) => [
+          s.value,
+          intl.formatMessage({
+            id: `pages.questions.status.${s.value}`,
+            defaultMessage: s.label,
+          }),
+        ])
+      ),
+    [intl]
+  );
+
+  const notSetLabel = intl.formatMessage({
+    id: "pages.questions.form.notSet",
+    defaultMessage: "未设置",
+  });
+
+  const noContentLabel = intl.formatMessage({
+    id: "pages.questions.form.noContent",
+    defaultMessage: "暂无题干",
+  });
+
+  // i18n'd select options
+  const typeOptions = useMemo(
+    () => QUESTION_TYPES.map((t) => ({ ...t, label: typeLabelMap[t.value] })),
+    [typeLabelMap]
+  );
+
+  const difficultyOptions = useMemo(
+    () =>
+      DIFFICULTIES.map((d) => ({ ...d, label: difficultyLabelMap[d.value] })),
+    [difficultyLabelMap]
+  );
+
+  const statusOptions = useMemo(
+    () => STATUSES.map((s) => ({ ...s, label: statusLabelMap[s.value] })),
+    [statusLabelMap]
+  );
+
+  // valueEnums for ProTable
+  const typeValueEnum = useMemo(
+    () =>
+      Object.fromEntries(
+        QUESTION_TYPES.map((t) => [t.value, { text: typeLabelMap[t.value] }])
+      ),
+    [typeLabelMap]
+  );
+
+  const difficultyValueEnum = useMemo(
+    () =>
+      Object.fromEntries(
+        DIFFICULTIES.map((d) => [
+          d.value,
+          { text: difficultyLabelMap[d.value] },
+        ])
+      ),
+    [difficultyLabelMap]
+  );
+
+  const statusValueEnum = useMemo(
+    () =>
+      Object.fromEntries(
+        STATUSES.map((s) => [s.value, { text: statusLabelMap[s.value] }])
+      ),
+    [statusLabelMap]
+  );
 
   const answerOptions = useMemo(
     () =>
@@ -276,62 +305,30 @@ const QuestionsPageContent: React.FC = () => {
         label: `${item.key}. ${item.text}`,
         value: item.key,
       })),
-    [optionsText],
+    [optionsText]
   );
-
-  const fetchQuestions = async () => {
-    setLoading(true);
-    try {
-      const response = await request<PageEnvelope>('/api/admin/questions', {
-        params: {
-          ...filters,
-          sort_field: sortState.field,
-          sort_order: sortState.order,
-          page,
-          page_size: pageSize,
-        },
-      });
-      setQuestions(response.data?.items || []);
-      setTotal(response.data?.total || 0);
-    } catch (_error) {
-      message.error('获取题目列表失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchQuestions();
-  }, [filters, sortState, page, pageSize]);
-
-  const fetchQuestionDetail = async (id: number) => {
-    const response = await request<QuestionEnvelope>(
-      `/api/admin/questions/${id}`,
-    );
-    return response.data;
-  };
 
   const fillQuestionForm = (question?: AdminQuestion) => {
     const answer = question?.answer || {};
     const content = question?.content || {};
     questionForm.setFieldsValue({
-      type: question?.type || 'SINGLE_CHOICE',
-      status: question?.status || 'DRAFT',
-      title: question?.title || '',
+      type: question?.type || "SINGLE_CHOICE",
+      status: question?.status || "DRAFT",
+      title: question?.title || "",
       difficulty: question?.difficulty,
-      content_text: content.text || '',
+      content_text: content.text || "",
       options_text: optionsToText(content.options),
       answer_single: answer.choice as string | undefined,
       answer_multiple: (answer.choices as string[] | undefined) || [],
       answer_true_false:
-        typeof answer.correct === 'boolean'
+        typeof answer.correct === "boolean"
           ? answer.correct
-            ? 'true'
-            : 'false'
+            ? "true"
+            : "false"
           : undefined,
       answer_blanks: Array.isArray(answer.blanks)
-        ? (answer.blanks as string[]).join('\n')
-        : '',
+        ? (answer.blanks as string[]).join("\n")
+        : "",
       answer_reference: answer.reference as string | undefined,
       language: question?.language,
       starter_code: question?.starter_code,
@@ -346,7 +343,7 @@ const QuestionsPageContent: React.FC = () => {
         memory_limit_mb:
           item.memory_limit_mb || question?.memory_limit_mb || 256,
         sort_order: item.sort_order ?? index,
-      })),
+      }))
     );
   };
 
@@ -361,36 +358,44 @@ const QuestionsPageContent: React.FC = () => {
   const openEdit = async (record: AdminQuestion) => {
     try {
       setSaving(false);
-      const detail = await fetchQuestionDetail(record.id);
+      const response = await request<{ code: number; data: AdminQuestion }>(
+        `/api/admin/questions/${record.id}`
+      );
+      const detail = response.data;
       setEditing(detail);
       questionForm.resetFields();
       fillQuestionForm(detail);
       setDrawerOpen(true);
     } catch (_error) {
-      message.error('获取题目详情失败');
+      message.error(
+        intl.formatMessage({
+          id: "pages.questions.detailError",
+          defaultMessage: "获取题目详情失败",
+        })
+      );
     }
   };
 
   const buildPayload = (values: QuestionFormValues) => {
     const options = parseOptions(values.options_text);
     const content: Record<string, unknown> = {
-      text: values.content_text || '',
+      text: values.content_text || "",
     };
-    if (values.type === 'SINGLE_CHOICE' || values.type === 'MULTIPLE_CHOICE') {
+    if (values.type === "SINGLE_CHOICE" || values.type === "MULTIPLE_CHOICE") {
       content.options = options;
     }
 
     let answer: Record<string, unknown> = {};
-    if (values.type === 'SINGLE_CHOICE') {
+    if (values.type === "SINGLE_CHOICE") {
       answer = { choice: values.answer_single };
-    } else if (values.type === 'MULTIPLE_CHOICE') {
+    } else if (values.type === "MULTIPLE_CHOICE") {
       answer = { choices: values.answer_multiple || [] };
-    } else if (values.type === 'TRUE_FALSE') {
-      answer = { correct: values.answer_true_false === 'true' };
-    } else if (values.type === 'FILL_BLANK') {
+    } else if (values.type === "TRUE_FALSE") {
+      answer = { correct: values.answer_true_false === "true" };
+    } else if (values.type === "FILL_BLANK") {
       answer = { blanks: splitLines(values.answer_blanks) };
-    } else if (values.type === 'SHORT_ANSWER') {
-      answer = { reference: values.answer_reference || '' };
+    } else if (values.type === "SHORT_ANSWER") {
+      answer = { reference: values.answer_reference || "" };
     }
 
     return {
@@ -399,14 +404,14 @@ const QuestionsPageContent: React.FC = () => {
       content,
       answer,
       difficulty: values.difficulty,
-      language: values.type === 'PROGRAMMING' ? values.language : undefined,
+      language: values.type === "PROGRAMMING" ? values.language : undefined,
       starter_code:
-        values.type === 'PROGRAMMING' ? values.starter_code || '' : undefined,
+        values.type === "PROGRAMMING" ? values.starter_code || "" : undefined,
       time_limit_ms: values.time_limit_ms || 2000,
       memory_limit_mb: values.memory_limit_mb || 256,
       status: values.status,
       test_cases:
-        values.type === 'PROGRAMMING'
+        values.type === "PROGRAMMING"
           ? testCases.map((item, index) => ({
               input: item.input,
               expected_output: item.expected_output,
@@ -424,59 +429,119 @@ const QuestionsPageContent: React.FC = () => {
   const saveQuestion = async () => {
     try {
       const values = await questionForm.validateFields();
-      if (values.type === 'PROGRAMMING' && testCases.length === 0) {
-        message.error('请至少添加一个测试用例');
+      if (values.type === "PROGRAMMING" && testCases.length === 0) {
+        message.error(
+          intl.formatMessage({
+            id: "pages.questions.needTestCase",
+            defaultMessage: "请至少添加一个测试用例",
+          })
+        );
         return;
       }
       if (
-        values.type === 'PROGRAMMING' &&
+        values.type === "PROGRAMMING" &&
         testCases.some((item) => !item.expected_output.trim())
       ) {
-        message.error('请填写每个测试用例的预期输出');
+        message.error(
+          intl.formatMessage({
+            id: "pages.questions.needExpectedOutput",
+            defaultMessage: "请填写每个测试用例的预期输出",
+          })
+        );
         return;
       }
       setSaving(true);
       const payload = buildPayload(values);
       await request(
-        editing ? `/api/admin/questions/${editing.id}` : '/api/admin/questions',
+        editing ? `/api/admin/questions/${editing.id}` : "/api/admin/questions",
         {
-          method: editing ? 'PUT' : 'POST',
+          method: editing ? "PUT" : "POST",
           data: payload,
-        },
+        }
       );
-      message.success(editing ? '题目已保存' : '题目已创建');
+      message.success(
+        editing
+          ? intl.formatMessage({
+              id: "pages.questions.saveSuccess",
+              defaultMessage: "题目已保存",
+            })
+          : intl.formatMessage({
+              id: "pages.questions.createSuccess",
+              defaultMessage: "题目已创建",
+            })
+      );
       setDrawerOpen(false);
-      fetchQuestions();
+      actionRef.current?.reload();
     } catch (error) {
       if (errorCode(error) !== undefined) {
-        message.error(editing ? '保存题目失败' : '创建题目失败');
+        message.error(
+          editing
+            ? intl.formatMessage({
+                id: "pages.questions.saveError",
+                defaultMessage: "保存题目失败",
+              })
+            : intl.formatMessage({
+                id: "pages.questions.createError",
+                defaultMessage: "创建题目失败",
+              })
+        );
       }
     } finally {
       setSaving(false);
     }
   };
 
-  const deleteQuestion = (id: number) => {
+  const confirmDelete = (question: AdminQuestion) => {
     Modal.confirm({
-      title: '确认删除',
-      content: '确定要删除该题目吗？此操作不可撤销。',
-      okText: '删除',
-      okType: 'danger',
-      cancelText: '取消',
+      title: intl.formatMessage({
+        id: "pages.questions.deleteConfirmTitle",
+        defaultMessage: "确认删除",
+      }),
+      content: intl.formatMessage(
+        {
+          id: "pages.questions.deleteConfirmContent",
+          defaultMessage: "确定要删除题目「{title}」吗？此操作不可撤销。",
+        },
+        { title: question.title }
+      ),
+      okText: intl.formatMessage({
+        id: "pages.questions.delete",
+        defaultMessage: "删除",
+      }),
+      okType: "danger",
+      cancelText: intl.formatMessage({
+        id: "pages.questions.cancel",
+        defaultMessage: "取消",
+      }),
       onOk: async () => {
         try {
-          await request(`/api/admin/questions/${id}`, {
-            method: 'DELETE',
+          await request(`/api/admin/questions/${question.id}`, {
+            method: "DELETE",
             skipErrorHandler: true,
           });
-          message.success('题目已删除');
-          fetchQuestions();
+          message.success(
+            intl.formatMessage({
+              id: "pages.questions.deleteSuccess",
+              defaultMessage: "题目已删除",
+            })
+          );
+          actionRef.current?.reload();
         } catch (error) {
           if (errorCode(error) === 40900 || errorCode(error) === 409) {
-            message.error('该题已被试卷引用，不能删除');
+            message.error(
+              intl.formatMessage({
+                id: "pages.questions.deleteRefError",
+                defaultMessage: "该题已被试卷引用，不能删除",
+              })
+            );
             return;
           }
-          message.error('删除题目失败');
+          message.error(
+            intl.formatMessage({
+              id: "pages.questions.deleteError",
+              defaultMessage: "删除题目失败",
+            })
+          );
         }
       },
     });
@@ -486,11 +551,11 @@ const QuestionsPageContent: React.FC = () => {
     setTestCases((items) => [
       ...items,
       {
-        input: '',
+        input: "",
         client_key: newTestCaseKey(),
-        expected_output: '',
-        time_limit_ms: questionForm.getFieldValue('time_limit_ms') || 2000,
-        memory_limit_mb: questionForm.getFieldValue('memory_limit_mb') || 256,
+        expected_output: "",
+        time_limit_ms: questionForm.getFieldValue("time_limit_ms") || 2000,
+        memory_limit_mb: questionForm.getFieldValue("memory_limit_mb") || 256,
         is_sample: items.length === 0,
         is_hidden: items.length !== 0,
         sort_order: items.length,
@@ -501,12 +566,12 @@ const QuestionsPageContent: React.FC = () => {
   const updateTestCase = <K extends keyof AdminTestCase>(
     index: number,
     key: K,
-    value: AdminTestCase[K],
+    value: AdminTestCase[K]
   ) => {
     setTestCases((items) =>
       items.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [key]: value } : item,
-      ),
+        itemIndex === index ? { ...item, [key]: value } : item
+      )
     );
   };
 
@@ -514,51 +579,37 @@ const QuestionsPageContent: React.FC = () => {
     setTestCases((items) =>
       items
         .filter((_, itemIndex) => itemIndex !== index)
-        .map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
+        .map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
     );
   };
 
-  const submitFilters = (values: FilterValues) => {
-    setFilters((current) => ({
-      ...current,
-      keyword: values.keyword?.trim() || undefined,
-    }));
-    setPage(1);
-  };
-
-  const handleTableChange: TableProps<AdminQuestion>['onChange'] = (
-    _pagination,
-    tableFilters,
-    tableSorter,
-  ) => {
-    setFilters((current) => ({
-      ...current,
-      type: selectedTableFilter<QuestionType>(tableFilters.type),
-      difficulty: selectedTableFilter<string>(tableFilters.difficulty),
-      status: selectedTableFilter<QuestionStatus>(tableFilters.status),
-    }));
-
-    const sorter = Array.isArray(tableSorter) ? undefined : tableSorter;
-    if (sorter?.field) {
-      setSortState({
-        field: sorter.field as QuestionSortField,
-        order: sorter.order === 'ascend' ? 'asc' : 'desc',
-      });
-    } else {
-      setSortState((prev) => ({
-        field: 'updated_at',
-        order: prev.order === 'asc' ? 'desc' : 'asc',
-      }));
-    }
-    setPage(1);
-  };
-
-  const columns: ColumnsType<AdminQuestion> = [
+  const columns: ProColumns<AdminQuestion>[] = [
     {
-      title: '题目',
-      dataIndex: 'title',
-      key: 'title',
+      title: intl.formatMessage({
+        id: "pages.questions.search.keyword",
+        defaultMessage: "关键词",
+      }),
+      dataIndex: "keyword",
+      valueType: "text",
+      hideInTable: true,
+      order: 100,
+      fieldProps: {
+        allowClear: true,
+        placeholder: intl.formatMessage({
+          id: "pages.questions.search.placeholder",
+          defaultMessage: "搜索标题、题干...",
+        }),
+      },
+    },
+    {
+      title: intl.formatMessage({
+        id: "pages.questions.columns.title",
+        defaultMessage: "题目",
+      }),
+      dataIndex: "title",
+      key: "title",
       width: 460,
+      search: false,
       render: (_: unknown, question: AdminQuestion) => (
         <div className="question-title-cell">
           <div className="question-type-icon" aria-hidden="true">
@@ -578,152 +629,216 @@ const QuestionsPageContent: React.FC = () => {
               </button>
             </Tooltip>
             <div className="question-title-desc">
-              {question.content?.text || '暂无题干'}
+              {question.content?.text || noContentLabel}
             </div>
           </div>
         </div>
       ),
     },
     {
-      title: '题型',
-      dataIndex: 'type',
-      key: 'type',
+      title: intl.formatMessage({
+        id: "pages.questions.columns.type",
+        defaultMessage: "题型",
+      }),
+      dataIndex: "type",
+      key: "type",
       width: 118,
-      filters: filterOptions(QUESTION_TYPES),
-      filteredValue: filters.type ? [filters.type] : null,
-      filterMultiple: false,
-      render: (type: QuestionType) => (
-        <Tag className="question-type-tag">{typeLabel(type)}</Tag>
+      valueType: "select",
+      valueEnum: typeValueEnum,
+      render: (_: unknown, question: AdminQuestion) => (
+        <Tag className="question-type-tag">
+          {typeLabelMap[question.type] || question.type}
+        </Tag>
       ),
     },
     {
-      title: '难度',
-      dataIndex: 'difficulty',
-      key: 'difficulty',
+      title: intl.formatMessage({
+        id: "pages.questions.columns.difficulty",
+        defaultMessage: "难度",
+      }),
+      dataIndex: "difficulty",
+      key: "difficulty",
       width: 112,
-      filters: filterOptions(DIFFICULTIES),
-      filteredValue: filters.difficulty ? [filters.difficulty] : null,
-      filterMultiple: false,
-      render: (difficulty?: string) =>
-        difficulty ? (
+      valueType: "select",
+      valueEnum: difficultyValueEnum,
+      render: (_: unknown, question: AdminQuestion) =>
+        question.difficulty ? (
           <Tag
             className={`question-diff-tag ${
-              DIFFICULTY_CLASS[difficulty] || ''
+              DIFFICULTY_CLASS[question.difficulty] || ""
             }`}
           >
-            {difficultyLabel(difficulty)}
+            {difficultyLabelMap[question.difficulty] || question.difficulty}
           </Tag>
         ) : (
-          <span className="question-muted">未设置</span>
+          <span className="question-muted">{notSetLabel}</span>
         ),
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
+      title: intl.formatMessage({
+        id: "pages.questions.columns.status",
+        defaultMessage: "状态",
+      }),
+      dataIndex: "status",
+      key: "status",
       width: 118,
-      filters: filterOptions(STATUSES),
-      filteredValue: filters.status ? [filters.status] : null,
-      filterMultiple: false,
-      render: (status: QuestionStatus) => (
+      valueType: "select",
+      valueEnum: statusValueEnum,
+      render: (_: unknown, question: AdminQuestion) => (
         <Badge
           className="question-status-badge"
-          status={STATUS_BADGE[status]}
-          text={statusLabel(status)}
+          status={STATUS_BADGE[question.status]}
+          text={statusLabelMap[question.status] || question.status}
         />
       ),
     },
     {
-      title: '更新时间',
-      dataIndex: 'updated_at',
-      key: 'updated_at',
+      title: intl.formatMessage({
+        id: "pages.questions.columns.updatedAt",
+        defaultMessage: "更新时间",
+      }),
+      dataIndex: "updated_at",
+      key: "updated_at",
       width: 168,
+      search: false,
       sorter: true,
-      sortOrder:
-        sortState.field === 'updated_at'
-          ? antdSortOrder(sortState.order)
-          : null,
-      render: (value: string) => (
+      render: (_: unknown, question: AdminQuestion) => (
         <span className="question-date">
-          {dayjs(value).format('YYYY-MM-DD HH:mm')}
+          {dayjs(question.updated_at).format("YYYY-MM-DD HH:mm")}
         </span>
       ),
     },
     {
-      title: '操作',
-      key: 'actions',
-      width: 96,
-      fixed: 'right' as const,
+      title: intl.formatMessage({
+        id: "common.actions",
+        defaultMessage: "操作",
+      }),
+      key: "actions",
+      width: 130,
+      fixed: "right" as const,
+      search: false,
+      hideInSetting: true,
       render: (_: unknown, question: AdminQuestion) => (
-        <Space size={4} onClick={(event) => event.stopPropagation()}>
-          <Button
-            type="text"
-            size="small"
-            icon={<EditOutlined />}
-            aria-label="编辑题目"
-            onClick={() => openEdit(question)}
-          />
+        <div onClick={(e) => e.stopPropagation()}>
+          <a onClick={() => openEdit(question)}>
+            {intl.formatMessage({
+              id: "pages.questions.edit",
+              defaultMessage: "编辑",
+            })}
+          </a>
+          <Divider type="vertical" />
           <Dropdown
             menu={{
               items: [
                 {
-                  key: 'delete',
-                  label: '删除',
+                  key: "delete",
+                  label: intl.formatMessage({
+                    id: "pages.questions.delete",
+                    defaultMessage: "删除",
+                  }),
                   icon: <DeleteOutlined />,
                   danger: true,
-                  onClick: () => deleteQuestion(question.id),
+                  onClick: () => confirmDelete(question),
                 },
               ],
             }}
-            trigger={['click']}
+            trigger={["click"]}
           >
-            <Button
-              type="text"
-              size="small"
-              icon={<MoreOutlined />}
-              aria-label="更多操作"
-            />
+            <a onClick={(e) => e.preventDefault()}>
+              <Space size={4}>
+                {intl.formatMessage({
+                  id: "pages.questions.more",
+                  defaultMessage: "更多",
+                })}
+                <DownOutlined />
+              </Space>
+            </a>
           </Dropdown>
-        </Space>
+        </div>
       ),
     },
   ];
 
   const renderAnswerFields = () => {
     if (
-      questionType === 'SINGLE_CHOICE' ||
-      questionType === 'MULTIPLE_CHOICE'
+      questionType === "SINGLE_CHOICE" ||
+      questionType === "MULTIPLE_CHOICE"
     ) {
       return (
         <>
           <Form.Item
-            label="选项"
+            label={intl.formatMessage({
+              id: "pages.questions.form.options",
+              defaultMessage: "选项",
+            })}
             name="options_text"
-            rules={[{ required: true, message: '请输入题目选项' }]}
+            rules={[
+              {
+                required: true,
+                message: intl.formatMessage({
+                  id: "pages.questions.form.optionsRequired",
+                  defaultMessage: "请输入题目选项",
+                }),
+              },
+            ]}
           >
             <Input.TextArea
               rows={5}
-              placeholder={'A. 选项一\nB. 选项二\nC. 选项三'}
+              placeholder={intl.formatMessage({
+                id: "pages.questions.form.optionsPlaceholder",
+                defaultMessage: "A. 选项一\nB. 选项二\nC. 选项三",
+              })}
             />
           </Form.Item>
-          {questionType === 'SINGLE_CHOICE' ? (
+          {questionType === "SINGLE_CHOICE" ? (
             <Form.Item
-              label="正确答案"
+              label={intl.formatMessage({
+                id: "pages.questions.form.answerSingle",
+                defaultMessage: "正确答案",
+              })}
               name="answer_single"
-              rules={[{ required: true, message: '请选择正确答案' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: "pages.questions.form.answerSingleRequired",
+                    defaultMessage: "请选择正确答案",
+                  }),
+                },
+              ]}
             >
-              <Select options={answerOptions} placeholder="选择一个正确选项" />
+              <Select
+                options={answerOptions}
+                placeholder={intl.formatMessage({
+                  id: "pages.questions.form.answerSinglePlaceholder",
+                  defaultMessage: "选择一个正确选项",
+                })}
+              />
             </Form.Item>
           ) : (
             <Form.Item
-              label="正确答案"
+              label={intl.formatMessage({
+                id: "pages.questions.form.answerMultiple",
+                defaultMessage: "正确答案",
+              })}
               name="answer_multiple"
-              rules={[{ required: true, message: '请选择正确答案' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: "pages.questions.form.answerMultipleRequired",
+                    defaultMessage: "请选择正确答案",
+                  }),
+                },
+              ]}
             >
               <Select
                 mode="multiple"
                 options={answerOptions}
-                placeholder="选择多个正确选项"
+                placeholder={intl.formatMessage({
+                  id: "pages.questions.form.answerMultiplePlaceholder",
+                  defaultMessage: "选择多个正确选项",
+                })}
               />
             </Form.Item>
           )}
@@ -731,43 +846,100 @@ const QuestionsPageContent: React.FC = () => {
       );
     }
 
-    if (questionType === 'TRUE_FALSE') {
+    if (questionType === "TRUE_FALSE") {
       return (
         <Form.Item
-          label="正确答案"
+          label={intl.formatMessage({
+            id: "pages.questions.form.answerTrueFalse",
+            defaultMessage: "正确答案",
+          })}
           name="answer_true_false"
-          rules={[{ required: true, message: '请选择正确答案' }]}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: "pages.questions.form.answerTrueFalseRequired",
+                defaultMessage: "请选择正确答案",
+              }),
+            },
+          ]}
         >
           <Select
             options={[
-              { label: '正确', value: 'true' },
-              { label: '错误', value: 'false' },
+              {
+                label: intl.formatMessage({
+                  id: "pages.questions.form.true",
+                  defaultMessage: "正确",
+                }),
+                value: "true",
+              },
+              {
+                label: intl.formatMessage({
+                  id: "pages.questions.form.false",
+                  defaultMessage: "错误",
+                }),
+                value: "false",
+              },
             ]}
           />
         </Form.Item>
       );
     }
 
-    if (questionType === 'FILL_BLANK') {
+    if (questionType === "FILL_BLANK") {
       return (
         <Form.Item
-          label="填空答案"
+          label={intl.formatMessage({
+            id: "pages.questions.form.answerBlanks",
+            defaultMessage: "填空答案",
+          })}
           name="answer_blanks"
-          rules={[{ required: true, message: '请输入填空答案' }]}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: "pages.questions.form.answerBlanksRequired",
+                defaultMessage: "请输入填空答案",
+              }),
+            },
+          ]}
         >
-          <Input.TextArea rows={3} placeholder="每行一个空的答案" />
+          <Input.TextArea
+            rows={3}
+            placeholder={intl.formatMessage({
+              id: "pages.questions.form.answerBlanksPlaceholder",
+              defaultMessage: "每行一个空的答案",
+            })}
+          />
         </Form.Item>
       );
     }
 
-    if (questionType === 'SHORT_ANSWER') {
+    if (questionType === "SHORT_ANSWER") {
       return (
         <Form.Item
-          label="参考答案"
+          label={intl.formatMessage({
+            id: "pages.questions.form.answerReference",
+            defaultMessage: "参考答案",
+          })}
           name="answer_reference"
-          rules={[{ required: true, message: '请输入参考答案' }]}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: "pages.questions.form.answerReferenceRequired",
+                defaultMessage: "请输入参考答案",
+              }),
+            },
+          ]}
         >
-          <Input.TextArea rows={5} placeholder="输入参考答案或评分要点" />
+          <Input.TextArea
+            rows={5}
+            placeholder={intl.formatMessage({
+              id: "pages.questions.form.answerReferencePlaceholder",
+              defaultMessage: "输入参考答案或评分要点",
+            })}
+          />
         </Form.Item>
       );
     }
@@ -776,56 +948,108 @@ const QuestionsPageContent: React.FC = () => {
   };
 
   const renderProgrammingFields = () => {
-    if (questionType !== 'PROGRAMMING') {
-      return null;
-    }
+    if (questionType !== "PROGRAMMING") return null;
 
     return (
       <>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              label="语言"
+              label={intl.formatMessage({
+                id: "pages.questions.form.language",
+                defaultMessage: "语言",
+              })}
               name="language"
-              rules={[{ required: true, message: '请选择语言' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: "pages.questions.form.languageRequired",
+                    defaultMessage: "请选择语言",
+                  }),
+                },
+              ]}
             >
-              <Select options={LANGUAGES} placeholder="选择语言" />
+              <Select
+                options={LANGUAGES}
+                placeholder={intl.formatMessage({
+                  id: "pages.questions.form.languagePlaceholder",
+                  defaultMessage: "选择语言",
+                })}
+              />
             </Form.Item>
           </Col>
           <Col span={6}>
             <Form.Item
-              label="时间限制(ms)"
+              label={intl.formatMessage({
+                id: "pages.questions.form.timeLimit",
+                defaultMessage: "时间限制(ms)",
+              })}
               name="time_limit_ms"
-              rules={[{ required: true, message: '请输入时间限制' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: "pages.questions.form.timeLimitRequired",
+                    defaultMessage: "请输入时间限制",
+                  }),
+                },
+              ]}
             >
-              <InputNumber min={1} max={30000} style={{ width: '100%' }} />
+              <InputNumber min={1} max={30000} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
           <Col span={6}>
             <Form.Item
-              label="内存限制(MB)"
+              label={intl.formatMessage({
+                id: "pages.questions.form.memoryLimit",
+                defaultMessage: "内存限制(MB)",
+              })}
               name="memory_limit_mb"
-              rules={[{ required: true, message: '请输入内存限制' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: "pages.questions.form.memoryLimitRequired",
+                    defaultMessage: "请输入内存限制",
+                  }),
+                },
+              ]}
             >
-              <InputNumber min={1} max={4096} style={{ width: '100%' }} />
+              <InputNumber min={1} max={4096} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item label="代码模板" name="starter_code">
+        <Form.Item
+          label={intl.formatMessage({
+            id: "pages.questions.form.starterCode",
+            defaultMessage: "代码模板",
+          })}
+          name="starter_code"
+        >
           <Input.TextArea
             rows={6}
-            placeholder="可选，输入候选人初始代码"
+            placeholder={intl.formatMessage({
+              id: "pages.questions.form.starterCodePlaceholder",
+              defaultMessage: "可选，输入候选人初始代码",
+            })}
             style={{
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
             }}
           />
         </Form.Item>
-        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+        <Space orientation="vertical" style={{ width: "100%" }} size={12}>
           {testCases.map((item, index) => (
             <Card
               key={item.client_key}
               size="small"
-              title={`测试用例 ${index + 1}`}
+              title={intl.formatMessage(
+                {
+                  id: "pages.questions.form.testCase",
+                  defaultMessage: "测试用例 {index}",
+                },
+                { index: index + 1 }
+              )}
               extra={
                 <Button
                   type="text"
@@ -833,7 +1057,10 @@ const QuestionsPageContent: React.FC = () => {
                   size="small"
                   onClick={() => removeTestCase(index)}
                 >
-                  删除
+                  {intl.formatMessage({
+                    id: "pages.questions.form.deleteTestCase",
+                    defaultMessage: "删除",
+                  })}
                 </Button>
               }
             >
@@ -842,9 +1069,12 @@ const QuestionsPageContent: React.FC = () => {
                   <Input.TextArea
                     value={item.input}
                     rows={3}
-                    placeholder="标准输入"
+                    placeholder={intl.formatMessage({
+                      id: "pages.questions.form.input",
+                      defaultMessage: "标准输入",
+                    })}
                     onChange={(event) =>
-                      updateTestCase(index, 'input', event.target.value)
+                      updateTestCase(index, "input", event.target.value)
                     }
                   />
                 </Col>
@@ -852,12 +1082,15 @@ const QuestionsPageContent: React.FC = () => {
                   <Input.TextArea
                     value={item.expected_output}
                     rows={3}
-                    placeholder="预期输出"
+                    placeholder={intl.formatMessage({
+                      id: "pages.questions.form.expectedOutput",
+                      defaultMessage: "预期输出",
+                    })}
                     onChange={(event) =>
                       updateTestCase(
                         index,
-                        'expected_output',
-                        event.target.value,
+                        "expected_output",
+                        event.target.value
                       )
                     }
                   />
@@ -870,9 +1103,9 @@ const QuestionsPageContent: React.FC = () => {
                     max={30000}
                     value={item.time_limit_ms}
                     addonAfter="ms"
-                    style={{ width: '100%' }}
+                    style={{ width: "100%" }}
                     onChange={(value) =>
-                      updateTestCase(index, 'time_limit_ms', value || 2000)
+                      updateTestCase(index, "time_limit_ms", value || 2000)
                     }
                   />
                 </Col>
@@ -882,30 +1115,40 @@ const QuestionsPageContent: React.FC = () => {
                     max={4096}
                     value={item.memory_limit_mb}
                     addonAfter="MB"
-                    style={{ width: '100%' }}
+                    style={{ width: "100%" }}
                     onChange={(value) =>
-                      updateTestCase(index, 'memory_limit_mb', value || 256)
+                      updateTestCase(index, "memory_limit_mb", value || 256)
                     }
                   />
                 </Col>
                 <Col span={6}>
                   <Space>
-                    <span>示例</span>
+                    <span>
+                      {intl.formatMessage({
+                        id: "pages.questions.form.sample",
+                        defaultMessage: "示例",
+                      })}
+                    </span>
                     <Switch
                       checked={item.is_sample}
                       onChange={(value) =>
-                        updateTestCase(index, 'is_sample', value)
+                        updateTestCase(index, "is_sample", value)
                       }
                     />
                   </Space>
                 </Col>
                 <Col span={6}>
                   <Space>
-                    <span>隐藏</span>
+                    <span>
+                      {intl.formatMessage({
+                        id: "pages.questions.form.hidden",
+                        defaultMessage: "隐藏",
+                      })}
+                    </span>
                     <Switch
                       checked={item.is_hidden}
                       onChange={(value) =>
-                        updateTestCase(index, 'is_hidden', value)
+                        updateTestCase(index, "is_hidden", value)
                       }
                     />
                   </Space>
@@ -919,7 +1162,10 @@ const QuestionsPageContent: React.FC = () => {
             onClick={addTestCase}
             icon={<PlusOutlined />}
           >
-            添加测试用例
+            {intl.formatMessage({
+              id: "pages.questions.form.addTestCase",
+              defaultMessage: "添加测试用例",
+            })}
           </Button>
         </Space>
       </>
@@ -928,85 +1174,165 @@ const QuestionsPageContent: React.FC = () => {
 
   return (
     <PageContainer
-      className="questions-page"
-      breadcrumbRender={false}
-      title={false}
-    >
-      <div className="questions-shell">
-        <section className="questions-page-header">
-          <div>
-            <h1>题目</h1>
-            <p>创建和管理考试题目、答案与编程用例。</p>
-          </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-            新建题目
-          </Button>
-        </section>
-
-        <Form
-          form={filterForm}
-          layout="inline"
-          onFinish={submitFilters}
-          className="question-search-form"
+      title={intl.formatMessage({
+        id: "menu.content.library.questions",
+        defaultMessage: "题目管理",
+      })}
+      content={
+        <p
+          style={{
+            margin: 0,
+            color: "var(--examora-text-secondary)",
+            fontSize: 14,
+          }}
         >
-          <Form.Item name="keyword" className="question-filter-keyword">
-            <Input
-              allowClear
-              prefix={
-                <SearchOutlined
-                  style={{ color: 'var(--q-text)', fontSize: 17 }}
-                />
-              }
-              suffix={<kbd className="question-shortcut-kbd">⌘ K</kbd>}
-              placeholder="搜索标题、题干或标签..."
-              className="question-search-input"
-              onPressEnter={() => filterForm.submit()}
-            />
-          </Form.Item>
-        </Form>
+          {intl.formatMessage({
+            id: "pages.questions.description",
+            defaultMessage: "创建和管理考试题目、答案与编程用例。",
+          })}
+        </p>
+      }
+    >
+      <ProTable<AdminQuestion>
+        actionRef={actionRef}
+        cardBordered={{
+          search: true,
+          table: true,
+        }}
+        columns={columns}
+        columnsState={{
+          persistenceKey: "examora-questions-table-columns",
+          persistenceType: "localStorage",
+        }}
+        columnEmptyText="-"
+        dateFormatter="string"
+        debounceTime={300}
+        defaultSize="middle"
+        headerTitle={intl.formatMessage({
+          id: "pages.questions.listTitle",
+          defaultMessage: "题目列表",
+        })}
+        loading={tableLoading}
+        onLoadingChange={(loading) => {
+          setTableLoading(Boolean(loading));
+        }}
+        options={{
+          density: true,
+          fullScreen: false,
+          reload: true,
+          setting: true,
+        }}
+        rowKey="id"
+        search={{
+          labelWidth: "auto",
+          span: {
+            xs: 24,
+            sm: 12,
+            md: 8,
+            lg: 6,
+            xl: 6,
+            xxl: 4,
+          },
+          defaultCollapsed: true,
+          searchText: intl.formatMessage({
+            id: "pages.questions.search.searchText",
+            defaultMessage: "查询",
+          }),
+          resetText: intl.formatMessage({
+            id: "pages.questions.search.resetText",
+            defaultMessage: "重置",
+          }),
+        }}
+        beforeSearchSubmit={(params) => ({
+          ...params,
+          keyword:
+            typeof params.keyword === "string"
+              ? params.keyword.trim()
+              : params.keyword,
+        })}
+        request={async (params, sort) => {
+          try {
+            const sortField = Object.keys(sort)[0] || "updated_at";
+            const sortOrder = sort[sortField] === "ascend" ? "asc" : "desc";
+            const response = await request<{
+              code: number;
+              data: { items: AdminQuestion[]; total: number };
+            }>("/api/admin/questions", {
+              params: {
+                page: params.current,
+                page_size: params.pageSize,
+                ...(params.keyword ? { keyword: params.keyword } : {}),
+                ...(params.type ? { type: params.type } : {}),
+                ...(params.difficulty ? { difficulty: params.difficulty } : {}),
+                ...(params.status ? { status: params.status } : {}),
+                sort_field: sortField,
+                sort_order: sortOrder,
+              },
+            });
 
-        <Card className="question-table-card" variant="borderless">
-          <Table
-            rowKey="id"
-            size="small"
-            columns={columns}
-            dataSource={questions}
-            loading={loading}
-            scroll={{ x: 1080 }}
-            locale={{
-              emptyText: (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="暂无题目，先创建一道题"
-                />
-              ),
-            }}
-            pagination={false}
-            onChange={handleTableChange}
-            onRow={(question) => ({
-              onClick: () =>
-                history.push(`/content/library/questions/${question.id}`),
+            return {
+              data: response.data?.items || [],
+              total: response.data?.total || 0,
+              success: true,
+            };
+          } catch (_error) {
+            message.error(
+              intl.formatMessage({
+                id: "pages.questions.fetchError",
+                defaultMessage: "获取题目列表失败",
+              })
+            );
+            return { data: [], total: 0, success: false };
+          }
+        }}
+        pagination={{
+          defaultPageSize: 20,
+          showSizeChanger: true,
+          pageSizeOptions: [10, 20, 50, 100],
+          showTotal: (total) =>
+            intl.formatMessage(
+              {
+                id: "pages.questions.total",
+                defaultMessage: "共 {total} 条",
+              },
+              { total }
+            ),
+        }}
+        revalidateOnFocus={false}
+        scroll={{ x: 1100 }}
+        tableLayout="fixed"
+        toolBarRender={() => [
+          <Button
+            key="create"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={openCreate}
+          >
+            {intl.formatMessage({
+              id: "pages.questions.create",
+              defaultMessage: "新建题目",
             })}
-          />
-          <div className="question-table-pagination">
-            <span className="question-total">共 {total} 条</span>
-            <Pagination
-              current={page}
-              pageSize={pageSize}
-              total={total}
-              showSizeChanger
-              pageSizeOptions={[10, 20, 50, 100]}
-              onChange={(nextPage: number, nextPageSize: number) => {
-                setPage(nextPageSize !== pageSize ? 1 : nextPage);
-                setPageSize(nextPageSize);
-              }}
-            />
-          </div>
-        </Card>
-      </div>
+          </Button>,
+        ]}
+        onRow={(question) => ({
+          onClick: () =>
+            history.push(`/content/library/questions/${question.id}`),
+          style: { cursor: "pointer" },
+        })}
+      />
 
       <Drawer
-        title={editing ? '编辑题目' : '新建题目'}
+        title={
+          editing
+            ? intl.formatMessage({
+                id: "pages.questions.drawerEditTitle",
+                defaultMessage: "编辑题目",
+              })
+            : intl.formatMessage({
+                id: "pages.questions.drawerCreateTitle",
+                defaultMessage: "新建题目",
+              })
+        }
         size={820}
         open={drawerOpen}
         onClose={() => {
@@ -1021,10 +1347,16 @@ const QuestionsPageContent: React.FC = () => {
                 setDrawerOpen(false);
               }}
             >
-              取消
+              {intl.formatMessage({
+                id: "pages.questions.cancel",
+                defaultMessage: "取消",
+              })}
             </Button>
             <Button type="primary" loading={saving} onClick={saveQuestion}>
-              保存
+              {intl.formatMessage({
+                id: "pages.questions.save",
+                defaultMessage: "保存",
+              })}
             </Button>
           </Space>
         }
@@ -1033,43 +1365,109 @@ const QuestionsPageContent: React.FC = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                label="题型"
+                label={intl.formatMessage({
+                  id: "pages.questions.form.type",
+                  defaultMessage: "题型",
+                })}
                 name="type"
-                rules={[{ required: true, message: '请选择题型' }]}
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: "pages.questions.form.typeRequired",
+                      defaultMessage: "请选择题型",
+                    }),
+                  },
+                ]}
               >
-                <Select options={QUESTION_TYPES} />
+                <Select options={typeOptions} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                label="状态"
+                label={intl.formatMessage({
+                  id: "pages.questions.form.status",
+                  defaultMessage: "状态",
+                })}
                 name="status"
-                rules={[{ required: true, message: '请选择状态' }]}
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: "pages.questions.form.statusRequired",
+                      defaultMessage: "请选择状态",
+                    }),
+                  },
+                ]}
               >
-                <Select options={STATUSES} />
+                <Select options={statusOptions} />
               </Form.Item>
             </Col>
           </Row>
           <Form.Item
-            label="标题"
+            label={intl.formatMessage({
+              id: "pages.questions.form.title",
+              defaultMessage: "标题",
+            })}
             name="title"
             rules={[
-              { required: true, whitespace: true, message: '请输入标题' },
+              {
+                required: true,
+                whitespace: true,
+                message: intl.formatMessage({
+                  id: "pages.questions.form.titleRequired",
+                  defaultMessage: "请输入标题",
+                }),
+              },
             ]}
           >
-            <Input placeholder="输入题目标题" />
+            <Input
+              placeholder={intl.formatMessage({
+                id: "pages.questions.form.titlePlaceholder",
+                defaultMessage: "输入题目标题",
+              })}
+            />
           </Form.Item>
           <Form.Item
-            label="题干"
+            label={intl.formatMessage({
+              id: "pages.questions.form.contentText",
+              defaultMessage: "题干",
+            })}
             name="content_text"
             rules={[
-              { required: true, whitespace: true, message: '请输入题干' },
+              {
+                required: true,
+                whitespace: true,
+                message: intl.formatMessage({
+                  id: "pages.questions.form.contentTextRequired",
+                  defaultMessage: "请输入题干",
+                }),
+              },
             ]}
           >
-            <Input.TextArea rows={5} placeholder="输入题干内容" />
+            <Input.TextArea
+              rows={5}
+              placeholder={intl.formatMessage({
+                id: "pages.questions.form.contentTextPlaceholder",
+                defaultMessage: "输入题干内容",
+              })}
+            />
           </Form.Item>
-          <Form.Item label="难度" name="difficulty">
-            <Select allowClear options={DIFFICULTIES} placeholder="选择难度" />
+          <Form.Item
+            label={intl.formatMessage({
+              id: "pages.questions.form.difficulty",
+              defaultMessage: "难度",
+            })}
+            name="difficulty"
+          >
+            <Select
+              allowClear
+              options={difficultyOptions}
+              placeholder={intl.formatMessage({
+                id: "pages.questions.form.difficultyPlaceholder",
+                defaultMessage: "选择难度",
+              })}
+            />
           </Form.Item>
           {renderAnswerFields()}
           {renderProgrammingFields()}
