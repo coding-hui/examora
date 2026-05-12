@@ -29,6 +29,16 @@ func stringPtr(value string) *string {
 	return &value
 }
 
+func choiceContent(text string) map[string]any {
+	return map[string]any{
+		"text": text,
+		"options": []any{
+			map[string]any{"key": "A", "text": "A"},
+			map[string]any{"key": "B", "text": "B"},
+		},
+	}
+}
+
 func TestListQuestionsFilters(t *testing.T) {
 	service, _ := newLibraryService(t)
 	ctx := context.Background()
@@ -36,7 +46,7 @@ func TestListQuestionsFilters(t *testing.T) {
 	_, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
 		Type:       library.QuestionTypeSingleChoice,
 		Title:      "Go basics",
-		Content:    map[string]any{"text": "Which keyword starts a goroutine?"},
+		Content:    choiceContent("Which keyword starts a goroutine?"),
 		Answer:     map[string]any{"choice": "A"},
 		Difficulty: stringPtr("EASY"),
 		Status:     library.QuestionStatusDraft,
@@ -74,7 +84,7 @@ func TestListQuestionsDefaultSortIsStableLatestFirst(t *testing.T) {
 	first, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
 		Type:    library.QuestionTypeSingleChoice,
 		Title:   "First question",
-		Content: map[string]any{"text": "first"},
+		Content: choiceContent("first"),
 		Answer:  map[string]any{"choice": "A"},
 		Status:  library.QuestionStatusDraft,
 	})
@@ -139,6 +149,194 @@ func TestProgrammingQuestionReplacesTestCases(t *testing.T) {
 	require.Equal(t, "13", cases[0].ExpectedOutput)
 }
 
+func TestCreateQuestionValidatesStructuredQuestionPayloads(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name string
+		cmd  library.SaveQuestionCommand
+	}{
+		{
+			name: "single choice answer must reference option key",
+			cmd: library.SaveQuestionCommand{
+				Type:    library.QuestionTypeSingleChoice,
+				Title:   "Single",
+				Content: choiceContent("Pick one"),
+				Answer:  map[string]any{"choice": "C"},
+			},
+		},
+		{
+			name: "multiple choice answers are required",
+			cmd: library.SaveQuestionCommand{
+				Type:    library.QuestionTypeMultipleChoice,
+				Title:   "Multiple",
+				Content: choiceContent("Pick many"),
+				Answer:  map[string]any{"choices": []any{}},
+			},
+		},
+		{
+			name: "true false answer must be boolean",
+			cmd: library.SaveQuestionCommand{
+				Type:    library.QuestionTypeTrueFalse,
+				Title:   "True false",
+				Content: map[string]any{"text": "Go is compiled"},
+				Answer:  map[string]any{"correct": "true"},
+			},
+		},
+		{
+			name: "fill blank answers are required",
+			cmd: library.SaveQuestionCommand{
+				Type:    library.QuestionTypeFillBlank,
+				Title:   "Blank",
+				Content: map[string]any{"text": "Go was created at ____."},
+				Answer:  map[string]any{"blanks": []any{""}},
+			},
+		},
+		{
+			name: "short answer reference is required",
+			cmd: library.SaveQuestionCommand{
+				Type:    library.QuestionTypeShortAnswer,
+				Title:   "Short",
+				Content: map[string]any{"text": "Describe HTTP."},
+				Answer:  map[string]any{"reference": " "},
+			},
+		},
+		{
+			name: "programming requires test case expected output",
+			cmd: library.SaveQuestionCommand{
+				Type:     library.QuestionTypeProgramming,
+				Title:    "Code",
+				Content:  map[string]any{"text": "Print hello"},
+				Language: stringPtr("GO"),
+				TestCases: []library.TestCase{
+					{Input: "", ExpectedOutput: ""},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := service.CreateQuestion(ctx, tt.cmd)
+			require.ErrorIs(t, err, library.ErrInvalidQuestion)
+		})
+	}
+}
+
+func TestPatchQuestionStatusPublishedValidatesExistingQuestionCompleteness(t *testing.T) {
+	service, store := newLibraryService(t)
+	ctx := context.Background()
+
+	question := &library.Question{
+		Type:          library.QuestionTypeProgramming,
+		Title:         "Incomplete programming",
+		Content:       map[string]any{"text": "Print hello"},
+		Language:      stringPtr("GO"),
+		TimeLimitMS:   2000,
+		MemoryLimitMB: 256,
+		Status:        library.QuestionStatusDraft,
+	}
+	require.NoError(t, store.CreateQuestion(ctx, question))
+
+	_, err := service.PatchQuestionStatus(ctx, question.ID, library.QuestionStatusPublished)
+	require.ErrorIs(t, err, library.ErrInvalidQuestion)
+
+	_, err = service.AddTestCase(ctx, question.ID, library.SaveTestCaseCommand{
+		Input:          "",
+		ExpectedOutput: "hello",
+	})
+	require.NoError(t, err)
+
+	published, err := service.PatchQuestionStatus(ctx, question.ID, library.QuestionStatusPublished)
+	require.NoError(t, err)
+	require.Equal(t, library.QuestionStatusPublished, published.Status)
+}
+
+func TestAddPaperQuestionValidatesPublishedQuestionScoreAndDuplicates(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Backend paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	draft, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Draft question",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusDraft,
+	})
+	require.NoError(t, err)
+
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: draft.ID,
+		Score:      10,
+	})
+	require.ErrorIs(t, err, library.ErrInvalidPaper)
+
+	published, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Published question",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: published.ID,
+		Score:      0,
+	})
+	require.ErrorIs(t, err, library.ErrInvalidPaper)
+
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: published.ID,
+		Score:      10,
+	})
+	require.NoError(t, err)
+
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: published.ID,
+		Score:      20,
+	})
+	require.ErrorIs(t, err, library.ErrPaperQuestionExists)
+}
+
+func TestStoreAddPaperQuestionMapsUniqueConstraintToConflict(t *testing.T) {
+	service, store := newLibraryService(t)
+	ctx := context.Background()
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Backend paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Published question",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+
+	err = store.AddPaperQuestion(ctx, &library.PaperQuestion{
+		PaperID:    paper.ID,
+		QuestionID: question.ID,
+		Score:      10,
+	})
+	require.NoError(t, err)
+	err = store.AddPaperQuestion(ctx, &library.PaperQuestion{
+		PaperID:    paper.ID,
+		QuestionID: question.ID,
+		Score:      20,
+	})
+	require.ErrorIs(t, err, library.ErrPaperQuestionExists)
+}
+
 func TestDeleteQuestionRejectsReferencedQuestion(t *testing.T) {
 	service, store := newLibraryService(t)
 	ctx := context.Background()
@@ -148,7 +346,7 @@ func TestDeleteQuestionRejectsReferencedQuestion(t *testing.T) {
 		Title:   "Go is compiled",
 		Content: map[string]any{"text": "Go is a compiled language."},
 		Answer:  map[string]any{"correct": true},
-		Status:  library.QuestionStatusDraft,
+		Status:  library.QuestionStatusPublished,
 	})
 	require.NoError(t, err)
 

@@ -18,9 +18,10 @@ import (
 )
 
 type examFixture struct {
-	exams     *exam.Service
-	examStore *examstore.Store
-	library   *library.Service
+	exams        *exam.Service
+	examStore    *examstore.Store
+	library      *library.Service
+	libraryStore *librarystore.Store
 }
 
 func newExamFixture(t *testing.T) *examFixture {
@@ -39,9 +40,10 @@ func newExamFixture(t *testing.T) *examFixture {
 	require.NoError(t, err)
 
 	return &examFixture{
-		exams:     examService,
-		examStore: examStore,
-		library:   libraryService,
+		exams:        examService,
+		examStore:    examStore,
+		library:      libraryService,
+		libraryStore: libraryStore,
 	}
 }
 
@@ -54,11 +56,17 @@ func publishableExam(t *testing.T, fx *examFixture) *exam.Exam {
 	ctx := context.Background()
 
 	choice, err := fx.library.CreateQuestion(ctx, library.SaveQuestionCommand{
-		Type:    library.QuestionTypeSingleChoice,
-		Title:   "Original choice",
-		Content: map[string]any{"text": "Pick A", "options": []any{"A", "B"}},
-		Answer:  map[string]any{"choice": "A"},
-		Status:  library.QuestionStatusDraft,
+		Type:  library.QuestionTypeSingleChoice,
+		Title: "Original choice",
+		Content: map[string]any{
+			"text": "Pick A",
+			"options": []any{
+				map[string]any{"key": "A", "text": "A"},
+				map[string]any{"key": "B", "text": "B"},
+			},
+		},
+		Answer: map[string]any{"choice": "A"},
+		Status: library.QuestionStatusPublished,
 	})
 	require.NoError(t, err)
 
@@ -67,7 +75,7 @@ func publishableExam(t *testing.T, fx *examFixture) *exam.Exam {
 		Title:    "Original programming",
 		Content:  map[string]any{"text": "Print hello"},
 		Language: strPtr("GO"),
-		Status:   library.QuestionStatusDraft,
+		Status:   library.QuestionStatusPublished,
 		Answer:   map[string]any{},
 		TestCases: []library.TestCase{
 			{Input: "", ExpectedOutput: "hello", IsSample: true, SortOrder: 1},
@@ -122,11 +130,17 @@ func TestPublishSnapshotFreezesSourceQuestionData(t *testing.T) {
 	require.Equal(t, map[string]any{"choice": "A"}, snaps[0].Answer)
 
 	_, err = fx.library.UpdateQuestion(ctx, snaps[0].QuestionID, library.SaveQuestionCommand{
-		Type:    library.QuestionTypeSingleChoice,
-		Title:   "Changed after publish",
-		Content: map[string]any{"text": "Pick B"},
-		Answer:  map[string]any{"choice": "B"},
-		Status:  library.QuestionStatusPublished,
+		Type:  library.QuestionTypeSingleChoice,
+		Title: "Changed after publish",
+		Content: map[string]any{
+			"text": "Pick B",
+			"options": []any{
+				map[string]any{"key": "A", "text": "A"},
+				map[string]any{"key": "B", "text": "B"},
+			},
+		},
+		Answer: map[string]any{"choice": "B"},
+		Status: library.QuestionStatusPublished,
 	})
 	require.NoError(t, err)
 
@@ -226,4 +240,61 @@ func TestPublishRejectsInvalidTimeWindow(t *testing.T) {
 		return err
 	}()
 	require.ErrorIs(t, err, exam.ErrInvalidExamWindow)
+}
+
+func TestPublishRejectsEmptyPaper(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	paper, err := fx.library.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Empty paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
+		Title:           "Empty exam",
+		PaperID:         &paper.ID,
+		Status:          exam.StatusDraft,
+		DurationMinutes: 60,
+	})
+	require.NoError(t, err)
+
+	_, err = fx.exams.PublishExamWithSnapshot(ctx, created.ID, time.Now(), time.Now().Add(time.Hour), 60)
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+}
+
+func TestPublishRejectsInvalidPublishedQuestionShape(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	dirty := &library.Question{
+		Type:          library.QuestionTypeSingleChoice,
+		Title:         "Dirty published question",
+		Content:       map[string]any{"text": "Pick A"},
+		Answer:        map[string]any{"choice": "A"},
+		TimeLimitMS:   2000,
+		MemoryLimitMB: 256,
+		Status:        library.QuestionStatusPublished,
+	}
+	require.NoError(t, fx.libraryStore.CreateQuestion(ctx, dirty))
+	paper, err := fx.library.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Dirty paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = fx.library.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: dirty.ID,
+		Score:      10,
+	})
+	require.NoError(t, err)
+	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
+		Title:           "Dirty exam",
+		PaperID:         &paper.ID,
+		Status:          exam.StatusDraft,
+		DurationMinutes: 60,
+	})
+	require.NoError(t, err)
+
+	_, err = fx.exams.PublishExamWithSnapshot(ctx, created.ID, time.Now(), time.Now().Add(time.Hour), 60)
+	require.ErrorIs(t, err, library.ErrInvalidQuestion)
 }

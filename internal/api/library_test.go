@@ -40,13 +40,23 @@ func apiStringPtr(value string) *string {
 	return &value
 }
 
+func apiChoiceContent(text string) map[string]any {
+	return map[string]any{
+		"text": text,
+		"options": []any{
+			map[string]any{"key": "A", "text": "A"},
+			map[string]any{"key": "B", "text": "B"},
+		},
+	}
+}
+
 func TestListQuestionsEndpointSupportsFiltersAndPaging(t *testing.T) {
 	router, service := newLibraryAPIRouter(t)
 
 	_, err := service.CreateQuestion(t.Context(), library.SaveQuestionCommand{
 		Type:       library.QuestionTypeSingleChoice,
 		Title:      "Go basics",
-		Content:    map[string]any{"text": "Which keyword starts a goroutine?"},
+		Content:    apiChoiceContent("Which keyword starts a goroutine?"),
 		Answer:     map[string]any{"choice": "A"},
 		Difficulty: apiStringPtr("EASY"),
 		Status:     library.QuestionStatusDraft,
@@ -98,7 +108,7 @@ func TestListQuestionsEndpointSupportsUpdatedAtSorting(t *testing.T) {
 	_, err := service.CreateQuestion(t.Context(), library.SaveQuestionCommand{
 		Type:       library.QuestionTypeSingleChoice,
 		Title:      "Draft choice",
-		Content:    map[string]any{"text": "draft"},
+		Content:    apiChoiceContent("draft"),
 		Answer:     map[string]any{"choice": "A"},
 		Difficulty: apiStringPtr("EASY"),
 		Status:     library.QuestionStatusDraft,
@@ -152,7 +162,7 @@ func TestListQuestionsEndpointNormalizesUnsafeSortAndPaging(t *testing.T) {
 	_, err := service.CreateQuestion(t.Context(), library.SaveQuestionCommand{
 		Type:       library.QuestionTypeSingleChoice,
 		Title:      "Safe sort",
-		Content:    map[string]any{"text": "safe sort"},
+		Content:    apiChoiceContent("safe sort"),
 		Answer:     map[string]any{"choice": "A"},
 		Difficulty: apiStringPtr("EASY"),
 		Status:     library.QuestionStatusDraft,

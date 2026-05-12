@@ -101,6 +101,7 @@ CREATE TABLE IF NOT EXISTS paper_questions (
 );
 CREATE INDEX IF NOT EXISTS idx_paper_questions_paper_id ON paper_questions(paper_id);
 CREATE INDEX IF NOT EXISTS idx_paper_questions_question_id ON paper_questions(question_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_paper_questions_paper_question ON paper_questions(paper_id, question_id);
 
 -- exams
 CREATE TABLE IF NOT EXISTS exams (

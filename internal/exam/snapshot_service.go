@@ -38,6 +38,9 @@ func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, st
 	if err != nil {
 		return nil, err
 	}
+	if len(paperQuestions) == 0 {
+		return nil, ErrInvalidExamStatusTransition
+	}
 
 	type questionSnapshotData struct {
 		question  *library.Question
@@ -52,11 +55,20 @@ func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, st
 		if err != nil {
 			return nil, err
 		}
+		if q.Status != library.QuestionStatusPublished || pq.Score <= 0 {
+			return nil, ErrInvalidExamStatusTransition
+		}
 
 		var testCases []TestCase
 		if q.Type == QuestionTypeProgramming {
 			tcList, err := s.papers.ListTestCases(ctx, q.ID, true) // include hidden
 			if err != nil {
+				return nil, err
+			}
+			if len(tcList) == 0 {
+				return nil, ErrInvalidExamStatusTransition
+			}
+			if err := library.ValidateQuestionForPublish(q, tcList); err != nil {
 				return nil, err
 			}
 			for _, tc := range tcList {
@@ -70,6 +82,8 @@ func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, st
 					IsHidden:       tc.IsHidden,
 				})
 			}
+		} else if err := library.ValidateQuestionForPublish(q, nil); err != nil {
+			return nil, err
 		}
 		questionData = append(questionData, questionSnapshotData{
 			question:  q,

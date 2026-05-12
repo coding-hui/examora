@@ -2,6 +2,7 @@ package library
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -79,6 +80,28 @@ func (s *Service) UpdatePaper(ctx context.Context, id uint64, cmd SavePaperComma
 }
 
 func (s *Service) AddPaperQuestion(ctx context.Context, paperID uint64, cmd AddPaperQuestionCommand) (*PaperQuestion, error) {
+	if _, err := s.store.GetPaper(ctx, paperID); err != nil {
+		return nil, err
+	}
+	question, err := s.store.GetQuestion(ctx, cmd.QuestionID)
+	if err != nil {
+		return nil, err
+	}
+	if cmd.Score <= 0 {
+		return nil, fmt.Errorf("%w: paper question score must be positive", ErrInvalidPaper)
+	}
+	if question.Status != QuestionStatusPublished {
+		return nil, fmt.Errorf("%w: paper question must reference a published question", ErrInvalidPaper)
+	}
+	existing, err := s.store.ListPaperQuestions(ctx, paperID)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range existing {
+		if item.QuestionID == cmd.QuestionID {
+			return nil, ErrPaperQuestionExists
+		}
+	}
 	item := &PaperQuestion{PaperID: paperID, QuestionID: cmd.QuestionID, Score: cmd.Score, SortOrder: cmd.SortOrder}
 	if err := s.store.AddPaperQuestion(ctx, item); err != nil {
 		return nil, err

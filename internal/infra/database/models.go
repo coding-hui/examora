@@ -69,8 +69,8 @@ func (PaperModel) TableName() string { return "papers" }
 
 type PaperQuestionModel struct {
 	ID         uint64 `gorm:"primaryKey;autoIncrement"`
-	PaperID    uint64 `gorm:"index"`
-	QuestionID uint64 `gorm:"index"`
+	PaperID    uint64 `gorm:"index;uniqueIndex:idx_paper_questions_paper_question"`
+	QuestionID uint64 `gorm:"index;uniqueIndex:idx_paper_questions_paper_question"`
 	Score      float64
 	SortOrder  int
 	CreatedAt  time.Time

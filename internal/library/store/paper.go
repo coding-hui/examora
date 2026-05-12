@@ -66,6 +66,9 @@ func (s *Store) DeletePaper(ctx context.Context, id uint64) error {
 func (s *Store) AddPaperQuestion(ctx context.Context, item *library.PaperQuestion) error {
 	row := &database.PaperQuestionModel{PaperID: item.PaperID, QuestionID: item.QuestionID, Score: item.Score, SortOrder: item.SortOrder}
 	if err := s.db(ctx).Create(row).Error; err != nil {
+		if database.IsUniqueConstraint(err) {
+			return library.ErrPaperQuestionExists
+		}
 		return err
 	}
 	item.ID = row.ID

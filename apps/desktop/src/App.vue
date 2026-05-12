@@ -24,6 +24,11 @@ interface CandidateQuestion {
   timeLimitMs: number
 }
 
+interface ChoiceOption {
+  key: string
+  text: string
+}
+
 interface CandidatePaper {
   examSnapshotId: string
   title: string
@@ -239,6 +244,51 @@ function handleAnswer(questionId: string, answer: Record<string, unknown>) {
   answers.value.set(questionId, answer)
 }
 
+function getChoiceOptions(question: CandidateQuestion): ChoiceOption[] {
+  const options = question.content.options
+  if (Array.isArray(options)) {
+    return options
+      .map((option, index) => {
+        if (typeof option === 'string') {
+          return { key: String.fromCharCode(65 + index), text: option }
+        }
+        const item = option as Record<string, unknown>
+        return {
+          key: String(item.key || String.fromCharCode(65 + index)),
+          text: String(item.text || ''),
+        }
+      })
+      .filter((option) => option.text)
+  }
+
+  if (options && typeof options === 'object') {
+    return Object.entries(options as Record<string, unknown>).map(([key, text]) => ({
+      key,
+      text: String(text),
+    }))
+  }
+
+  return []
+}
+
+function getQuestionText(question: CandidateQuestion): string {
+  return String(question.content.text || '')
+}
+
+function isChoiceSelected(questionId: string, key: string): boolean {
+  const choices = answers.value.get(questionId)?.choices
+  return Array.isArray(choices) && choices.includes(key)
+}
+
+function toggleMultipleChoice(questionId: string, key: string, checked: boolean) {
+  const current = answers.value.get(questionId)?.choices
+  const choices = Array.isArray(current) ? current.map(String) : []
+  const next = checked
+    ? Array.from(new Set([...choices, key]))
+    : choices.filter((choice) => choice !== key)
+  handleAnswer(questionId, { choices: next })
+}
+
 function navigateQuestion(index: number) {
   currentQuestionIndex.value = index
 }
@@ -333,19 +383,33 @@ onUnmounted(() => {
               <span class="q-score">{{ currentQuestion.score }}分</span>
             </div>
             <h3>{{ currentQuestion.title }}</h3>
-            <p>{{ JSON.stringify(currentQuestion.content) }}</p>
+            <p>{{ getQuestionText(currentQuestion) }}</p>
 
             <!-- Answer based on type -->
             <div class="answer-area">
               <template v-if="currentQuestion.type === 'SINGLE_CHOICE'">
-                <label v-for="(opt, key) in (currentQuestion.content.options as Record<string, string>)" :key="key">
+                <label v-for="opt in getChoiceOptions(currentQuestion)" :key="opt.key">
                   <input
                     type="radio"
                     :name="'q-' + currentQuestion.snapshotId"
-                    :value="key"
-                    @change="handleAnswer(currentQuestion.snapshotId, { selected: key })"
+                    :value="opt.key"
+                    :checked="answers.get(currentQuestion.snapshotId)?.choice === opt.key"
+                    @change="handleAnswer(currentQuestion.snapshotId, { choice: opt.key })"
                   />
-                  {{ opt }}
+                  <span class="option-key">{{ opt.key }}</span>
+                  {{ opt.text }}
+                </label>
+              </template>
+              <template v-else-if="currentQuestion.type === 'MULTIPLE_CHOICE'">
+                <label v-for="opt in getChoiceOptions(currentQuestion)" :key="opt.key">
+                  <input
+                    type="checkbox"
+                    :value="opt.key"
+                    :checked="isChoiceSelected(currentQuestion.snapshotId, opt.key)"
+                    @change="toggleMultipleChoice(currentQuestion.snapshotId, opt.key, ($event.target as HTMLInputElement).checked)"
+                  />
+                  <span class="option-key">{{ opt.key }}</span>
+                  {{ opt.text }}
                 </label>
               </template>
               <template v-else-if="currentQuestion.type === 'PROGRAMMING'">
@@ -575,12 +639,19 @@ h1 { margin: 0; }
 }
 
 .answer-area label {
-  display: block;
+  display: flex;
+  gap: 10px;
+  align-items: center;
   padding: 12px;
   border: 1px solid rgba(29, 20, 13, 0.1);
   border-radius: 8px;
   margin-bottom: 8px;
   cursor: pointer;
+}
+
+.option-key {
+  font-weight: 700;
+  min-width: 20px;
 }
 
 .answer-area textarea {
