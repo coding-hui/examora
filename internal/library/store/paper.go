@@ -5,9 +5,10 @@ import (
 	"errors"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/coding-hui/examora/internal/infra/database"
 	"github.com/coding-hui/examora/internal/library"
-	"gorm.io/gorm"
 )
 
 func (s *Store) ListPapers(ctx context.Context, filter library.PaperFilter) ([]library.Paper, int64, error) {

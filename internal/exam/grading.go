@@ -86,11 +86,12 @@ func (s *Service) gradeSubmittedSession(ctx context.Context, examID uint64, snap
 	}
 
 	now := time.Now()
-	if hasJudging {
+	switch {
+	case hasJudging:
 		result.Status = ResultStatusJudging
-	} else if hasManual {
+	case hasManual:
 		result.Status = ResultStatusManualRequired
-	} else {
+	default:
 		result.Status = ResultStatusGraded
 		result.GradedAt = &now
 	}

@@ -109,18 +109,6 @@ func (s *Store) UpdatePaperQuestion(ctx context.Context, item *library.PaperQues
 	return nil
 }
 
-func toPaperQuestion(m *database.PaperQuestionModel) *library.PaperQuestion {
-	return &library.PaperQuestion{
-		ID:         m.ID,
-		PaperID:    m.PaperID,
-		SectionID:  m.SectionID,
-		QuestionID: m.QuestionID,
-		Score:      m.Score,
-		SortOrder:  m.SortOrder,
-		CreatedAt:  m.CreatedAt,
-	}
-}
-
 func (s *Store) ListPaperSectionsWithQuestions(ctx context.Context, paperID uint64) ([]library.PaperSection, error) {
 	var sectionRows []database.PaperSectionModel
 	if err := s.db(ctx).Where("paper_id = ?", paperID).Order("sort_order ASC, id ASC").Find(&sectionRows).Error; err != nil {

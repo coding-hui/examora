@@ -84,11 +84,12 @@ func (s *Store) refreshExamResultSummary(ctx context.Context, examResultID uint6
 	}
 	status := exam.ResultStatusGraded
 	var gradedAt *time.Time
-	if hasJudging {
+	switch {
+	case hasJudging:
 		status = exam.ResultStatusJudging
-	} else if hasManual {
+	case hasManual:
 		status = exam.ResultStatusManualRequired
-	} else {
+	default:
 		gradedAt = &now
 	}
 	return db.Model(&database.ExamResultModel{}).Where("id = ?", examResultID).Updates(map[string]any{
