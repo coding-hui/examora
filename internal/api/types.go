@@ -31,6 +31,15 @@ type patchQuestionRequest struct {
 	Status string `json:"status"`
 }
 
+type batchIDsRequest struct {
+	IDs []uint64 `json:"ids"`
+}
+
+type batchQuestionStatusRequest struct {
+	IDs    []uint64 `json:"ids"`
+	Status string   `json:"status"`
+}
+
 type saveTestCaseRequest struct {
 	ID             uint64 `json:"id"`
 	Input          string `json:"input"`

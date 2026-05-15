@@ -22,10 +22,8 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   SortableContext,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import type { AdminQuestion, QuestionType } from '@examora/types';
 import {
   DIFFICULTY_OPTIONS,
@@ -42,7 +40,6 @@ import {
   Empty,
   Form,
   Input,
-  InputNumber,
   Popconfirm,
   Radio,
   Row,
@@ -53,6 +50,9 @@ import {
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import { requestErrorMessage } from '@/utils/request';
+import { SectionTitle } from './components/SectionTitle';
+import { SortableItemWrapper } from './components/SortableItemWrapper';
+import { UnitInputNumber } from './components/UnitInputNumber';
 import './index.less';
 
 interface QuestionOption {
@@ -61,17 +61,6 @@ interface QuestionOption {
 }
 
 const OPTION_KEYS = 'ABCDEFGH'.split('');
-
-const UnitInputNumber: React.FC<
-  React.ComponentProps<typeof InputNumber> & { unit: string }
-> = ({ unit, style, ...props }) => (
-  <Space.Compact style={{ width: '100%' }}>
-    <InputNumber {...props} style={{ ...style, width: '100%' }} />
-    <Button disabled tabIndex={-1}>
-      {unit}
-    </Button>
-  </Space.Compact>
-);
 
 const normalizeOptions = (options: QuestionOption[] | undefined) =>
   (options || [])
@@ -291,49 +280,6 @@ const DIFFICULTY_TAGS: Record<string, string> = {
 /* ============================================================
    Sub-components
    ============================================================ */
-
-const SectionTitle: React.FC<{
-  children: React.ReactNode;
-  style?: React.CSSProperties;
-}> = ({ children, style }) => (
-  <h3 className="qdetail-section-title" style={style}>
-    {children}
-  </h3>
-);
-
-interface SortableItemWrapperProps {
-  id: string;
-  children: (handlers: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    listeners: any;
-    setActivatorNodeRef: (node: HTMLElement | null) => void;
-  }) => React.ReactNode;
-}
-
-const SortableItemWrapper: React.FC<SortableItemWrapperProps> = ({
-  id,
-  children,
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id });
-
-  const style: React.CSSProperties = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      {children({ listeners, setActivatorNodeRef })}
-    </div>
-  );
-};
 
 const OptionAnswerControl: React.FC<{
   type: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE';

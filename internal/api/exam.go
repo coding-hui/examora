@@ -10,6 +10,7 @@ import (
 func (s *Server) registerExamAdminRoutes(admin *gin.RouterGroup) {
 	admin.GET("/exams", s.listExams)
 	admin.POST("/exams", s.createExam)
+	admin.POST("/exams/batch/close", s.batchCloseExams)
 	admin.GET("/exams/:id", s.getExam)
 	admin.PUT("/exams/:id", s.updateExam)
 	admin.POST("/exams/:id/publish", s.publishExamWithSnapshot)
@@ -99,6 +100,19 @@ func (s *Server) closeExam(c *gin.Context) {
 		return
 	}
 	response.NoContent(c)
+}
+
+func (s *Server) batchCloseExams(c *gin.Context) {
+	req, ok := bindJSON[batchIDsRequest](c)
+	if !ok {
+		return
+	}
+	if len(normalizeBatchIDs(req.IDs)) == 0 {
+		response.BadRequest(c, "ids are required")
+		return
+	}
+	result := s.exam.BatchCloseExams(c.Request.Context(), req.IDs)
+	response.Success(c, result)
 }
 
 // M1: Candidate exam flow handlers

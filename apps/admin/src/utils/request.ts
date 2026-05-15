@@ -11,3 +11,12 @@ export const proTableSortParams = (
     sort_order: sort[sortField] === 'ascend' ? 'asc' : 'desc',
   };
 };
+
+export type BatchActionResult = {
+  success_count: number;
+  failed_count: number;
+  failures: Array<{
+    id: number;
+    reason: string;
+  }>;
+};

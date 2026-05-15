@@ -75,6 +75,34 @@ func strPtr(value string) *string {
 	return &value
 }
 
+func TestBatchCloseExamsReturnsPartialFailures(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	published, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
+		Title:  "Published exam",
+		Status: exam.StatusPublished,
+	})
+	require.NoError(t, err)
+	draft, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
+		Title:  "Draft exam",
+		Status: exam.StatusDraft,
+	})
+	require.NoError(t, err)
+
+	result := fx.exams.BatchCloseExams(ctx, []uint64{published.ID, draft.ID, 99999})
+
+	require.Equal(t, 1, result.SuccessCount)
+	require.Equal(t, 2, result.FailedCount)
+	require.Len(t, result.Failures, 2)
+	closed, err := fx.exams.GetExam(ctx, published.ID)
+	require.NoError(t, err)
+	require.Equal(t, exam.StatusClosed, closed.Status)
+	unchanged, err := fx.exams.GetExam(ctx, draft.ID)
+	require.NoError(t, err)
+	require.Equal(t, exam.StatusDraft, unchanged.Status)
+}
+
 func publishableExam(t *testing.T, fx *examFixture) *exam.Exam {
 	t.Helper()
 	ctx := context.Background()

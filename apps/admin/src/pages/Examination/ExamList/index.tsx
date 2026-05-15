@@ -1,5 +1,7 @@
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, StopOutlined } from '@ant-design/icons';
 import {
+  type ActionType,
+  FooterToolbar,
   PageContainer,
   type ProColumns,
   ProTable,
@@ -7,7 +9,9 @@ import {
 import { history, request, useIntl } from '@umijs/max';
 import { App as AntdApp, Button, Tag } from 'antd';
 import dayjs from 'dayjs';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
+import type { BatchActionResult } from '@/utils/request';
+import { requestErrorMessage } from '@/utils/request';
 
 interface Exam {
   id: number;
@@ -39,7 +43,9 @@ const statusColors: Record<string, string> = {
 
 const ExamListContent: React.FC = () => {
   const intl = useIntl();
-  const { message } = AntdApp.useApp();
+  const { message, modal } = AntdApp.useApp();
+  const actionRef = useRef<ActionType>(null);
+  const [selectedRows, setSelectedRows] = useState<Exam[]>([]);
 
   const statusLabelMap: Record<string, string> = useMemo(
     () => ({
@@ -77,6 +83,105 @@ const ExamListContent: React.FC = () => {
       ),
     [statusLabelMap],
   );
+
+  const closableSelectedRows = selectedRows.filter((record) =>
+    ['PUBLISHED', 'RUNNING'].includes(record.status),
+  );
+
+  const showBatchResult = (result?: BatchActionResult) => {
+    if (!result) {
+      return;
+    }
+    if (result.failed_count > 0) {
+      modal.warning({
+        title: intl.formatMessage({
+          id: 'pages.batch.partialFailure',
+          defaultMessage: '部分操作失败',
+        }),
+        content: (
+          <div>
+            <p>
+              {intl.formatMessage(
+                {
+                  id: 'pages.batch.summary',
+                  defaultMessage: '成功 {success} 项，失败 {failed} 项。',
+                },
+                {
+                  success: result.success_count,
+                  failed: result.failed_count,
+                },
+              )}
+            </p>
+            <ul>
+              {result.failures.slice(0, 5).map((failure) => (
+                <li key={failure.id}>
+                  #{failure.id}: {failure.reason}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ),
+      });
+      return;
+    }
+    message.success(
+      intl.formatMessage(
+        {
+          id: 'pages.batch.success',
+          defaultMessage: '成功处理 {count} 项',
+        },
+        { count: result.success_count },
+      ),
+    );
+  };
+
+  const runBatchCloseExams = () => {
+    modal.confirm({
+      title: intl.formatMessage({
+        id: 'pages.exams.batchCloseConfirmTitle',
+        defaultMessage: '确认批量关闭',
+      }),
+      content: intl.formatMessage(
+        {
+          id: 'pages.exams.batchCloseConfirmContent',
+          defaultMessage: '将关闭已选择的 {count} 场可关闭考试。',
+        },
+        { count: closableSelectedRows.length },
+      ),
+      okText: intl.formatMessage({
+        id: 'pages.exams.close',
+        defaultMessage: '关闭',
+      }),
+      okType: 'danger',
+      cancelText: intl.formatMessage({
+        id: 'pages.questions.cancel',
+        defaultMessage: '取消',
+      }),
+      onOk: async () => {
+        try {
+          const response = await request<{
+            code: number;
+            data: BatchActionResult;
+          }>('/api/admin/exams/batch/close', {
+            method: 'POST',
+            data: { ids: closableSelectedRows.map((item) => item.id) },
+            skipErrorHandler: true,
+          });
+          showBatchResult(response.data);
+          setSelectedRows([]);
+          actionRef.current?.reload();
+        } catch (error) {
+          message.error(
+            requestErrorMessage(error) ||
+              intl.formatMessage({
+                id: 'pages.exams.closeError',
+                defaultMessage: '关闭考试失败',
+              }),
+          );
+        }
+      },
+    });
+  };
 
   const columns: ProColumns<Exam>[] = [
     {
@@ -207,6 +312,7 @@ const ExamListContent: React.FC = () => {
       })}
     >
       <ProTable<Exam>
+        actionRef={actionRef}
         cardBordered={{
           search: true,
           table: true,
@@ -231,6 +337,10 @@ const ExamListContent: React.FC = () => {
           setting: true,
         }}
         rowKey="id"
+        rowSelection={{
+          selectedRowKeys: selectedRows.map((item) => item.id),
+          onChange: (_, rows) => setSelectedRows(rows),
+        }}
         search={false}
         request={async (params) => {
           try {
@@ -273,6 +383,29 @@ const ExamListContent: React.FC = () => {
           </Button>,
         ]}
       />
+      {selectedRows.length > 0 && (
+        <FooterToolbar
+          extra={intl.formatMessage(
+            {
+              id: 'pages.batch.selected',
+              defaultMessage: '已选择 {count} 项',
+            },
+            { count: selectedRows.length },
+          )}
+        >
+          <Button
+            danger
+            disabled={closableSelectedRows.length === 0}
+            icon={<StopOutlined />}
+            onClick={runBatchCloseExams}
+          >
+            {intl.formatMessage({
+              id: 'pages.exams.close',
+              defaultMessage: '关闭',
+            })}
+          </Button>
+        </FooterToolbar>
+      )}
     </PageContainer>
   );
 };

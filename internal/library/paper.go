@@ -127,6 +127,9 @@ func (s *Service) PaperExists(ctx context.Context, id uint64) (bool, error) {
 }
 
 func (s *Service) DeletePaper(ctx context.Context, id uint64) error {
+	if _, err := s.store.GetPaper(ctx, id); err != nil {
+		return err
+	}
 	return s.store.DeletePaper(ctx, id)
 }
 

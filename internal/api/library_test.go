@@ -194,6 +194,108 @@ func TestListQuestionsEndpointNormalizesUnsafeSortAndPaging(t *testing.T) {
 	require.Equal(t, "Safe sort", body.Data.Items[0].Title)
 }
 
+func TestBatchPatchQuestionStatusEndpointReturnsPartialFailures(t *testing.T) {
+	router, service := newLibraryAPIRouter(t)
+	ctx := t.Context()
+
+	ready, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Ready",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusDraft,
+	})
+	require.NoError(t, err)
+	bodyBytes, err := json.Marshal(map[string]any{
+		"ids":    []uint64{ready.ID, 99999},
+		"status": library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPatch, "/api/admin/questions/batch/status", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusOK, resp.Code)
+	var body struct {
+		Code int                 `json:"code"`
+		Data library.BatchResult `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
+	require.Equal(t, 0, body.Code)
+	require.Equal(t, 1, body.Data.SuccessCount)
+	require.Equal(t, 1, body.Data.FailedCount)
+	require.Len(t, body.Data.Failures, 1)
+
+	published, err := service.GetQuestion(ctx, ready.ID)
+	require.NoError(t, err)
+	require.Equal(t, library.QuestionStatusPublished, published.Status)
+}
+
+func TestBatchDeleteQuestionsEndpointProtectsReferencedQuestions(t *testing.T) {
+	router, service := newLibraryAPIRouter(t)
+	ctx := t.Context()
+
+	referenced, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Referenced",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	loose, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Loose",
+		Content: map[string]any{"text": "Go has maps."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusDraft,
+	})
+	require.NoError(t, err)
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Backend paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: referenced.ID,
+		Score:      5,
+		SortOrder:  1,
+	})
+	require.NoError(t, err)
+
+	bodyBytes, err := json.Marshal(map[string]any{"ids": []uint64{referenced.ID, loose.ID}})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodDelete, "/api/admin/questions/batch", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusOK, resp.Code)
+	var body struct {
+		Data library.BatchResult `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
+	require.Equal(t, 1, body.Data.SuccessCount)
+	require.Equal(t, 1, body.Data.FailedCount)
+	require.Contains(t, body.Data.Failures[0].Reason, library.ErrQuestionReferenced.Error())
+	_, err = service.GetQuestion(ctx, loose.ID)
+	require.Error(t, err)
+	_, err = service.GetQuestion(ctx, referenced.ID)
+	require.NoError(t, err)
+}
+
+func TestBatchDeleteQuestionsEndpointRejectsEmptyIDs(t *testing.T) {
+	router, _ := newLibraryAPIRouter(t)
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/admin/questions/batch", bytes.NewReader([]byte(`{"ids":[]}`)))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusBadRequest, resp.Code)
+}
+
 func TestListPapersEndpointSupportsFiltersAndSummary(t *testing.T) {
 	router, service := newLibraryAPIRouter(t)
 	ctx := t.Context()
@@ -246,6 +348,38 @@ func TestListPapersEndpointSupportsFiltersAndSummary(t *testing.T) {
 	require.Equal(t, library.PaperStatusDraft, body.Data.Items[0].Status)
 	require.Equal(t, 1, body.Data.Items[0].QuestionCount)
 	require.Equal(t, 12.5, body.Data.Items[0].TotalScore)
+}
+
+func TestBatchDeletePapersEndpointReturnsPartialFailures(t *testing.T) {
+	router, service := newLibraryAPIRouter(t)
+	ctx := t.Context()
+
+	first, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "First",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	second, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Second",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+
+	bodyBytes, err := json.Marshal(map[string]any{"ids": []uint64{first.ID, second.ID, 99999}})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodDelete, "/api/admin/papers/batch", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusOK, resp.Code)
+	var body struct {
+		Data library.BatchResult `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
+	require.Equal(t, 2, body.Data.SuccessCount)
+	require.Equal(t, 1, body.Data.FailedCount)
+	require.Len(t, body.Data.Failures, 1)
 }
 
 func TestListPaperQuestionsEndpointReturnsQuestionSummary(t *testing.T) {
