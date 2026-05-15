@@ -39,15 +39,50 @@
     format("woff2");
 }
 
+/* ---- CSS Variables for theming ---- */
+:root {
+  --examora-text: #262626;
+  --examora-text-inverse: #e4e4e7;
+  --examora-bg: #fafafa;
+  --examora-bg-body: #ffffff;
+  --examora-bg-container: #ffffff;
+  --examora-bg-elevated: #ffffff;
+  --examora-border: #e5e5e5;
+  --examora-border-secondary: #f5f5f5;
+  --examora-header-bg: rgba(255, 255, 255, 0.92);
+  --examora-card-bg: #ffffff;
+  --examora-card-border: #e5e5e5;
+  --examora-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+html.examora-dark {
+  --examora-text: #e4e4e7;
+  --examora-text-inverse: #262626;
+  --examora-bg: #0a0a0a;
+  --examora-bg-body: #0a0a0a;
+  --examora-bg-container: #18181b;
+  --examora-bg-elevated: #27272a;
+  --examora-border: #27272a;
+  --examora-border-secondary: #18181b;
+  --examora-header-bg: rgba(10, 10, 10, 0.92);
+  --examora-card-bg: #18181b;
+  --examora-card-border: #27272a;
+  --examora-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4),
+    0 1px 2px -1px rgba(0, 0, 0, 0.4);
+}
+
 html,
 body,
 #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family:
-    AlibabaSans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  color: var(--examora-text);
+  background: var(--examora-bg);
+  font-family: AlibabaSans, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 .colorWeak {
@@ -56,9 +91,69 @@ body,
 
 .ant-layout {
   min-height: 100vh;
+  background: var(--examora-bg);
 }
-.ant-pro-sider.ant-layout-sider.ant-pro-sider-fixed {
-  left: unset;
+
+.ant-pro-layout {
+  background: var(--examora-bg);
+}
+
+.ant-pro-sider {
+  border-right: 1px solid var(--examora-border);
+  box-shadow: none;
+}
+
+.ant-pro-global-header {
+  color: var(--examora-text);
+  background: var(--examora-header-bg);
+  border-bottom: 1px solid var(--examora-border);
+  box-shadow: none;
+  backdrop-filter: blur(16px);
+}
+
+.ant-pro-page-container-children-container {
+  padding-block-start: 16px;
+  padding-block-end: 24px;
+  background: var(--examora-bg);
+}
+
+.ant-pro-page-container-with-title {
+  .ant-pro-page-container-header {
+    align-items: flex-start;
+  }
+  .ant-pro-page-container-title {
+    margin-bottom: 4px;
+  }
+  .ant-pro-page-container-header-content,
+  .ant-pro-page-container-extra {
+    margin-top: 0;
+  }
+}
+
+.ant-page-header-content {
+  padding-block-start: 0;
+}
+
+.ant-card {
+  border-color: var(--examora-card-border);
+  background: var(--examora-card-bg);
+  box-shadow: var(--examora-shadow);
+}
+
+.ant-table-wrapper .ant-table {
+  border-radius: 10px;
+}
+
+.ant-btn {
+  font-weight: 500;
+}
+
+.ant-btn-primary {
+  box-shadow: none;
+}
+
+.ant-pro-global-header-logo img {
+  height: 32px;
 }
 
 canvas {
@@ -85,9 +180,4 @@ ol {
       }
     }
   }
-}
-
-// Logo size in header
-.ant-pro-global-header-logo img {
-  height: 32px;
 }

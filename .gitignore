@@ -57,3 +57,13 @@ docker-compose.override.yml
 *.swp
 *.swo
 .tech/
+/.claude/
+/.codex/
+
+# Local data
+*.rdb
+design-system/
+
+# Dev utilities
+/.playwright/
+/.playwright-mcp/

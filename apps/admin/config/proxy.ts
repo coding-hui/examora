@@ -9,10 +9,12 @@
  *
  * @doc https://umijs.org/docs/guides/proxy
  */
+const apiProxyTarget = process.env.API_PROXY_TARGET || 'http://localhost:8080';
+
 export default {
   dev: {
     '/api/': {
-      target: 'http://localhost:8080',
+      target: apiProxyTarget,
       changeOrigin: true,
     },
   },

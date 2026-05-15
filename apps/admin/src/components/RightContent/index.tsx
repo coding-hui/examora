@@ -1,32 +1,52 @@
-import { QuestionCircleOutlined } from '@ant-design/icons';
-import { SelectLang as UmiSelectLang } from '@umijs/max';
+import {
+  getAllLocales,
+  getLocale,
+  setLocale,
+} from '@@/plugin-locale/localeExports';
+import { GlobalOutlined } from '@ant-design/icons';
+import { Dropdown } from 'antd';
+import { createStyles } from 'antd-style';
+import React from 'react';
 
-export type SiderTheme = 'light' | 'dark';
+const useStyles = createStyles(() => ({
+  trigger: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    cursor: 'pointer',
+    fontSize: 18,
+    color: 'inherit',
+    transition: 'background 0.2s',
+    '&:hover': { background: 'rgba(0,0,0,0.04)' },
+  },
+}));
+
+const localeLabels: Record<string, string> = {
+  'zh-CN': '简体中文',
+  'en-US': 'English',
+};
 
 export const SelectLang: React.FC = () => {
+  const { styles } = useStyles();
+
   return (
-    <UmiSelectLang
-      style={{
-        padding: 4,
+    <Dropdown
+      menu={{
+        selectedKeys: [getLocale()],
+        onClick: ({ key }) => setLocale(key, false),
+        items: getAllLocales().map((loc) => ({
+          key: loc,
+          label: localeLabels[loc] || loc,
+        })),
       }}
-    />
+      trigger={['click']}
+    >
+      <span className={styles.trigger}>
+        <GlobalOutlined />
+      </span>
+    </Dropdown>
   );
 };
 
-export const Question: React.FC = () => {
-  return (
-    <a
-      href="https://pro.ant.design/docs/getting-started"
-      target="_blank"
-      rel="noreferrer"
-      style={{
-        display: 'inline-flex',
-        padding: '4px',
-        fontSize: '18px',
-        color: 'inherit',
-      }}
-    >
-      <QuestionCircleOutlined />
-    </a>
-  );
-};
+export type SiderTheme = 'light' | 'dark';

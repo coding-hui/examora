@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/coding-hui/examora/internal/exam"
 	"github.com/coding-hui/examora/internal/transport/http/response"
 )
 
@@ -11,12 +12,22 @@ func (s *Server) registerExamAdminRoutes(admin *gin.RouterGroup) {
 	admin.POST("/exams", s.createExam)
 	admin.GET("/exams/:id", s.getExam)
 	admin.PUT("/exams/:id", s.updateExam)
-	admin.POST("/exams/:id/publish", s.publishExam)
+	admin.POST("/exams/:id/publish", s.publishExamWithSnapshot)
 	admin.POST("/exams/:id/close", s.closeExam)
+	admin.GET("/exams/:id/results", s.listExamResults)
+	admin.GET("/exam-results/:id", s.getExamResult)
 }
 
 func (s *Server) registerExamClientRoutes(client *gin.RouterGroup) {
-	client.POST("/exams/:exam_id/submissions", s.createSubmission)
+	// M1: Candidate exam flow
+	client.GET("/exams/:id/paper", s.getCandidatePaper)
+	client.POST("/exams/:id/sessions/start", s.startExamSession)
+	client.GET("/exams/:id/sessions/current", s.getCurrentSession)
+	client.POST("/exams/:id/answers", s.saveAnswers)
+	client.POST("/exams/:id/submit", s.submitExam)
+	client.GET("/exams/:id/result", s.getMyExamResult)
+
+	client.POST("/exams/:id/submissions", s.createSubmission)
 	client.GET("/submissions/:id", s.getSubmission)
 	client.GET("/submissions/:id/result", s.getSubmission)
 	client.POST("/heartbeat", s.recordClientEvent("HEARTBEAT"))
@@ -78,18 +89,6 @@ func (s *Server) updateExam(c *gin.Context) {
 	response.Success(c, toExamResponse(*exam))
 }
 
-func (s *Server) publishExam(c *gin.Context) {
-	id, ok := parseUintParam(c, "id")
-	if !ok {
-		return
-	}
-	if err := s.exam.PublishExam(c.Request.Context(), id); err != nil {
-		writeError(c, err)
-		return
-	}
-	response.NoContent(c)
-}
-
 func (s *Server) closeExam(c *gin.Context) {
 	id, ok := parseUintParam(c, "id")
 	if !ok {
@@ -102,8 +101,87 @@ func (s *Server) closeExam(c *gin.Context) {
 	response.NoContent(c)
 }
 
+// M1: Candidate exam flow handlers
+
+func (s *Server) publishExamWithSnapshot(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	var req publishExamRequest
+	if !bindJSONAndCheck(c, &req) {
+		return
+	}
+	snapshot, err := s.exam.PublishExamWithSnapshot(c.Request.Context(), id, req.StartTime, req.EndTime, req.DurationMinutes)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Created(c, toExamSnapshotResponse(*snapshot))
+}
+
+func (s *Server) getCandidatePaper(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	paper, err := s.exam.GetCandidatePaper(c.Request.Context(), id, currentUserID(c))
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toCandidatePaperResponse(paper))
+}
+
+func (s *Server) startExamSession(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	var req startSessionRequest
+	if !bindJSONAndCheck(c, &req) {
+		return
+	}
+	ipAddress := c.ClientIP()
+	deviceID := ""
+	if req.DeviceID != nil {
+		deviceID = *req.DeviceID
+	}
+	session, err := s.exam.StartExamSession(c.Request.Context(), id, currentUserID(c), ipAddress, deviceID)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Created(c, toExamSessionResponse(*session))
+}
+
+func (s *Server) getCurrentSession(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	session, err := s.exam.GetCurrentSession(c.Request.Context(), id, currentUserID(c))
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toExamSessionResponse(*session))
+}
+
+func (s *Server) submitExam(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	if err := s.exam.SubmitExam(c.Request.Context(), id, currentUserID(c)); err != nil {
+		writeError(c, err)
+		return
+	}
+	response.NoContent(c)
+}
+
 func (s *Server) createSubmission(c *gin.Context) {
-	examID, ok := parseUintParam(c, "exam_id")
+	examID, ok := parseUintParam(c, "id")
 	if !ok {
 		return
 	}
@@ -132,6 +210,48 @@ func (s *Server) getSubmission(c *gin.Context) {
 	response.Success(c, toSubmissionResponse(*submission))
 }
 
+func (s *Server) listExamResults(c *gin.Context) {
+	examID, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	pageNum, pageSize := pageQuery(c)
+	items, total, err := s.exam.ListExamResults(c.Request.Context(), examID, pageNum, pageSize)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.PageSuccessWith(c, items, total, pageNum, pageSize, func(item exam.ExamResult) examResultResponse {
+		return toExamResultResponse(item, false)
+	})
+}
+
+func (s *Server) getExamResult(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	result, err := s.exam.GetExamResult(c.Request.Context(), id)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toExamResultResponse(*result, true))
+}
+
+func (s *Server) getMyExamResult(c *gin.Context) {
+	examID, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	result, err := s.exam.GetExamResultForUser(c.Request.Context(), examID, currentUserID(c))
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toExamResultResponse(*result, false))
+}
+
 func (s *Server) recordClientEvent(defaultType string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		req, ok := bindJSON[recordEventRequest](c)
@@ -145,4 +265,20 @@ func (s *Server) recordClientEvent(defaultType string) gin.HandlerFunc {
 		}
 		response.Created(c, toClientEventResponse(*ev))
 	}
+}
+
+func (s *Server) saveAnswers(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	var req saveAnswersRequest
+	if !bindJSONAndCheck(c, &req) {
+		return
+	}
+	if err := s.exam.SaveAnswers(c.Request.Context(), id, currentUserID(c), req.Answers); err != nil {
+		writeError(c, err)
+		return
+	}
+	response.NoContent(c)
 }

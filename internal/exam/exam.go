@@ -16,6 +16,10 @@ const (
 	StatusArchived  = "ARCHIVED"
 )
 
+const (
+	QuestionTypeProgramming = "PROGRAMMING"
+)
+
 type Exam struct {
 	ID              uint64     `json:"id"`
 	Title           string     `json:"title"`
@@ -112,4 +116,126 @@ func (s *Service) CloseExam(ctx context.Context, id uint64) error {
 		return errors.Join(ErrInvalidExamStatusTransition, err)
 	}
 	return s.store.UpdateExam(ctx, e)
+}
+
+// =====================================================================
+// M1: Snapshot models for exam publishing
+// =====================================================================
+
+type ExamSnapshot struct {
+	ID              uint64    `json:"id"`
+	ExamID          uint64    `json:"exam_id"`
+	PaperSnapshotID uint64    `json:"paper_snapshot_id"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	DurationMinutes int       `json:"duration_minutes"`
+	PublishedAt     time.Time `json:"published_at"`
+}
+
+type PaperSectionSnapshot struct {
+	ID              uint64    `json:"id"`
+	ExamSnapshotID  uint64    `json:"exam_snapshot_id"`
+	SourceSectionID uint64    `json:"source_section_id"`
+	Title           string    `json:"title"`
+	Description     string    `json:"description"`
+	SortOrder       int       `json:"sort_order"`
+	QuestionCount   int       `json:"question_count"`
+	TotalScore      float64   `json:"total_score"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+type QuestionSnapshot struct {
+	ID                uint64         `json:"id"`
+	ExamSnapshotID    uint64         `json:"exam_snapshot_id"`
+	SectionSnapshotID uint64         `json:"section_snapshot_id"`
+	QuestionID        uint64         `json:"question_id"`
+	Type              string         `json:"type"`
+	Title             string         `json:"title"`
+	Content           map[string]any `json:"content"`
+	Score             float64        `json:"score"`
+	SortOrder         int            `json:"sort_order"`
+	QuestionSortOrder int            `json:"question_sort_order"`
+	Answer            map[string]any `json:"-"` // Internal only, never exposed to candidate
+	TestCases         []TestCase     `json:"-"` // Internal only, never exposed to candidate
+	StarterCode       *string        `json:"starter_code,omitempty"`
+	TimeLimitMs       int            `json:"time_limit_ms"`
+	MemoryLimitMb     int            `json:"memory_limit_mb"`
+}
+
+type TestCase struct {
+	ID             uint64 `json:"id,omitempty"`
+	Input          string `json:"input"`
+	ExpectedOutput string `json:"expected_output"`
+	TimeLimitMS    int    `json:"time_limit_ms,omitempty"`
+	MemoryLimitMB  int    `json:"memory_limit_mb,omitempty"`
+	IsSample       bool   `json:"is_sample"`
+	IsHidden       bool   `json:"is_hidden"`
+	SortOrder      int    `json:"sort_order,omitempty"`
+}
+
+// AnswerDraft stores candidate answer drafts
+type AnswerDraft struct {
+	ID            uint64
+	ExamSessionID uint64
+	QuestionID    uint64
+	Answer        map[string]any
+}
+
+const (
+	ResultStatusGraded         = "GRADED"
+	ResultStatusJudging        = "JUDGING"
+	ResultStatusManualRequired = "MANUAL_REQUIRED"
+)
+
+const (
+	QuestionResultStatusCorrect        = "CORRECT"
+	QuestionResultStatusIncorrect      = "INCORRECT"
+	QuestionResultStatusUnanswered     = "UNANSWERED"
+	QuestionResultStatusJudging        = "JUDGING"
+	QuestionResultStatusManualRequired = "MANUAL_REQUIRED"
+)
+
+type ExamResult struct {
+	ID             uint64              `json:"id"`
+	ExamID         uint64              `json:"exam_id"`
+	ExamSnapshotID uint64              `json:"exam_snapshot_id"`
+	ExamSessionID  uint64              `json:"exam_session_id"`
+	UserID         uint64              `json:"user_id"`
+	Status         string              `json:"status"`
+	Score          float64             `json:"score"`
+	MaxScore       float64             `json:"max_score"`
+	SubmittedAt    time.Time           `json:"submitted_at"`
+	GradedAt       *time.Time          `json:"graded_at,omitempty"`
+	Sections       []ExamResultSection `json:"sections,omitempty"`
+	Questions      []QuestionResult    `json:"questions,omitempty"`
+}
+
+type ExamResultSection struct {
+	SectionSnapshotID uint64           `json:"section_snapshot_id"`
+	Title             string           `json:"title"`
+	Description       string           `json:"description"`
+	SortOrder         int              `json:"sort_order"`
+	Score             float64          `json:"score"`
+	MaxScore          float64          `json:"max_score"`
+	QuestionCount     int              `json:"question_count"`
+	Questions         []QuestionResult `json:"questions,omitempty"`
+}
+
+type QuestionResult struct {
+	ID                 uint64         `json:"id"`
+	ExamResultID       uint64         `json:"exam_result_id"`
+	ExamSessionID      uint64         `json:"exam_session_id"`
+	SectionSnapshotID  uint64         `json:"section_snapshot_id"`
+	QuestionSnapshotID uint64         `json:"question_snapshot_id"`
+	QuestionID         uint64         `json:"question_id"`
+	Type               string         `json:"type"`
+	SortOrder          int            `json:"sort_order"`
+	QuestionSortOrder  int            `json:"question_sort_order"`
+	Answer             map[string]any `json:"answer,omitempty"`
+	Status             string         `json:"status"`
+	Score              float64        `json:"score"`
+	MaxScore           float64        `json:"max_score"`
+	Result             map[string]any `json:"result,omitempty"`
+	SubmissionID       *uint64        `json:"submission_id,omitempty"`
+	JudgedAt           *time.Time     `json:"judged_at,omitempty"`
 }

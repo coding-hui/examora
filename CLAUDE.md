@@ -41,8 +41,8 @@ make worker           # go run ./cmd/worker
 Examora is a monorepo with three logical layers:
 
 **ClientSide**
-- `apps/admin-web` — React + Umi admin console
-- `apps/exam-desktop` — Tauri 2 + React desktop exam client (uses `@examora/client`)
+- `apps/admin` — React + Umi admin console
+- `apps/desktop` — Tauri 2 + React desktop exam client (uses `@examora/client`)
 
 **ServiceLayer**
 - `cmd/api` — Go Gin API server (binds `:8080`)

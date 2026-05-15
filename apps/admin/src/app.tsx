@@ -1,7 +1,10 @@
-import type { Settings as LayoutSettings } from '@ant-design/pro-components';
-import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
-import { history, Link, request } from '@umijs/max';
-import { Button, Result } from 'antd';
+import {
+  type Settings as LayoutSettings,
+  SettingDrawer,
+} from '@ant-design/pro-components';
+import type { RunTimeLayoutConfig } from '@umijs/max';
+import { history, Link } from '@umijs/max';
+import { Avatar, Button, ConfigProvider, Result } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import React from 'react';
@@ -11,13 +14,14 @@ import {
   getAccessToken,
   setLocalProfile,
 } from '@/auth/token';
+import { AvatarDropdown, Footer, SelectLang } from '@/components';
 import {
-  AvatarDropdown,
-  AvatarName,
-  Footer,
-  Question,
-  SelectLang,
-} from '@/components';
+  loadThemePreference,
+  saveThemePreference,
+  toLayoutSettings,
+} from '@/theme/preference';
+import useShadcnTheme from '@/theme/shadcnTheme';
+import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './request';
 
 // Initialize dayjs plugins globally
@@ -25,6 +29,50 @@ dayjs.extend(relativeTime);
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/login';
+
+// 生成随机颜色的函数
+const getRandomColor = (name: string): string => {
+  const colors = [
+    '#18181b',
+    '#262626',
+    '#3f3f46',
+    '#525252',
+    '#16a34a',
+    '#ea580c',
+    '#dc2626',
+    '#404040',
+  ];
+  // 基于名字生成一致性随机颜色
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+// 获取名字首字母（最多两个）
+const getInitials = (name: string): string => {
+  if (!name) return '?';
+  if (name.length === 1) return name.charAt(0).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+};
+
+const ShadcnThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const configProps = useShadcnTheme();
+
+  return <ConfigProvider {...configProps}>{children}</ConfigProvider>;
+};
+
+export function rootContainer(container: React.ReactNode) {
+  return <ShadcnThemeProvider>{container}</ShadcnThemeProvider>;
+}
+
+const getLayoutSettings = (): Partial<LayoutSettings> => ({
+  ...(defaultSettings as unknown as Partial<LayoutSettings>),
+  ...(toLayoutSettings(loadThemePreference()) as Partial<LayoutSettings>),
+});
 
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
@@ -38,15 +86,17 @@ export async function getInitialState(): Promise<{
     if (!token) return null;
 
     try {
-      const response = await request<AuthMeData>('/api/auth/me', {
-        method: 'GET',
+      const response = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (response) {
-        setLocalProfile(response);
+      const data = await response.json();
+      if (data.code === 0 && data.data) {
+        setLocalProfile(data.data);
+        return data.data;
       }
-      return response;
+      return null;
     } catch (_error: any) {
-      const httpStatus = _error?.response?.status;
+      const httpStatus = _error?.status;
       const errorCode = _error?.info?.errorCode;
 
       // 403 Forbidden - user lacks admin role
@@ -91,6 +141,7 @@ export async function getInitialState(): Promise<{
         fetchUserInfo,
         currentUser: null,
         forbidden: true,
+        settings: getLayoutSettings(),
       };
     }
 
@@ -98,19 +149,22 @@ export async function getInitialState(): Promise<{
       fetchUserInfo,
       currentUser: userProfile,
       forbidden: false,
+      settings: getLayoutSettings(),
     };
   }
 
-  return {};
+  return {
+    settings: getLayoutSettings(),
+  };
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
-export const layout: RunTimeLayoutConfig = ({ initialState }) => {
+export const layout: RunTimeLayoutConfig = ({
+  initialState,
+  setInitialState,
+}) => {
   return {
-    actionsRender: () => [
-      <Question key="doc" />,
-      <SelectLang key="SelectLang" />,
-    ],
+    actionsRender: () => [<SelectLang key="SelectLang" />],
     menuItemRender: (item, dom) => {
       if (item.path) {
         return (
@@ -122,13 +176,30 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
       return dom;
     },
     avatarProps: {
-      title: <AvatarName />,
-      render: (_, avatarChildren) => (
-        <AvatarDropdown>{avatarChildren}</AvatarDropdown>
-      ),
-    },
-    waterMarkProps: {
-      content: initialState?.currentUser?.display_name,
+      title: null,
+      render: () => {
+        const userName =
+          initialState?.currentUser?.display_name ||
+          initialState?.currentUser?.username ||
+          '?';
+        const initials = getInitials(userName);
+        const bgColor = getRandomColor(userName);
+
+        return (
+          <AvatarDropdown menu>
+            <Avatar
+              style={{
+                backgroundColor: bgColor,
+                cursor: 'pointer',
+                fontSize: 12,
+              }}
+              size={28}
+            >
+              {initials}
+            </Avatar>
+          </AvatarDropdown>
+        );
+      },
     },
     footerRender: () => <Footer />,
     onPageChange: () => {
@@ -142,27 +213,30 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
         history.push(loginPath);
       }
     },
-    bgLayoutImgList: [
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNky4sAAAAAAAAAAAAAFl94AQBr',
-        left: 85,
-        bottom: 100,
-        height: '303px',
-      },
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/C2TWRpJpiC0AAAAAAAAAAAAAFl94AQBr',
-        bottom: -68,
-        right: -45,
-        height: '303px',
-      },
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/F6vSTbj8KpYAAAAAAAAAAAAAFl94AQBr',
-        bottom: 0,
-        left: 0,
-        width: '331px',
-      },
-    ],
+    bgLayoutImgList: [],
     menuHeaderRender: undefined,
+    childrenRender: (children) => (
+      <>
+        {children}
+        <SettingDrawer
+          enableDarkTheme
+          hideCopyButton
+          hideHintAlert
+          disableUrlParams
+          settings={initialState?.settings}
+          onSettingChange={(settings) => {
+            saveThemePreference({
+              ...loadThemePreference(),
+              ...settings,
+            });
+            setInitialState?.((state: any) => ({
+              ...state,
+              settings,
+            }));
+          }}
+        />
+      </>
+    ),
     // 无权限页面
     unAccessible: <ForbiddenPage />,
     ...initialState?.settings,
@@ -174,7 +248,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
  * 它基于 axios 提供了一套统一的网络请求和错误处理方案。
  * @doc https://umijs.org/docs/max/request#配置
  */
-export const requestConfig: RequestConfig = {
+export const request: any = {
   baseURL: isDev ? '' : 'https://exam.micromoving.net',
   ...errorConfig,
 };
@@ -186,7 +260,11 @@ const ForbiddenPage: React.FC = () => {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      await request('/api/auth/logout', { method: 'POST' });
+      const token = getAccessToken();
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
     } catch (_) {
       // ignore logout errors
     }

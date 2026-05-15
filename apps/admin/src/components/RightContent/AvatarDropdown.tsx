@@ -1,9 +1,5 @@
-import {
-  LogoutOutlined,
-  SettingOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import { history, request, useModel } from '@umijs/max';
+import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { history, request, useIntl, useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
 import { Spin } from 'antd';
 import { createStyles } from 'antd-style';
@@ -49,6 +45,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   menu,
   children,
 }) => {
+  const intl = useIntl();
   const loginOut = async () => {
     try {
       await request('/api/auth/logout', { method: 'POST' });
@@ -100,14 +97,12 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
     ...(menu
       ? [
           {
-            key: 'center',
-            icon: <UserOutlined />,
-            label: '个人中心',
-          },
-          {
             key: 'settings',
             icon: <SettingOutlined />,
-            label: '个人设置',
+            label: intl.formatMessage({
+              id: 'navbar.settings',
+              defaultMessage: '设置',
+            }),
           },
           {
             type: 'divider' as const,
@@ -117,7 +112,10 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: intl.formatMessage({
+        id: 'navbar.logout',
+        defaultMessage: '退出登录',
+      }),
     },
   ];
 

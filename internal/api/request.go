@@ -55,3 +55,11 @@ func currentUser(c *gin.Context) *auth.AuthenticatedUser {
 func currentUserID(c *gin.Context) uint64 {
 	return currentUser(c).ID
 }
+
+func bindJSONAndCheck(c *gin.Context, req any) bool {
+	if err := c.ShouldBindJSON(req); err != nil {
+		response.BadRequest(c, "invalid request")
+		return false
+	}
+	return true
+}

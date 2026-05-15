@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -29,28 +30,36 @@ type Config struct {
 	JWTSecret          string
 	JWTAccessTokenTTL  time.Duration
 	JWTRefreshTokenTTL time.Duration
-	AdminDefaultPW     string
+
+	AdminDefaultUsername    string
+	AdminDefaultDisplayName string
+	AdminDefaultEmail       string
+	AdminDefaultPW          string
 }
 
 func Load() Config {
+	redisAddr, redisPassword, redisDB := redisConfig()
 	return Config{
-		AppEnv:             get("APP_ENV", "development"),
-		AppHost:            get("APP_HOST", get("API_HOST", "0.0.0.0")),
-		AppPort:            get("APP_PORT", get("API_PORT", "8080")),
-		LogLevel:           get("LOG_LEVEL", "info"),
-		DatabaseDSN:        get("DATABASE_DSN", "./examora.db"),
-		RedisAddr:          redisAddr(),
-		RedisPassword:      get("REDIS_PASSWORD", ""),
-		RedisDB:            getInt("REDIS_DB", 0),
-		LogtoEnabled:       getBool("LOGTO_ENABLED", false),
-		LogtoEndpoint:      strings.TrimRight(get("LOGTO_ENDPOINT", "https://auth.micromoving.net"), "/"),
-		LogtoAppID:         get("LOGTO_APP_ID", ""),
-		LogtoAPIAudience:   get("LOGTO_API_AUDIENCE", get("LOGTO_APP_ID", "https://auth.micromoving.net")),
-		SandboxAddr:        get("SANDBOX_ADDR", "http://localhost:8081"),
-		JWTSecret:          get("JWT_SECRET", "examora-local-jwt-secret-change-in-production"),
-		JWTAccessTokenTTL:  time.Duration(getInt("JWT_ACCESS_TOKEN_TTL", 7200)) * time.Second,
-		JWTRefreshTokenTTL: time.Duration(getInt("JWT_REFRESH_TOKEN_TTL", 604800)) * time.Second,
-		AdminDefaultPW:     get("ADMIN_DEFAULT_PASSWORD", "examora-admin-2024"),
+		AppEnv:                  get("APP_ENV", "development"),
+		AppHost:                 get("APP_HOST", get("API_HOST", "0.0.0.0")),
+		AppPort:                 get("APP_PORT", get("API_PORT", "8080")),
+		LogLevel:                get("LOG_LEVEL", "info"),
+		DatabaseDSN:             get("DATABASE_DSN", "./examora.db"),
+		RedisAddr:               redisAddr,
+		RedisPassword:           redisPassword,
+		RedisDB:                 redisDB,
+		LogtoEnabled:            getBool("LOGTO_ENABLED", false),
+		LogtoEndpoint:           strings.TrimRight(get("LOGTO_ENDPOINT", "https://auth.micromoving.net"), "/"),
+		LogtoAppID:              get("LOGTO_APP_ID", ""),
+		LogtoAPIAudience:        get("LOGTO_API_AUDIENCE", get("LOGTO_APP_ID", "https://auth.micromoving.net")),
+		SandboxAddr:             get("SANDBOX_ADDR", "http://localhost:8081"),
+		JWTSecret:               get("JWT_SECRET", "examora-local-jwt-secret-change-in-production"),
+		JWTAccessTokenTTL:       time.Duration(getInt("JWT_ACCESS_TOKEN_TTL", 7200)) * time.Second,
+		JWTRefreshTokenTTL:      time.Duration(getInt("JWT_REFRESH_TOKEN_TTL", 604800)) * time.Second,
+		AdminDefaultUsername:    strings.TrimSpace(get("ADMIN_DEFAULT_USERNAME", "admin")),
+		AdminDefaultDisplayName: strings.TrimSpace(get("ADMIN_DEFAULT_DISPLAY_NAME", "Administrator")),
+		AdminDefaultEmail:       strings.TrimSpace(get("ADMIN_DEFAULT_EMAIL", "")),
+		AdminDefaultPW:          get("ADMIN_DEFAULT_PASSWORD", "examora-admin-2024"),
 	}
 }
 
@@ -102,13 +111,32 @@ func getInt(key string, fallback int) int {
 	return value
 }
 
-func redisAddr() string {
+func redisConfig() (string, string, int) {
+	password := get("REDIS_PASSWORD", "")
+	db := getInt("REDIS_DB", 0)
 	if value := os.Getenv("REDIS_ADDR"); value != "" {
-		return value
+		return value, password, db
 	}
-	url := get("REDIS_URL", "")
-	if url, ok := strings.CutPrefix(url, "redis://"); ok {
-		return url
+
+	rawURL := get("REDIS_URL", "")
+	if rawURL != "" {
+		parsed, err := url.Parse(rawURL)
+		if err == nil && parsed.Scheme == "redis" && parsed.Host != "" {
+			if parsed.User != nil {
+				if value, ok := parsed.User.Password(); ok && password == "" {
+					password = value
+				}
+			}
+			if pathDB := strings.TrimPrefix(parsed.Path, "/"); pathDB != "" {
+				if value, err := strconv.Atoi(pathDB); err == nil {
+					db = value
+				}
+			}
+			return parsed.Host, password, db
+		}
+		if addr, ok := strings.CutPrefix(rawURL, "redis://"); ok {
+			return addr, password, db
+		}
 	}
-	return "localhost:6379"
+	return "127.0.0.1:6379", password, db
 }

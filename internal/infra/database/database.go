@@ -24,10 +24,19 @@ func AutoMigrate(db *gorm.DB) error {
 		&QuestionModel{},
 		&TestCaseModel{},
 		&PaperModel{},
+		&PaperSectionModel{},
 		&PaperQuestionModel{},
 		&ExamModel{},
 		&SubmissionModel{},
 		&JudgeTaskModel{},
 		&ClientEventModel{},
+		// M1: Snapshot models
+		&ExamSnapshotModel{},
+		&PaperSectionSnapshotModel{},
+		&QuestionSnapshotModel{},
+		&ExamSessionModel{},
+		&ExamResultModel{},
+		&QuestionResultModel{},
+		&AnswerDraftModel{},
 	)
 }

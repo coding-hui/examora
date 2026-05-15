@@ -76,10 +76,9 @@ const AvatarList: React.FC<AvatarListProps> & {
     const cls = avatarSizeToClassName(styles, size);
     childrenWithProps.push(
       <li key="exceed" className={cls}>
-        <Avatar
-          size={size}
-          style={excessItemsStyle}
-        >{`+${numOfChildren - maxLength}`}</Avatar>
+        <Avatar size={size} style={excessItemsStyle}>{`+${
+          numOfChildren - maxLength
+        }`}</Avatar>
       </li>,
     );
   }

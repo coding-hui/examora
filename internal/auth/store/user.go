@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -54,6 +55,9 @@ func (r *UserStore) Create(ctx context.Context, user *auth.User, passwordHash st
 	if user.DisplayName != nil {
 		row.DisplayName = user.DisplayName
 	}
+	if user.Email != nil {
+		row.Email = user.Email
+	}
 	if user.AuthProvider != nil {
 		row.AuthProvider = user.AuthProvider
 	}
@@ -90,23 +94,25 @@ func (r *UserStore) LinkExternalSubject(ctx context.Context, userID uint64, sub 
 		}).Error
 }
 
-func (r *UserStore) EnsureDefaultAdmin(ctx context.Context, defaultPWHash string) (uint64, error) {
-	hasUsers, err := r.HasUsers(ctx)
-	if err != nil {
+func (r *UserStore) EnsureDefaultAdmin(ctx context.Context, admin auth.DefaultAdmin, defaultPWHash string) (uint64, error) {
+	if existing, err := r.FindByUsername(ctx, admin.Username); err == nil {
+		return existing.ID, nil
+	} else if err != nil && !errors.Is(err, auth.ErrUserNotFound) {
 		return 0, err
 	}
-	if hasUsers {
-		return 0, nil
-	}
 
-	adminName := "Administrator"
 	authProv := "local"
 	row := &database.UserModel{
-		Username:     "admin",
+		Username:     admin.Username,
 		PasswordHash: defaultPWHash,
 		Status:       "ACTIVE",
-		DisplayName:  &adminName,
 		AuthProvider: &authProv,
+	}
+	if admin.DisplayName != "" {
+		row.DisplayName = &admin.DisplayName
+	}
+	if admin.Email != "" {
+		row.Email = &admin.Email
 	}
 	if err := transaction.DBFromContext(ctx, r.db).Create(row).Error; err != nil {
 		return 0, err
@@ -124,13 +130,43 @@ func (r *UserStore) VerifyPassword(ctx context.Context, username, password strin
 	return user, err == nil, nil
 }
 
+func (r *UserStore) Update(ctx context.Context, id uint64, username, displayName, email, status string) error {
+	return transaction.DBFromContext(ctx, r.db).Model(&database.UserModel{}).Where("id = ?", id).Updates(map[string]any{
+		"username":     username,
+		"display_name": displayName,
+		"email":        email,
+		"status":       status,
+	}).Error
+}
+
+func (r *UserStore) Delete(ctx context.Context, id uint64) error {
+	return transaction.DBFromContext(ctx, r.db).Delete(&database.UserModel{}, id).Error
+}
+
+func (r *UserStore) List(ctx context.Context, page, pageSize int) ([]auth.User, int64, error) {
+	var total int64
+	if err := transaction.DBFromContext(ctx, r.db).Model(&database.UserModel{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var rows []database.UserModel
+	offset := (page - 1) * pageSize
+	if err := transaction.DBFromContext(ctx, r.db).Order("id desc").Offset(offset).Limit(pageSize).Find(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+	users := make([]auth.User, 0, len(rows))
+	for _, row := range rows {
+		users = append(users, *toUser(&row))
+	}
+	return users, total, nil
+}
+
 func toUser(m *database.UserModel) *auth.User {
 	return &auth.User{
-		ID:              m.ID,
-		Username:        m.Username,
-		Status:          m.Status,
-		DisplayName:     m.DisplayName,
-		AuthProvider:    m.AuthProvider,
-		ExternalSubject: m.ExternalSubject,
+		ID:          m.ID,
+		Username:    m.Username,
+		Status:      m.Status,
+		DisplayName: m.DisplayName,
+		Email:       m.Email,
+		CreatedAt:   m.CreatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }
