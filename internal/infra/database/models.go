@@ -67,9 +67,22 @@ type PaperModel struct {
 
 func (PaperModel) TableName() string { return "papers" }
 
+type PaperSectionModel struct {
+	ID          uint64 `gorm:"primaryKey;autoIncrement"`
+	PaperID     uint64 `gorm:"index;not null"`
+	Title       string
+	Description string
+	SortOrder   int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func (PaperSectionModel) TableName() string { return "paper_sections" }
+
 type PaperQuestionModel struct {
 	ID         uint64 `gorm:"primaryKey;autoIncrement"`
 	PaperID    uint64 `gorm:"index;uniqueIndex:idx_paper_questions_paper_question"`
+	SectionID  uint64 `gorm:"index"`
 	QuestionID uint64 `gorm:"index;uniqueIndex:idx_paper_questions_paper_question"`
 	Score      float64
 	SortOrder  int
@@ -154,19 +167,36 @@ type ExamSnapshotModel struct {
 	EndTime         time.Time `gorm:"not null"`
 	DurationMinutes int       `gorm:"not null"`
 	PublishedAt     time.Time `gorm:"not null"`
+	CreatedAt       time.Time `gorm:"not null"`
 }
 
 func (ExamSnapshotModel) TableName() string { return "exam_snapshots" }
 
+type PaperSectionSnapshotModel struct {
+	ID              uint64 `gorm:"primaryKey;autoIncrement"`
+	ExamSnapshotID  uint64 `gorm:"index;not null"`
+	SourceSectionID uint64 `gorm:"index;not null"`
+	Title           string
+	Description     string
+	SortOrder       int
+	QuestionCount   int
+	TotalScore      float64
+	CreatedAt       time.Time `gorm:"not null"`
+}
+
+func (PaperSectionSnapshotModel) TableName() string { return "paper_section_snapshots" }
+
 type QuestionSnapshotModel struct {
-	ID             uint64         `gorm:"primaryKey;autoIncrement"`
-	ExamSnapshotID uint64         `gorm:"index"`
-	QuestionID     uint64         `gorm:"index"`
-	Type           string         `gorm:"size:32;not null"`
-	Title          string         `gorm:"size:255;not null"`
-	Content        datatypes.JSON `gorm:"not null;default:'{}'"`
-	Score          float64        `gorm:"not null;default:0"`
-	SortOrder      int            `gorm:"not null;default:0"`
+	ID                uint64         `gorm:"primaryKey;autoIncrement"`
+	ExamSnapshotID    uint64         `gorm:"index"`
+	SectionSnapshotID uint64         `gorm:"index"`
+	QuestionID        uint64         `gorm:"index"`
+	Type              string         `gorm:"size:32;not null"`
+	Title             string         `gorm:"size:255;not null"`
+	Content           datatypes.JSON `gorm:"not null;default:'{}'"`
+	Score             float64        `gorm:"not null;default:0"`
+	SortOrder         int            `gorm:"not null;default:0"`
+	QuestionSortOrder int            `gorm:"not null;default:0"`
 	// Internal-only fields (candidate API must never expose these)
 	Answer        datatypes.JSON
 	TestCases     datatypes.JSON `gorm:"type:jsonb"`
@@ -193,6 +223,43 @@ type ExamSessionModel struct {
 }
 
 func (ExamSessionModel) TableName() string { return "exam_sessions" }
+
+type ExamResultModel struct {
+	ID             uint64 `gorm:"primaryKey;autoIncrement"`
+	ExamID         uint64 `gorm:"index;not null"`
+	ExamSnapshotID uint64 `gorm:"index;not null"`
+	ExamSessionID  uint64 `gorm:"uniqueIndex;not null"`
+	UserID         uint64 `gorm:"index;not null;default:0"`
+	Status         string `gorm:"size:32;not null"`
+	Score          float64
+	MaxScore       float64
+	SubmittedAt    time.Time `gorm:"not null;index"`
+	GradedAt       *time.Time
+	CreatedAt      time.Time `gorm:"not null"`
+	UpdatedAt      time.Time `gorm:"not null"`
+}
+
+func (ExamResultModel) TableName() string { return "exam_results" }
+
+type QuestionResultModel struct {
+	ID                 uint64 `gorm:"primaryKey;autoIncrement"`
+	ExamResultID       uint64 `gorm:"index;not null;uniqueIndex:idx_question_result_exam_question"`
+	ExamSessionID      uint64 `gorm:"index;not null"`
+	QuestionSnapshotID uint64 `gorm:"index;not null;uniqueIndex:idx_question_result_exam_question"`
+	QuestionID         uint64 `gorm:"index;not null"`
+	Type               string `gorm:"size:32;not null"`
+	Answer             datatypes.JSON
+	Status             string `gorm:"size:32;not null"`
+	Score              float64
+	MaxScore           float64
+	Result             datatypes.JSON
+	SubmissionID       *uint64 `gorm:"index"`
+	JudgedAt           *time.Time
+	CreatedAt          time.Time `gorm:"not null"`
+	UpdatedAt          time.Time `gorm:"not null"`
+}
+
+func (QuestionResultModel) TableName() string { return "question_results" }
 
 // AnswerDraftModel stores candidate answer drafts for objective questions
 type AnswerDraftModel struct {

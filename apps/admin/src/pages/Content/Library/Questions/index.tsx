@@ -31,7 +31,8 @@ import {
   Tooltip,
 } from 'antd';
 import dayjs from 'dayjs';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
+import { proTableSortParams, requestErrorMessage } from '@/utils/request';
 import './index.less';
 
 const DIFFICULTY_CLASS: Record<string, string> = {
@@ -48,11 +49,17 @@ const questionTypeIcon = (type: QuestionType) => {
   return <FileTextOutlined />;
 };
 
-const QuestionsPageContent: React.FC = () => {
+interface QuestionsPageContentProps {
+  fixedType?: QuestionType;
+}
+
+export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
+  fixedType,
+}) => {
   const intl = useIntl();
   const { message } = AntdApp.useApp();
   const actionRef = useRef<ActionType>(null);
-  const [tableLoading, setTableLoading] = useState(false);
+  const isProgrammingOnly = fixedType === 'PROGRAMMING';
 
   // i18n label maps
   const typeLabelMap = useMemo(
@@ -262,12 +269,13 @@ const QuestionsPageContent: React.FC = () => {
             ),
           );
           actionRef.current?.reload();
-        } catch {
+        } catch (error) {
           message.error(
-            intl.formatMessage({
-              id: 'pages.questions.statusUpdateError',
-              defaultMessage: '状态更新失败',
-            }),
+            requestErrorMessage(error) ||
+              intl.formatMessage({
+                id: 'pages.questions.statusUpdateError',
+                defaultMessage: '状态更新失败',
+              }),
           );
         }
       },
@@ -334,6 +342,7 @@ const QuestionsPageContent: React.FC = () => {
       dataIndex: 'type',
       key: 'type',
       width: 118,
+      search: fixedType ? false : undefined,
       valueType: 'select',
       valueEnum: typeValueEnum,
       render: (_: unknown, question: AdminQuestion) => (
@@ -462,8 +471,10 @@ const QuestionsPageContent: React.FC = () => {
   return (
     <PageContainer
       title={intl.formatMessage({
-        id: 'menu.content.library.questions',
-        defaultMessage: '题目管理',
+        id: isProgrammingOnly
+          ? 'menu.content.programming'
+          : 'menu.content.library.questions',
+        defaultMessage: isProgrammingOnly ? '编程题' : '题目管理',
       })}
       content={
         <p
@@ -474,8 +485,12 @@ const QuestionsPageContent: React.FC = () => {
           }}
         >
           {intl.formatMessage({
-            id: 'pages.questions.description',
-            defaultMessage: '创建和管理考试题目、答案与编程用例。',
+            id: isProgrammingOnly
+              ? 'pages.programming.description'
+              : 'pages.questions.description',
+            defaultMessage: isProgrammingOnly
+              ? '集中维护编程题、代码模板与测试用例，用于在线评测。'
+              : '创建和管理考试题目、答案与编程用例。',
           })}
         </p>
       }
@@ -488,7 +503,9 @@ const QuestionsPageContent: React.FC = () => {
         }}
         columns={columns}
         columnsState={{
-          persistenceKey: 'examora-questions-table-columns',
+          persistenceKey: isProgrammingOnly
+            ? 'examora-programming-questions-table-columns'
+            : 'examora-questions-table-columns',
           persistenceType: 'localStorage',
         }}
         columnEmptyText="-"
@@ -496,13 +513,11 @@ const QuestionsPageContent: React.FC = () => {
         debounceTime={300}
         defaultSize="middle"
         headerTitle={intl.formatMessage({
-          id: 'pages.questions.listTitle',
-          defaultMessage: '题目列表',
+          id: isProgrammingOnly
+            ? 'pages.programming.listTitle'
+            : 'pages.questions.listTitle',
+          defaultMessage: isProgrammingOnly ? '编程题列表' : '题目列表',
         })}
-        loading={tableLoading}
-        onLoadingChange={(loading) => {
-          setTableLoading(Boolean(loading));
-        }}
         options={{
           density: true,
           fullScreen: false,
@@ -539,8 +554,7 @@ const QuestionsPageContent: React.FC = () => {
         })}
         request={async (params, sort) => {
           try {
-            const sortField = Object.keys(sort)[0] || 'updated_at';
-            const sortOrder = sort[sortField] === 'ascend' ? 'asc' : 'desc';
+            const sortParams = proTableSortParams(sort);
             const response = await request<{
               code: number;
               data: { items: AdminQuestion[]; total: number };
@@ -549,11 +563,12 @@ const QuestionsPageContent: React.FC = () => {
                 page: params.current,
                 page_size: params.pageSize,
                 ...(params.keyword ? { keyword: params.keyword } : {}),
-                ...(params.type ? { type: params.type } : {}),
+                ...(fixedType || params.type
+                  ? { type: fixedType || params.type }
+                  : {}),
                 ...(params.difficulty ? { difficulty: params.difficulty } : {}),
                 ...(params.status ? { status: params.status } : {}),
-                sort_field: sortField,
-                sort_order: sortOrder,
+                ...sortParams,
               },
             });
 
@@ -593,11 +608,19 @@ const QuestionsPageContent: React.FC = () => {
             key="create"
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => history.push('/content/library/questions/new')}
+            onClick={() =>
+              history.push(
+                fixedType
+                  ? `/content/library/questions/new?type=${fixedType}`
+                  : '/content/library/questions/new',
+              )
+            }
           >
             {intl.formatMessage({
-              id: 'pages.questions.create',
-              defaultMessage: '新建题目',
+              id: isProgrammingOnly
+                ? 'pages.programming.create'
+                : 'pages.questions.create',
+              defaultMessage: isProgrammingOnly ? '新建编程题' : '新建题目',
             })}
           </Button>,
         ]}

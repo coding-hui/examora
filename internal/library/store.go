@@ -24,17 +24,27 @@ type QuestionStore interface {
 
 type PaperStore interface {
 	PaperReader
-	ListPapers(ctx context.Context, pageNum, pageSize int) ([]Paper, int64, error)
+	ListPapers(ctx context.Context, filter PaperFilter) ([]Paper, int64, error)
 	GetPaper(ctx context.Context, id uint64) (*Paper, error)
 	CreatePaper(ctx context.Context, p *Paper) error
 	UpdatePaper(ctx context.Context, p *Paper) error
 	DeletePaper(ctx context.Context, id uint64) error
+	CreatePaperSection(ctx context.Context, section *PaperSection) error
+	DeletePaperSectionsByPaper(ctx context.Context, paperID uint64) error
+	EnsureDefaultPaperSection(ctx context.Context, paperID uint64) (uint64, error)
 	AddPaperQuestion(ctx context.Context, item *PaperQuestion) error
+	UpdatePaperQuestion(ctx context.Context, item *PaperQuestion) error
 	RemovePaperQuestion(ctx context.Context, paperID, questionID uint64) error
+	DeletePaperQuestionsByPaper(ctx context.Context, paperID uint64) error
+	ListPaperQuestionsWithQuestion(ctx context.Context, paperID uint64) ([]PaperQuestionWithQuestion, error)
+	GetPaperQuestionWithQuestion(ctx context.Context, paperID, questionID uint64) (*PaperQuestionWithQuestion, error)
+	ListPaperSectionsWithQuestions(ctx context.Context, paperID uint64) ([]PaperSection, error)
+	GetPaperOutline(ctx context.Context, paperID uint64) (*PaperOutline, error)
 }
 
 type PaperReader interface {
 	PaperExists(ctx context.Context, id uint64) (bool, error)
+	GetPaperOutline(ctx context.Context, paperID uint64) (*PaperOutline, error)
 	ListPaperQuestions(ctx context.Context, paperID uint64) ([]PaperQuestion, error)
 	GetQuestion(ctx context.Context, id uint64) (*Question, error)
 	ListTestCases(ctx context.Context, questionID uint64, includeHidden bool) ([]TestCase, error)

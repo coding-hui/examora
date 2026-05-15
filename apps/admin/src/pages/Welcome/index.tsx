@@ -16,8 +16,8 @@ import {
   TeamOutlined,
   ThunderboltOutlined,
   UserOutlined,
-} from "@ant-design/icons";
-import { PageContainer } from "@ant-design/pro-components";
+} from '@ant-design/icons';
+import { PageContainer } from '@ant-design/pro-components';
 import {
   Badge,
   Button,
@@ -30,250 +30,250 @@ import {
   Tag,
   Timeline,
   Typography,
-} from "antd";
-import React from "react";
-import TrendLineChart from "./TrendLineChart";
-import "./welcome.less";
+} from 'antd';
+import React from 'react';
+import TrendLineChart from './TrendLineChart';
+import './welcome.less';
 
 const { Text, Title } = Typography;
 
 const Welcome: React.FC = () => {
   const stats = [
     {
-      key: "candidates",
-      label: "注册考生",
+      key: 'candidates',
+      label: '注册考生',
       value: 1247,
-      trend: "+12.8%",
-      caption: "较上周新增 146 人",
+      trend: '+12.8%',
+      caption: '较上周新增 146 人',
       icon: <UserOutlined />,
-      tone: "blue",
-      chartColor: "#18181b",
+      tone: 'blue',
+      chartColor: '#18181b',
       trendData: [
-        { label: "周一", value: 1018 },
-        { label: "周二", value: 1042 },
-        { label: "周三", value: 1096 },
-        { label: "周四", value: 1124 },
-        { label: "周五", value: 1190 },
-        { label: "周六", value: 1216 },
-        { label: "周日", value: 1247 },
+        { label: '周一', value: 1018 },
+        { label: '周二', value: 1042 },
+        { label: '周三', value: 1096 },
+        { label: '周四', value: 1124 },
+        { label: '周五', value: 1190 },
+        { label: '周六', value: 1216 },
+        { label: '周日', value: 1247 },
       ],
     },
     {
-      key: "activeExams",
-      label: "进行中考试",
+      key: 'activeExams',
+      label: '进行中考试',
       value: 38,
-      trend: "45 人在线",
-      caption: "覆盖 6 个考场",
+      trend: '45 人在线',
+      caption: '覆盖 6 个考场',
       icon: <FireOutlined />,
-      tone: "amber",
-      chartColor: "#f97316",
+      tone: 'amber',
+      chartColor: '#f97316',
       trendData: [
-        { label: "周一", value: 24 },
-        { label: "周二", value: 31 },
-        { label: "周三", value: 28 },
-        { label: "周四", value: 34 },
-        { label: "周五", value: 38 },
-        { label: "周六", value: 33 },
-        { label: "周日", value: 38 },
+        { label: '周一', value: 24 },
+        { label: '周二', value: 31 },
+        { label: '周三', value: 28 },
+        { label: '周四', value: 34 },
+        { label: '周五', value: 38 },
+        { label: '周六', value: 33 },
+        { label: '周日', value: 38 },
       ],
     },
     {
-      key: "papers",
-      label: "试卷总数",
+      key: 'papers',
+      label: '试卷总数',
       value: 156,
-      trend: "+8",
-      caption: "本月发布试卷",
+      trend: '+8',
+      caption: '本月发布试卷',
       icon: <FileProtectOutlined />,
-      tone: "green",
-      chartColor: "#22c55e",
+      tone: 'green',
+      chartColor: '#22c55e',
       trendData: [
-        { label: "周一", value: 132 },
-        { label: "周二", value: 138 },
-        { label: "周三", value: 139 },
-        { label: "周四", value: 144 },
-        { label: "周五", value: 150 },
-        { label: "周六", value: 152 },
-        { label: "周日", value: 156 },
+        { label: '周一', value: 132 },
+        { label: '周二', value: 138 },
+        { label: '周三', value: 139 },
+        { label: '周四', value: 144 },
+        { label: '周五', value: 150 },
+        { label: '周六', value: 152 },
+        { label: '周日', value: 156 },
       ],
     },
     {
-      key: "questions",
-      label: "题目总数",
+      key: 'questions',
+      label: '题目总数',
       value: 2843,
-      trend: "92%",
-      caption: "题库可复用率",
+      trend: '92%',
+      caption: '题库可复用率',
       icon: <DatabaseOutlined />,
-      tone: "violet",
-      chartColor: "#404040",
+      tone: 'violet',
+      chartColor: '#404040',
       trendData: [
-        { label: "周一", value: 2660 },
-        { label: "周二", value: 2704 },
-        { label: "周三", value: 2748 },
-        { label: "周四", value: 2768 },
-        { label: "周五", value: 2812 },
-        { label: "周六", value: 2824 },
-        { label: "周日", value: 2843 },
+        { label: '周一', value: 2660 },
+        { label: '周二', value: 2704 },
+        { label: '周三', value: 2748 },
+        { label: '周四', value: 2768 },
+        { label: '周五', value: 2812 },
+        { label: '周六', value: 2824 },
+        { label: '周日', value: 2843 },
       ],
     },
   ];
 
   const loadTrendSeries = [
     {
-      key: "online",
-      label: "在线考生",
-      color: "#18181b",
+      key: 'online',
+      label: '在线考生',
+      color: '#18181b',
       showArea: true,
       data: [
-        { label: "08:00", value: 18 },
-        { label: "10:00", value: 42 },
-        { label: "12:00", value: 37 },
-        { label: "14:00", value: 68 },
-        { label: "16:00", value: 84 },
-        { label: "18:00", value: 61 },
-        { label: "20:00", value: 45 },
+        { label: '08:00', value: 18 },
+        { label: '10:00', value: 42 },
+        { label: '12:00', value: 37 },
+        { label: '14:00', value: 68 },
+        { label: '16:00', value: 84 },
+        { label: '18:00', value: 61 },
+        { label: '20:00', value: 45 },
       ],
     },
     {
-      key: "queue",
-      label: "判题队列",
-      color: "#f97316",
+      key: 'queue',
+      label: '判题队列',
+      color: '#f97316',
       dashed: true,
       data: [
-        { label: "08:00", value: 22 },
-        { label: "10:00", value: 54 },
-        { label: "12:00", value: 48 },
-        { label: "14:00", value: 72 },
-        { label: "16:00", value: 126 },
-        { label: "18:00", value: 98 },
-        { label: "20:00", value: 66 },
+        { label: '08:00', value: 22 },
+        { label: '10:00', value: 54 },
+        { label: '12:00', value: 48 },
+        { label: '14:00', value: 72 },
+        { label: '16:00', value: 126 },
+        { label: '18:00', value: 98 },
+        { label: '20:00', value: 66 },
       ],
     },
     {
-      key: "risk",
-      label: "风险事件",
-      color: "#ef4444",
+      key: 'risk',
+      label: '风险事件',
+      color: '#ef4444',
       data: [
-        { label: "08:00", value: 2 },
-        { label: "10:00", value: 6 },
-        { label: "12:00", value: 5 },
-        { label: "14:00", value: 9 },
-        { label: "16:00", value: 7 },
-        { label: "18:00", value: 4 },
-        { label: "20:00", value: 3 },
+        { label: '08:00', value: 2 },
+        { label: '10:00', value: 6 },
+        { label: '12:00', value: 5 },
+        { label: '14:00', value: 9 },
+        { label: '16:00', value: 7 },
+        { label: '18:00', value: 4 },
+        { label: '20:00', value: 3 },
       ],
     },
   ];
 
   const exams = [
     {
-      key: "math-final",
-      name: "2026 春季高等数学期末考试",
+      key: 'math-final',
+      name: '2026 春季高等数学期末考试',
       progress: 78,
       active: 45,
       total: 120,
-      status: "进行中",
-      risk: "低风险",
+      status: '进行中',
+      risk: '低风险',
     },
     {
-      key: "python",
-      name: "Python 程序设计能力测试",
+      key: 'python',
+      name: 'Python 程序设计能力测试',
       progress: 45,
       active: 12,
       total: 60,
-      status: "进行中",
-      risk: "关注",
+      status: '进行中',
+      risk: '关注',
     },
     {
-      key: "physics",
-      name: "大学物理模拟测试",
+      key: 'physics',
+      name: '大学物理模拟测试',
       progress: 100,
       active: 0,
       total: 80,
-      status: "已结束",
-      risk: "正常",
+      status: '已结束',
+      risk: '正常',
     },
   ];
 
   const activities = [
     {
-      key: "a1",
-      text: "李娜提交了 Python 程序设计能力测试",
-      meta: "5 分钟前",
-      color: "#262626",
+      key: 'a1',
+      text: '李娜提交了 Python 程序设计能力测试',
+      meta: '5 分钟前',
+      color: '#262626',
     },
     {
-      key: "a2",
-      text: "王磊的考试被系统自动提交",
-      meta: "8 分钟前",
-      color: "#f97316",
+      key: 'a2',
+      text: '王磊的考试被系统自动提交',
+      meta: '8 分钟前',
+      color: '#f97316',
     },
     {
-      key: "a3",
-      text: "张伟开始作答 2026 春季高等数学",
-      meta: "12 分钟前",
-      color: "#22c55e",
+      key: 'a3',
+      text: '张伟开始作答 2026 春季高等数学',
+      meta: '12 分钟前',
+      color: '#22c55e',
     },
     {
-      key: "a4",
-      text: "陈静提交了数据结构与算法测试",
-      meta: "15 分钟前",
-      color: "#262626",
+      key: 'a4',
+      text: '陈静提交了数据结构与算法测试',
+      meta: '15 分钟前',
+      color: '#262626',
     },
   ];
 
   const judgeQueues = [
     {
-      key: "waiting",
-      label: "等待判题",
+      key: 'waiting',
+      label: '等待判题',
       value: 126,
       percent: 64,
-      color: "#18181b",
+      color: '#18181b',
     },
     {
-      key: "running",
-      label: "执行中",
+      key: 'running',
+      label: '执行中',
       value: 18,
       percent: 42,
-      color: "#f97316",
+      color: '#f97316',
     },
-    { key: "failed", label: "需复核", value: 7, percent: 18, color: "#ef4444" },
+    { key: 'failed', label: '需复核', value: 7, percent: 18, color: '#ef4444' },
   ];
 
   const shortcuts = [
     {
-      key: "users",
-      label: "用户管理",
-      path: "/system/settings/users",
+      key: 'users',
+      label: '用户管理',
+      path: '/system/settings/users',
       icon: <SolutionOutlined />,
     },
     {
-      key: "exams",
-      label: "考试管理",
-      path: "/examination/exams",
+      key: 'exams',
+      label: '考试管理',
+      path: '/examination/exams',
       icon: <ProjectOutlined />,
     },
     {
-      key: "papers",
-      label: "试卷管理",
-      path: "/content/papers",
+      key: 'papers',
+      label: '试卷管理',
+      path: '/content/papers',
       icon: <BookOutlined />,
     },
     {
-      key: "questions",
-      label: "题库管理",
-      path: "/content/library/questions",
+      key: 'questions',
+      label: '题库管理',
+      path: '/content/library/questions',
       icon: <DatabaseOutlined />,
     },
     {
-      key: "programming",
-      label: "编程题库",
-      path: "/content/library/programming",
+      key: 'programming',
+      label: '编程题库',
+      path: '/content/library/programming',
       icon: <CodeOutlined />,
     },
     {
-      key: "submissions",
-      label: "提交记录",
-      path: "/assessment/results/submissions",
+      key: 'submissions',
+      label: '提交记录',
+      path: '/assessment/results/submissions',
       icon: <AuditOutlined />,
     },
   ];
@@ -442,18 +442,18 @@ const Welcome: React.FC = () => {
                     </div>
                     <Space size={8} wrap>
                       <Tag
-                        color={exam.status === "已结束" ? "#22c55e" : "#262626"}
+                        color={exam.status === '已结束' ? '#22c55e' : '#262626'}
                       >
                         {exam.status}
                       </Tag>
-                      <Tag color={exam.risk === "关注" ? "#f97316" : "#262626"}>
+                      <Tag color={exam.risk === '关注' ? '#f97316' : '#262626'}>
                         {exam.risk}
                       </Tag>
                     </Space>
                   </div>
                   <Progress
                     percent={exam.progress}
-                    strokeColor={exam.progress === 100 ? "#22c55e" : "#18181b"}
+                    strokeColor={exam.progress === 100 ? '#22c55e' : '#18181b'}
                     railColor="#f4f4f5"
                     size={{ height: 10 }}
                   />

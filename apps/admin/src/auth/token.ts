@@ -1,4 +1,4 @@
-const TOKEN_KEY = "examora_access_token";
+const TOKEN_KEY = 'examora_access_token';
 
 export interface AuthConfig {
   auth_mode: string;
@@ -37,11 +37,11 @@ export const setAccessToken = (token: string): void => {
 export const clearAuthStorage = (): void => {
   cachedToken = null;
   localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem("examora_user_profile");
+  localStorage.removeItem('examora_user_profile');
 };
 
 export const getLocalProfile = (): AuthMeData | null => {
-  const profile = localStorage.getItem("examora_user_profile");
+  const profile = localStorage.getItem('examora_user_profile');
   if (!profile) return null;
   try {
     return JSON.parse(profile) as AuthMeData;
@@ -51,5 +51,5 @@ export const getLocalProfile = (): AuthMeData | null => {
 };
 
 export const setLocalProfile = (profile: AuthMeData): void => {
-  localStorage.setItem("examora_user_profile", JSON.stringify(profile));
+  localStorage.setItem('examora_user_profile', JSON.stringify(profile));
 };

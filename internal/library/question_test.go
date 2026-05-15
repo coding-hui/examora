@@ -214,6 +214,28 @@ func TestCreateQuestionValidatesStructuredQuestionPayloads(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "difficulty must be known",
+			cmd: library.SaveQuestionCommand{
+				Type:       library.QuestionTypeShortAnswer,
+				Title:      "Difficulty",
+				Content:    map[string]any{"text": "Describe difficulty."},
+				Answer:     map[string]any{"reference": "easy medium hard"},
+				Difficulty: stringPtr("UNKNOWN"),
+			},
+		},
+		{
+			name: "non programming questions cannot carry test cases",
+			cmd: library.SaveQuestionCommand{
+				Type:    library.QuestionTypeShortAnswer,
+				Title:   "Short",
+				Content: map[string]any{"text": "Describe HTTP."},
+				Answer:  map[string]any{"reference": "protocol"},
+				TestCases: []library.TestCase{
+					{Input: "", ExpectedOutput: "protocol"},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -303,6 +325,318 @@ func TestAddPaperQuestionValidatesPublishedQuestionScoreAndDuplicates(t *testing
 		Score:      20,
 	})
 	require.ErrorIs(t, err, library.ErrPaperQuestionExists)
+}
+
+func TestSavePaperValidatesTitleAndStatus(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name string
+		cmd  library.SavePaperCommand
+	}{
+		{
+			name: "title is required",
+			cmd: library.SavePaperCommand{
+				Title:  " ",
+				Status: library.PaperStatusDraft,
+			},
+		},
+		{
+			name: "status must be known",
+			cmd: library.SavePaperCommand{
+				Title:  "Backend paper",
+				Status: "ARCHIVED",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := service.CreatePaper(ctx, tt.cmd)
+			require.ErrorIs(t, err, library.ErrInvalidPaper)
+		})
+	}
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title: "  Backend paper  ",
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Backend paper", paper.Title)
+	require.Equal(t, library.PaperStatusDraft, paper.Status)
+
+	_, err = service.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  "Updated paper",
+		Status: "UNKNOWN",
+	})
+	require.ErrorIs(t, err, library.ErrInvalidPaper)
+}
+
+func TestListPaperQuestionsIncludesQuestionSummaryFields(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Backend paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	first, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:       library.QuestionTypeTrueFalse,
+		Title:      "Go is compiled",
+		Content:    map[string]any{"text": "Go is compiled."},
+		Answer:     map[string]any{"correct": true},
+		Difficulty: stringPtr("EASY"),
+		Status:     library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	second, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:       library.QuestionTypeShortAnswer,
+		Title:      "Explain middleware",
+		Content:    map[string]any{"text": "Explain middleware."},
+		Answer:     map[string]any{"reference": "chain"},
+		Difficulty: stringPtr("MEDIUM"),
+		Status:     library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: first.ID,
+		Score:      5,
+		SortOrder:  20,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: second.ID,
+		Score:      10,
+		SortOrder:  10,
+	})
+	require.NoError(t, err)
+
+	items, err := service.ListPaperQuestions(ctx, paper.ID)
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+	require.Equal(t, second.ID, items[0].QuestionID)
+	require.Equal(t, "Explain middleware", items[0].QuestionTitle)
+	require.Equal(t, library.QuestionTypeShortAnswer, items[0].QuestionType)
+	require.Equal(t, "MEDIUM", *items[0].QuestionDifficulty)
+	require.Equal(t, library.QuestionStatusPublished, items[0].QuestionStatus)
+	require.Equal(t, 10.0, items[0].Score)
+	require.Equal(t, 10, items[0].SortOrder)
+	require.Equal(t, first.ID, items[1].QuestionID)
+}
+
+func TestSavePaperOutlineGroupsQuestionsBySection(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Structured paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	first, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeSingleChoice,
+		Title:   "Pick A",
+		Content: choiceContent("Pick A"),
+		Answer:  map[string]any{"choice": "A"},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	second, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeShortAnswer,
+		Title:   "Explain HTTP",
+		Content: map[string]any{"text": "Explain HTTP"},
+		Answer:  map[string]any{"reference": "protocol"},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+
+	outline, err := service.SavePaperOutline(ctx, paper.ID, library.SavePaperOutlineCommand{
+		Sections: []library.SavePaperSectionCommand{
+			{
+				Title:       "第一大题 单选题",
+				Description: "每题 2 分",
+				SortOrder:   1,
+				Questions: []library.SavePaperSectionQuestionCommand{
+					{QuestionID: first.ID, Score: 2, SortOrder: 1},
+				},
+			},
+			{
+				Title:     "第二大题 简答题",
+				SortOrder: 2,
+				Questions: []library.SavePaperSectionQuestionCommand{
+					{QuestionID: second.ID, Score: 10, SortOrder: 1},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, paper.ID, outline.Paper.ID)
+	require.Len(t, outline.Sections, 2)
+	require.Equal(t, "第一大题 单选题", outline.Sections[0].Title)
+	require.Equal(t, 1, outline.Sections[0].QuestionCount)
+	require.Equal(t, 2.0, outline.Sections[0].TotalScore)
+	require.Equal(t, first.ID, outline.Sections[0].Questions[0].QuestionID)
+	require.Equal(t, "第二大题 简答题", outline.Sections[1].Title)
+	require.Equal(t, 12.0, outline.TotalScore)
+
+	loaded, err := service.GetPaperOutline(ctx, paper.ID)
+	require.NoError(t, err)
+	require.Len(t, loaded.Sections, 2)
+	require.Equal(t, "第二大题 简答题", loaded.Sections[1].Title)
+	require.Equal(t, second.ID, loaded.Sections[1].Questions[0].QuestionID)
+
+	flat, err := service.ListPaperQuestions(ctx, paper.ID)
+	require.NoError(t, err)
+	require.Len(t, flat, 2)
+	require.Equal(t, first.ID, flat[0].QuestionID)
+	require.Equal(t, second.ID, flat[1].QuestionID)
+	require.Equal(t, loaded.Sections[0].ID, flat[0].SectionID)
+	require.Equal(t, loaded.Sections[1].ID, flat[1].SectionID)
+}
+
+func TestSavePaperOutlineRejectsDuplicateQuestions(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Structured paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+
+	_, err = service.SavePaperOutline(ctx, paper.ID, library.SavePaperOutlineCommand{
+		Sections: []library.SavePaperSectionCommand{
+			{
+				Title:     "第一大题",
+				SortOrder: 1,
+				Questions: []library.SavePaperSectionQuestionCommand{
+					{QuestionID: question.ID, Score: 5, SortOrder: 1},
+				},
+			},
+			{
+				Title:     "第二大题",
+				SortOrder: 2,
+				Questions: []library.SavePaperSectionQuestionCommand{
+					{QuestionID: question.ID, Score: 5, SortOrder: 1},
+				},
+			},
+		},
+	})
+	require.ErrorIs(t, err, library.ErrPaperQuestionExists)
+}
+
+func TestUpdatePaperQuestionScoreAndSortOrder(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Backend paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: question.ID,
+		Score:      5,
+		SortOrder:  20,
+	})
+	require.NoError(t, err)
+
+	updated, err := service.UpdatePaperQuestion(ctx, paper.ID, question.ID, library.UpdatePaperQuestionCommand{
+		Score:     12.5,
+		SortOrder: 3,
+	})
+	require.NoError(t, err)
+	require.Equal(t, question.ID, updated.QuestionID)
+	require.Equal(t, "Go is compiled", updated.QuestionTitle)
+	require.Equal(t, 12.5, updated.Score)
+	require.Equal(t, 3, updated.SortOrder)
+
+	items, err := service.ListPaperQuestions(ctx, paper.ID)
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+	require.Equal(t, 12.5, items[0].Score)
+	require.Equal(t, 3, items[0].SortOrder)
+}
+
+func TestUpdatePaperQuestionValidatesPositiveScore(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Backend paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: question.ID,
+		Score:      5,
+	})
+	require.NoError(t, err)
+
+	_, err = service.UpdatePaperQuestion(ctx, paper.ID, question.ID, library.UpdatePaperQuestionCommand{
+		Score:     0,
+		SortOrder: 1,
+	})
+	require.ErrorIs(t, err, library.ErrInvalidPaper)
+}
+
+func TestUpdatePaperQuestionKeepsPublishedQuestionConstraint(t *testing.T) {
+	service, store := newLibraryService(t)
+	ctx := context.Background()
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Backend paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: question.ID,
+		Score:      5,
+	})
+	require.NoError(t, err)
+
+	question.Status = library.QuestionStatusDraft
+	require.NoError(t, store.UpdateQuestion(ctx, question))
+
+	_, err = service.UpdatePaperQuestion(ctx, paper.ID, question.ID, library.UpdatePaperQuestionCommand{
+		Score:     10,
+		SortOrder: 1,
+	})
+	require.ErrorIs(t, err, library.ErrInvalidPaper)
 }
 
 func TestStoreAddPaperQuestionMapsUniqueConstraintToConflict(t *testing.T) {

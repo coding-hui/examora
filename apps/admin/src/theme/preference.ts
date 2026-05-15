@@ -1,15 +1,15 @@
-import type { Settings as LayoutSettings } from "@ant-design/pro-components";
+import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 
-const STORAGE_KEY = "examora-theme-preference";
+const STORAGE_KEY = 'examora-theme-preference';
 
 export interface ThemePreference {
-  navTheme: "light" | "realDark";
+  navTheme: 'light' | 'realDark';
   colorPrimary: string;
 }
 
 const DEFAULT: ThemePreference = {
-  navTheme: "light",
-  colorPrimary: "#262626",
+  navTheme: 'light',
+  colorPrimary: '#262626',
 };
 
 export function loadThemePreference(): ThemePreference {
@@ -38,20 +38,22 @@ export function subscribe(callback: () => void): () => void {
 }
 
 export function notifyThemeChange(): void {
-  listeners.forEach((fn) => fn());
+  for (const fn of listeners) {
+    fn();
+  }
 }
 
 export function toLayoutSettings(pref: ThemePreference): LayoutSettings {
   return {
     navTheme: pref.navTheme,
     colorPrimary: pref.colorPrimary,
-    layout: "mix",
-    contentWidth: "Fluid",
+    layout: 'mix',
+    contentWidth: 'Fluid',
     fixedHeader: true,
     fixSiderbar: true,
     splitMenus: false,
-    siderMenuType: "group",
+    siderMenuType: 'group',
     colorWeak: false,
-    title: "Examora",
+    title: 'Examora',
   };
 }

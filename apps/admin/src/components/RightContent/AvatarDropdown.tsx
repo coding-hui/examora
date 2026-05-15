@@ -1,12 +1,12 @@
-import { LogoutOutlined, SettingOutlined } from "@ant-design/icons";
-import { history, request, useIntl, useModel } from "@umijs/max";
-import type { MenuProps } from "antd";
-import { Spin } from "antd";
-import { createStyles } from "antd-style";
-import React from "react";
-import { flushSync } from "react-dom";
-import { clearAuthStorage } from "@/auth/token";
-import HeaderDropdown from "../HeaderDropdown";
+import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { history, request, useIntl, useModel } from '@umijs/max';
+import type { MenuProps } from 'antd';
+import { Spin } from 'antd';
+import { createStyles } from 'antd-style';
+import React from 'react';
+import { flushSync } from 'react-dom';
+import { clearAuthStorage } from '@/auth/token';
+import HeaderDropdown from '../HeaderDropdown';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -14,7 +14,7 @@ export type GlobalHeaderRightProps = {
 };
 
 export const AvatarName = () => {
-  const { initialState } = useModel("@@initialState");
+  const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   return (
     <span className="anticon">
@@ -26,15 +26,15 @@ export const AvatarName = () => {
 const useStyles = createStyles(({ token }) => {
   return {
     action: {
-      display: "flex",
-      height: "48px",
-      marginLeft: "auto",
-      overflow: "hidden",
-      alignItems: "center",
-      padding: "0 8px",
-      cursor: "pointer",
+      display: 'flex',
+      height: '48px',
+      marginLeft: 'auto',
+      overflow: 'hidden',
+      alignItems: 'center',
+      padding: '0 8px',
+      cursor: 'pointer',
       borderRadius: token.borderRadius,
-      "&:hover": {
+      '&:hover': {
         backgroundColor: token.colorBgTextHover,
       },
     },
@@ -48,20 +48,20 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   const intl = useIntl();
   const loginOut = async () => {
     try {
-      await request("/api/auth/logout", { method: "POST" });
+      await request('/api/auth/logout', { method: 'POST' });
     } catch (_) {
       // ignore logout errors
     }
     clearAuthStorage();
-    history.push("/login");
+    history.push('/login');
   };
   const { styles } = useStyles();
 
-  const { initialState, setInitialState } = useModel("@@initialState");
+  const { initialState, setInitialState } = useModel('@@initialState');
 
-  const onMenuClick: MenuProps["onClick"] = (event) => {
+  const onMenuClick: MenuProps['onClick'] = (event) => {
     const { key } = event;
-    if (key === "logout") {
+    if (key === 'logout') {
       flushSync(() => {
         setInitialState((s: any) => ({ ...s, currentUser: undefined }));
       });
@@ -97,24 +97,24 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
     ...(menu
       ? [
           {
-            key: "settings",
+            key: 'settings',
             icon: <SettingOutlined />,
             label: intl.formatMessage({
-              id: "navbar.settings",
-              defaultMessage: "设置",
+              id: 'navbar.settings',
+              defaultMessage: '设置',
             }),
           },
           {
-            type: "divider" as const,
+            type: 'divider' as const,
           },
         ]
       : []),
     {
-      key: "logout",
+      key: 'logout',
       icon: <LogoutOutlined />,
       label: intl.formatMessage({
-        id: "navbar.logout",
-        defaultMessage: "退出登录",
+        id: 'navbar.logout',
+        defaultMessage: '退出登录',
       }),
     },
   ];

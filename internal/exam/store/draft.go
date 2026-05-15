@@ -33,3 +33,20 @@ func (s *Store) GetAnswerDraft(ctx context.Context, sessionID, questionID uint64
 		Answer:        jsonToMap(row.Answer),
 	}, nil
 }
+
+func (s *Store) ListAnswerDrafts(ctx context.Context, sessionID uint64) ([]exam.AnswerDraft, error) {
+	var rows []database.AnswerDraftModel
+	if err := s.db(ctx).Where("exam_session_id = ?", sessionID).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	items := make([]exam.AnswerDraft, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, exam.AnswerDraft{
+			ID:            row.ID,
+			ExamSessionID: row.ExamSessionID,
+			QuestionID:    row.QuestionID,
+			Answer:        jsonToMap(row.Answer),
+		})
+	}
+	return items, nil
+}

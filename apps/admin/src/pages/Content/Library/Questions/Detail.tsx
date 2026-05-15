@@ -52,6 +52,7 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
+import { requestErrorMessage } from '@/utils/request';
 import './index.less';
 
 interface QuestionOption {
@@ -60,6 +61,17 @@ interface QuestionOption {
 }
 
 const OPTION_KEYS = 'ABCDEFGH'.split('');
+
+const UnitInputNumber: React.FC<
+  React.ComponentProps<typeof InputNumber> & { unit: string }
+> = ({ unit, style, ...props }) => (
+  <Space.Compact style={{ width: '100%' }}>
+    <InputNumber {...props} style={{ ...style, width: '100%' }} />
+    <Button disabled tabIndex={-1}>
+      {unit}
+    </Button>
+  </Space.Compact>
+);
 
 const normalizeOptions = (options: QuestionOption[] | undefined) =>
   (options || [])
@@ -193,10 +205,82 @@ const normalizeQuestionPayload = (
   return payload;
 };
 
+const initialValuesForType = (type: QuestionType) => {
+  const base = {
+    content: { text: '' },
+    answer: undefined,
+    test_cases: undefined,
+  };
+
+  if (type === 'SINGLE_CHOICE') {
+    return {
+      ...base,
+      content: {
+        text: '',
+        options: [
+          { key: 'A', text: '' },
+          { key: 'B', text: '' },
+        ],
+      },
+      answer: {},
+    };
+  }
+
+  if (type === 'MULTIPLE_CHOICE') {
+    return {
+      ...base,
+      content: {
+        text: '',
+        options: [
+          { key: 'A', text: '' },
+          { key: 'B', text: '' },
+        ],
+      },
+      answer: { choices: [] },
+    };
+  }
+
+  if (type === 'FILL_BLANK') {
+    return {
+      ...base,
+      answer: { blanks: [''] },
+    };
+  }
+
+  if (type === 'SHORT_ANSWER') {
+    return {
+      ...base,
+      answer: { reference: '' },
+    };
+  }
+
+  if (type === 'PROGRAMMING') {
+    return {
+      ...base,
+      language: 'go',
+      test_cases: [
+        {
+          input: '',
+          expected_output: '',
+          time_limit_ms: 2000,
+          memory_limit_mb: 256,
+          is_sample: true,
+          is_hidden: false,
+          sort_order: 0,
+        },
+      ],
+    };
+  }
+
+  return base;
+};
+
 interface QuestionEnvelope {
   code: number;
   data: AdminQuestion;
 }
+
+const HiddenFormValue: React.FC = () => null;
 
 const DIFFICULTY_TAGS: Record<string, string> = {
   EASY: 'qdiff-easy',
@@ -794,11 +878,7 @@ const TestCasesEdit: React.FC = () => {
                             ]}
                             style={{ marginBottom: 0 }}
                           >
-                            <InputNumber
-                              min={0}
-                              style={{ width: '100%' }}
-                              addonAfter="ms"
-                            />
+                            <UnitInputNumber min={0} unit="ms" />
                           </Form.Item>
                         </Col>
                         <Col xs={12} sm={6}>
@@ -828,11 +908,7 @@ const TestCasesEdit: React.FC = () => {
                             ]}
                             style={{ marginBottom: 0 }}
                           >
-                            <InputNumber
-                              min={0}
-                              style={{ width: '100%' }}
-                              addonAfter="MB"
-                            />
+                            <UnitInputNumber min={0} unit="MB" />
                           </Form.Item>
                         </Col>
                       </Row>
@@ -1088,6 +1164,14 @@ const QuestionsDetailContent: React.FC = () => {
   const [form] = Form.useForm();
   const questionId = history.location.pathname.split('/').filter(Boolean).pop();
   const isNew = questionId === 'new';
+  const requestedType = new URLSearchParams(history.location.search).get(
+    'type',
+  );
+  const initialType = QUESTION_TYPE_OPTIONS.some(
+    (option) => option.value === requestedType,
+  )
+    ? (requestedType as QuestionType)
+    : undefined;
   const [question, setQuestion] = useState<AdminQuestion | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -1205,6 +1289,12 @@ const QuestionsDetailContent: React.FC = () => {
         time_limit_ms: 2000,
         memory_limit_mb: 256,
         content: { text: '' },
+        ...(initialType
+          ? {
+              type: initialType,
+              ...initialValuesForType(initialType),
+            }
+          : {}),
       });
       setLoading(false);
       setIsDirty(false);
@@ -1256,7 +1346,7 @@ const QuestionsDetailContent: React.FC = () => {
         setSaving(true);
         const response = await request<QuestionEnvelope>(
           '/api/admin/questions',
-          { method: 'POST', data: payload },
+          { method: 'POST', data: payload, skipErrorHandler: true },
         );
         message.success(
           intl.formatMessage({
@@ -1284,6 +1374,7 @@ const QuestionsDetailContent: React.FC = () => {
       await request(`/api/admin/questions/${question.id}`, {
         method: 'PUT',
         data: payload,
+        skipErrorHandler: true,
       });
       message.success(
         intl.formatMessage({
@@ -1296,15 +1387,16 @@ const QuestionsDetailContent: React.FC = () => {
     } catch (error) {
       if ((error as { errorFields?: unknown[] }).errorFields) return;
       message.error(
-        isNew
-          ? intl.formatMessage({
-              id: 'pages.questions.createError',
-              defaultMessage: '创建失败',
-            })
-          : intl.formatMessage({
-              id: 'pages.questions.saveError',
-              defaultMessage: '保存失败',
-            }),
+        requestErrorMessage(error) ||
+          (isNew
+            ? intl.formatMessage({
+                id: 'pages.questions.createError',
+                defaultMessage: '创建失败',
+              })
+            : intl.formatMessage({
+                id: 'pages.questions.saveError',
+                defaultMessage: '保存失败',
+              })),
       );
     } finally {
       setSaving(false);
@@ -1506,7 +1598,11 @@ const QuestionsDetailContent: React.FC = () => {
             </div>
           </div>
 
-          <div className="qdetail-wrap">
+          <div
+            className={`qdetail-wrap ${
+              isDirty ? 'qdetail-wrap-with-sticky-footer' : ''
+            }`}
+          >
             <div className="qdetail-paper">
               <Form
                 form={form}
@@ -1542,10 +1638,8 @@ const QuestionsDetailContent: React.FC = () => {
                           defaultMessage: '请选择题型',
                         })}
                         options={typeOptions}
-                        onChange={() => {
-                          // Reset answer fields when type changes
-                          form.setFieldValue('answer', undefined);
-                          form.setFieldValue('content', { text: '' });
+                        onChange={(type: QuestionType) => {
+                          form.setFieldsValue(initialValuesForType(type));
                           setTimeout(() => setIsDirty(true), 0);
                         }}
                       />
@@ -1726,7 +1820,7 @@ const QuestionsDetailContent: React.FC = () => {
                           },
                         ]}
                       >
-                        <Input />
+                        <HiddenFormValue />
                       </Form.Item>
                     )}
                   </div>
@@ -1825,11 +1919,7 @@ const QuestionsDetailContent: React.FC = () => {
                           ]}
                           style={{ marginBottom: 0 }}
                         >
-                          <InputNumber
-                            min={0}
-                            style={{ width: '100%' }}
-                            addonAfter="ms"
-                          />
+                          <UnitInputNumber min={0} unit="ms" />
                         </Form.Item>
                       </Col>
                       <Col xs={12} md={7} lg={5}>
@@ -1858,11 +1948,7 @@ const QuestionsDetailContent: React.FC = () => {
                           ]}
                           style={{ marginBottom: 0 }}
                         >
-                          <InputNumber
-                            min={0}
-                            style={{ width: '100%' }}
-                            addonAfter="MB"
-                          />
+                          <UnitInputNumber min={0} unit="MB" />
                         </Form.Item>
                       </Col>
                     </Row>
@@ -1886,7 +1972,7 @@ const QuestionsDetailContent: React.FC = () => {
 
                     <SectionTitle style={{ marginTop: 20 }}>
                       {intl.formatMessage({
-                        id: 'pages.questions.form.testCase',
+                        id: 'pages.questions.form.testCases',
                         defaultMessage: '测试用例',
                       })}
                     </SectionTitle>

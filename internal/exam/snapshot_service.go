@@ -33,64 +33,82 @@ func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, st
 		return nil, ErrInvalidExamStatusTransition
 	}
 
-	// Gather all question data before creating snapshots
-	paperQuestions, err := s.papers.ListPaperQuestions(ctx, *e.PaperID)
+	// Gather all section and question data before creating snapshots
+	outline, err := s.papers.GetPaperOutline(ctx, *e.PaperID)
 	if err != nil {
 		return nil, err
 	}
-	if len(paperQuestions) == 0 {
+	if outline.QuestionCount == 0 {
 		return nil, ErrInvalidExamStatusTransition
 	}
 
 	type questionSnapshotData struct {
-		question  *library.Question
-		score     float64
-		sortOrder int
-		testCases []TestCase
+		sectionID         uint64
+		question          *library.Question
+		score             float64
+		sortOrder         int
+		questionSortOrder int
+		testCases         []TestCase
 	}
 
-	var questionData []questionSnapshotData
-	for _, pq := range paperQuestions {
-		q, err := s.papers.GetQuestion(ctx, pq.QuestionID)
-		if err != nil {
-			return nil, err
-		}
-		if q.Status != library.QuestionStatusPublished || pq.Score <= 0 {
-			return nil, ErrInvalidExamStatusTransition
-		}
+	type sectionSnapshotData struct {
+		section   library.PaperSection
+		questions []questionSnapshotData
+	}
 
-		var testCases []TestCase
-		if q.Type == QuestionTypeProgramming {
-			tcList, err := s.papers.ListTestCases(ctx, q.ID, true) // include hidden
+	var sectionData []sectionSnapshotData
+	globalSortOrder := 1
+	for _, section := range outline.Sections {
+		if len(section.Questions) == 0 {
+			continue
+		}
+		data := sectionSnapshotData{section: section}
+		for _, pq := range section.Questions {
+			q, err := s.papers.GetQuestion(ctx, pq.QuestionID)
 			if err != nil {
 				return nil, err
 			}
-			if len(tcList) == 0 {
+			if q.Status != library.QuestionStatusPublished || pq.Score <= 0 {
 				return nil, ErrInvalidExamStatusTransition
 			}
-			if err := library.ValidateQuestionForPublish(q, tcList); err != nil {
+
+			var testCases []TestCase
+			if q.Type == QuestionTypeProgramming {
+				tcList, err := s.papers.ListTestCases(ctx, q.ID, true) // include hidden
+				if err != nil {
+					return nil, err
+				}
+				if len(tcList) == 0 {
+					return nil, ErrInvalidExamStatusTransition
+				}
+				if err := library.ValidateQuestionForPublish(q, tcList); err != nil {
+					return nil, err
+				}
+				for _, tc := range tcList {
+					testCases = append(testCases, TestCase{
+						ID:             tc.ID,
+						Input:          tc.Input,
+						ExpectedOutput: tc.ExpectedOutput,
+						TimeLimitMS:    tc.TimeLimitMS,
+						MemoryLimitMB:  tc.MemoryLimitMB,
+						IsSample:       tc.IsSample,
+						IsHidden:       tc.IsHidden,
+					})
+				}
+			} else if err := library.ValidateQuestionForPublish(q, nil); err != nil {
 				return nil, err
 			}
-			for _, tc := range tcList {
-				testCases = append(testCases, TestCase{
-					ID:             tc.ID,
-					Input:          tc.Input,
-					ExpectedOutput: tc.ExpectedOutput,
-					TimeLimitMS:    tc.TimeLimitMS,
-					MemoryLimitMB:  tc.MemoryLimitMB,
-					IsSample:       tc.IsSample,
-					IsHidden:       tc.IsHidden,
-				})
-			}
-		} else if err := library.ValidateQuestionForPublish(q, nil); err != nil {
-			return nil, err
+			data.questions = append(data.questions, questionSnapshotData{
+				sectionID:         section.ID,
+				question:          q,
+				score:             pq.Score,
+				sortOrder:         globalSortOrder,
+				questionSortOrder: pq.SortOrder,
+				testCases:         testCases,
+			})
+			globalSortOrder++
 		}
-		questionData = append(questionData, questionSnapshotData{
-			question:  q,
-			score:     pq.Score,
-			sortOrder: pq.SortOrder,
-			testCases: testCases,
-		})
+		sectionData = append(sectionData, data)
 	}
 
 	var snapshot *ExamSnapshot
@@ -118,38 +136,62 @@ func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, st
 		}
 		snapshot.ID = row.ID
 
-		// Freeze all questions from the paper into question_snapshots
-		for _, qd := range questionData {
-			qSnap := &QuestionSnapshot{
-				ExamSnapshotID: snapshot.ID,
-				QuestionID:     qd.question.ID,
-				Type:           qd.question.Type,
-				Title:          qd.question.Title,
-				Content:        qd.question.Content,
-				Score:          qd.score,
-				SortOrder:      qd.sortOrder,
-				Answer:         qd.question.Answer,
-				TestCases:      qd.testCases,
-				StarterCode:    qd.question.StarterCode,
-				TimeLimitMs:    qd.question.TimeLimitMS,
-				MemoryLimitMb:  qd.question.MemoryLimitMB,
+		sectionSnapshotIDs := make(map[uint64]uint64, len(sectionData))
+		for _, sd := range sectionData {
+			sectionRow := &database.PaperSectionSnapshotModel{
+				ExamSnapshotID:  snapshot.ID,
+				SourceSectionID: sd.section.ID,
+				Title:           sd.section.Title,
+				Description:     sd.section.Description,
+				SortOrder:       sd.section.SortOrder,
+				QuestionCount:   len(sd.questions),
+				TotalScore:      sd.section.TotalScore,
+				CreatedAt:       time.Now(),
 			}
-			qRow := &database.QuestionSnapshotModel{
-				ExamSnapshotID: qSnap.ExamSnapshotID,
-				QuestionID:     qSnap.QuestionID,
-				Type:           qSnap.Type,
-				Title:          qSnap.Title,
-				Content:        datatypes.JSON(mapToJSON(qSnap.Content)),
-				Score:          qSnap.Score,
-				SortOrder:      qSnap.SortOrder,
-				Answer:         datatypes.JSON(mapToJSON(qSnap.Answer)),
-				TestCases:      datatypes.JSON(testCasesToJSON(qSnap.TestCases)),
-				StarterCode:    qSnap.StarterCode,
-				TimeLimitMS:    qSnap.TimeLimitMs,
-				MemoryLimitMB:  qSnap.MemoryLimitMb,
-			}
-			if err := tx.Create(qRow).Error; err != nil {
+			if err := tx.Create(sectionRow).Error; err != nil {
 				return err
+			}
+			sectionSnapshotIDs[sd.section.ID] = sectionRow.ID
+		}
+
+		// Freeze all questions from the paper into question_snapshots
+		for _, sd := range sectionData {
+			for _, qd := range sd.questions {
+				qSnap := &QuestionSnapshot{
+					ExamSnapshotID:    snapshot.ID,
+					SectionSnapshotID: sectionSnapshotIDs[qd.sectionID],
+					QuestionID:        qd.question.ID,
+					Type:              qd.question.Type,
+					Title:             qd.question.Title,
+					Content:           qd.question.Content,
+					Score:             qd.score,
+					SortOrder:         qd.sortOrder,
+					QuestionSortOrder: qd.questionSortOrder,
+					Answer:            qd.question.Answer,
+					TestCases:         qd.testCases,
+					StarterCode:       qd.question.StarterCode,
+					TimeLimitMs:       qd.question.TimeLimitMS,
+					MemoryLimitMb:     qd.question.MemoryLimitMB,
+				}
+				qRow := &database.QuestionSnapshotModel{
+					ExamSnapshotID:    qSnap.ExamSnapshotID,
+					SectionSnapshotID: qSnap.SectionSnapshotID,
+					QuestionID:        qSnap.QuestionID,
+					Type:              qSnap.Type,
+					Title:             qSnap.Title,
+					Content:           datatypes.JSON(mapToJSON(qSnap.Content)),
+					Score:             qSnap.Score,
+					SortOrder:         qSnap.SortOrder,
+					QuestionSortOrder: qSnap.QuestionSortOrder,
+					Answer:            datatypes.JSON(mapToJSON(qSnap.Answer)),
+					TestCases:         datatypes.JSON(testCasesToJSON(qSnap.TestCases)),
+					StarterCode:       qSnap.StarterCode,
+					TimeLimitMS:       qSnap.TimeLimitMs,
+					MemoryLimitMB:     qSnap.MemoryLimitMb,
+				}
+				if err := tx.Create(qRow).Error; err != nil {
+					return err
+				}
 			}
 		}
 
@@ -206,6 +248,10 @@ func (s *Service) GetCandidatePaper(ctx context.Context, examID, userID uint64) 
 	if err != nil {
 		return nil, err
 	}
+	sectionSnapshots, err := s.store.ListPaperSectionSnapshots(ctx, snapshot.ID)
+	if err != nil {
+		return nil, err
+	}
 
 	// Build candidate-safe response
 	cp := &CandidatePaper{
@@ -216,11 +262,14 @@ func (s *Service) GetCandidatePaper(ctx context.Context, examID, userID uint64) 
 		DurationMinutes:  snapshot.DurationMinutes,
 		RemainingSeconds: calculateRemaining(session, snapshot),
 		Questions:        make([]CandidateQuestion, 0, len(questionSnapshots)),
+		Sections:         make([]CandidatePaperSection, 0, len(sectionSnapshots)),
 	}
 
+	questionsBySection := make(map[uint64][]CandidateQuestion)
 	for _, qs := range questionSnapshots {
 		cq := CandidateQuestion{
 			SnapshotID:  qs.ID,
+			QuestionID:  qs.QuestionID,
 			Type:        qs.Type,
 			Title:       qs.Title,
 			Content:     qs.Content,
@@ -243,6 +292,18 @@ func (s *Service) GetCandidatePaper(ctx context.Context, examID, userID uint64) 
 		}
 
 		cp.Questions = append(cp.Questions, cq)
+		questionsBySection[qs.SectionSnapshotID] = append(questionsBySection[qs.SectionSnapshotID], cq)
+	}
+	for _, section := range sectionSnapshots {
+		cp.Sections = append(cp.Sections, CandidatePaperSection{
+			SnapshotID:    section.ID,
+			Title:         section.Title,
+			Description:   section.Description,
+			SortOrder:     section.SortOrder,
+			QuestionCount: section.QuestionCount,
+			TotalScore:    section.TotalScore,
+			Questions:     questionsBySection[section.ID],
+		})
 	}
 
 	return cp, nil
@@ -269,7 +330,7 @@ func (s *Service) StartExamSession(ctx context.Context, examID, userID uint64, i
 			return nil, ErrInvalidExamStatusTransition
 		}
 		existing.Status = SessionStatusInProgress
-		remaining := calculateRemainingSeconds(existing, snapshot)
+		remaining := calculateRemaining(existing, snapshot)
 		existing.RemainingSeconds = &remaining
 		if err := s.store.UpdateExamSession(ctx, existing); err != nil {
 			return nil, err
@@ -312,7 +373,7 @@ func (s *Service) SubmitExam(ctx context.Context, examID, userID uint64) error {
 	}
 
 	if session.Status == SessionStatusSubmitted {
-		return nil // Already submitted, idempotent
+		return s.gradeSubmittedSession(ctx, examID, snapshot, session)
 	}
 
 	session.Status = SessionStatusSubmitted
@@ -320,7 +381,10 @@ func (s *Service) SubmitExam(ctx context.Context, examID, userID uint64) error {
 	remaining := 0
 	session.RemainingSeconds = &remaining
 
-	return s.store.UpdateExamSession(ctx, session)
+	if err := s.store.UpdateExamSession(ctx, session); err != nil {
+		return err
+	}
+	return s.gradeSubmittedSession(ctx, examID, snapshot, session)
 }
 
 // GetCurrentSession returns the current exam session for a user
@@ -334,7 +398,7 @@ func (s *Service) GetCurrentSession(ctx context.Context, examID, userID uint64) 
 		return nil, err
 	}
 	// Update remaining time
-	remaining := calculateRemainingSeconds(session, snapshot)
+	remaining := calculateRemaining(session, snapshot)
 	session.RemainingSeconds = &remaining
 	return session, nil
 }
@@ -396,17 +460,29 @@ func (s *Service) SaveAnswers(ctx context.Context, examID, userID uint64, answer
 // =====================================================================
 
 type CandidatePaper struct {
-	ExamSnapshotID   uint64              `json:"exam_snapshot_id"`
-	Title            string              `json:"title"`
-	StartTime        time.Time           `json:"start_time"`
-	EndTime          time.Time           `json:"end_time"`
-	DurationMinutes  int                 `json:"duration_minutes"`
-	RemainingSeconds int                 `json:"remaining_seconds"`
-	Questions        []CandidateQuestion `json:"questions"`
+	ExamSnapshotID   uint64                  `json:"exam_snapshot_id"`
+	Title            string                  `json:"title"`
+	StartTime        time.Time               `json:"start_time"`
+	EndTime          time.Time               `json:"end_time"`
+	DurationMinutes  int                     `json:"duration_minutes"`
+	RemainingSeconds int                     `json:"remaining_seconds"`
+	Sections         []CandidatePaperSection `json:"sections,omitempty"`
+	Questions        []CandidateQuestion     `json:"questions"`
+}
+
+type CandidatePaperSection struct {
+	SnapshotID    uint64              `json:"snapshot_id"`
+	Title         string              `json:"title"`
+	Description   string              `json:"description"`
+	SortOrder     int                 `json:"sort_order"`
+	QuestionCount int                 `json:"question_count"`
+	TotalScore    float64             `json:"total_score"`
+	Questions     []CandidateQuestion `json:"questions"`
 }
 
 type CandidateQuestion struct {
 	SnapshotID      uint64           `json:"snapshot_id"`
+	QuestionID      uint64           `json:"question_id"`
 	Type            string           `json:"type"`
 	Title           string           `json:"title"`
 	Content         map[string]any   `json:"content"`
@@ -458,22 +534,6 @@ func testCasesToJSON(tc []TestCase) []byte {
 }
 
 func calculateRemaining(session *ExamSession, snapshot *ExamSnapshot) int {
-	if session.Status == SessionStatusSubmitted {
-		return 0
-	}
-	if session.StartedAt == nil {
-		return snapshot.DurationMinutes * 60
-	}
-	elapsed := time.Since(*session.StartedAt).Seconds()
-	total := float64(snapshot.DurationMinutes * 60)
-	remaining := total - elapsed
-	if remaining < 0 {
-		return 0
-	}
-	return int(remaining)
-}
-
-func calculateRemainingSeconds(session *ExamSession, snapshot *ExamSnapshot) int {
 	if session.Status == SessionStatusSubmitted {
 		return 0
 	}

@@ -85,23 +85,83 @@ type addPaperQuestionRequest struct {
 	SortOrder  int     `json:"sort_order"`
 }
 
+type updatePaperQuestionRequest struct {
+	Score     float64 `json:"score"`
+	SortOrder int     `json:"sort_order"`
+}
+
+type savePaperOutlineRequest struct {
+	Sections []savePaperSectionRequest `json:"sections"`
+}
+
+type savePaperSectionRequest struct {
+	ID          uint64                     `json:"id"`
+	Title       string                     `json:"title"`
+	Description string                     `json:"description"`
+	SortOrder   int                        `json:"sort_order"`
+	Questions   []savePaperQuestionRequest `json:"questions"`
+}
+
+type savePaperQuestionRequest struct {
+	QuestionID uint64  `json:"question_id"`
+	Score      float64 `json:"score"`
+	SortOrder  int     `json:"sort_order"`
+}
+
 type paperResponse struct {
-	ID          uint64    `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Status      string    `json:"status"`
-	CreatedBy   uint64    `json:"created_by"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID            uint64    `json:"id"`
+	Title         string    `json:"title"`
+	Description   string    `json:"description"`
+	Status        string    `json:"status"`
+	CreatedBy     uint64    `json:"created_by"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	QuestionCount int       `json:"question_count"`
+	TotalScore    float64   `json:"total_score"`
 }
 
 type paperQuestionResponse struct {
 	ID         uint64    `json:"id"`
 	PaperID    uint64    `json:"paper_id"`
+	SectionID  uint64    `json:"section_id"`
 	QuestionID uint64    `json:"question_id"`
 	Score      float64   `json:"score"`
 	SortOrder  int       `json:"sort_order"`
 	CreatedAt  time.Time `json:"created_at"`
+}
+
+type paperQuestionListResponse struct {
+	ID         uint64    `json:"id"`
+	PaperID    uint64    `json:"paper_id"`
+	SectionID  uint64    `json:"section_id"`
+	QuestionID uint64    `json:"question_id"`
+	Score      float64   `json:"score"`
+	SortOrder  int       `json:"sort_order"`
+	CreatedAt  time.Time `json:"created_at"`
+	Title      string    `json:"title"`
+	Type       string    `json:"type"`
+	Difficulty *string   `json:"difficulty,omitempty"`
+	Status     string    `json:"status"`
+}
+
+type paperOutlineResponse struct {
+	Paper         paperResponse          `json:"paper"`
+	Sections      []paperSectionResponse `json:"sections"`
+	QuestionCount int                    `json:"question_count"`
+	TotalScore    float64                `json:"total_score"`
+}
+
+type paperSectionResponse struct {
+	ID            uint64                      `json:"id"`
+	PaperID       uint64                      `json:"paper_id"`
+	Title         string                      `json:"title"`
+	Description   string                      `json:"description"`
+	SortOrder     int                         `json:"sort_order"`
+	QuestionCount int                         `json:"question_count"`
+	TotalScore    float64                     `json:"total_score"`
+	CreatedAt     time.Time                   `json:"created_at"`
+	UpdatedAt     time.Time                   `json:"updated_at"`
+	Questions     []paperQuestionListResponse `json:"questions"`
 }
 
 type saveExamRequest struct {
@@ -147,17 +207,29 @@ type examSnapshotResponse struct {
 }
 
 type candidatePaperResponse struct {
-	ExamSnapshotID   uint64                      `json:"exam_snapshot_id"`
-	Title            string                      `json:"title"`
-	StartTime        time.Time                   `json:"start_time"`
-	EndTime          time.Time                   `json:"end_time"`
-	DurationMinutes  int                         `json:"duration_minutes"`
-	RemainingSeconds int                         `json:"remaining_seconds"`
-	Questions        []candidateQuestionResponse `json:"questions"`
+	ExamSnapshotID   uint64                          `json:"exam_snapshot_id"`
+	Title            string                          `json:"title"`
+	StartTime        time.Time                       `json:"start_time"`
+	EndTime          time.Time                       `json:"end_time"`
+	DurationMinutes  int                             `json:"duration_minutes"`
+	RemainingSeconds int                             `json:"remaining_seconds"`
+	Sections         []candidatePaperSectionResponse `json:"sections,omitempty"`
+	Questions        []candidateQuestionResponse     `json:"questions"`
+}
+
+type candidatePaperSectionResponse struct {
+	SnapshotID    uint64                      `json:"snapshot_id"`
+	Title         string                      `json:"title"`
+	Description   string                      `json:"description"`
+	SortOrder     int                         `json:"sort_order"`
+	QuestionCount int                         `json:"question_count"`
+	TotalScore    float64                     `json:"total_score"`
+	Questions     []candidateQuestionResponse `json:"questions"`
 }
 
 type candidateQuestionResponse struct {
 	SnapshotID      uint64                   `json:"snapshot_id"`
+	QuestionID      uint64                   `json:"question_id"`
 	Type            string                   `json:"type"`
 	Title           string                   `json:"title"`
 	Content         map[string]any           `json:"content"`
@@ -211,6 +283,49 @@ type submissionResponse struct {
 	Result      map[string]any `json:"result,omitempty"`
 	SubmittedAt time.Time      `json:"submitted_at"`
 	JudgedAt    *time.Time     `json:"judged_at"`
+}
+
+type examResultResponse struct {
+	ID             uint64                      `json:"id"`
+	ExamID         uint64                      `json:"exam_id"`
+	ExamSnapshotID uint64                      `json:"exam_snapshot_id"`
+	ExamSessionID  uint64                      `json:"exam_session_id"`
+	UserID         uint64                      `json:"user_id"`
+	Status         string                      `json:"status"`
+	Score          float64                     `json:"score"`
+	MaxScore       float64                     `json:"max_score"`
+	SubmittedAt    time.Time                   `json:"submitted_at"`
+	GradedAt       *time.Time                  `json:"graded_at,omitempty"`
+	Sections       []examResultSectionResponse `json:"sections,omitempty"`
+	Questions      []questionResultResponse    `json:"questions,omitempty"`
+}
+
+type examResultSectionResponse struct {
+	SectionSnapshotID uint64                   `json:"section_snapshot_id"`
+	Title             string                   `json:"title"`
+	Description       string                   `json:"description,omitempty"`
+	SortOrder         int                      `json:"sort_order"`
+	Score             float64                  `json:"score"`
+	MaxScore          float64                  `json:"max_score"`
+	QuestionCount     int                      `json:"question_count"`
+	Questions         []questionResultResponse `json:"questions,omitempty"`
+}
+
+type questionResultResponse struct {
+	ID                 uint64         `json:"id"`
+	SectionSnapshotID  uint64         `json:"section_snapshot_id"`
+	QuestionSnapshotID uint64         `json:"question_snapshot_id"`
+	QuestionID         uint64         `json:"question_id"`
+	Type               string         `json:"type"`
+	SortOrder          int            `json:"sort_order"`
+	QuestionSortOrder  int            `json:"question_sort_order"`
+	Answer             map[string]any `json:"answer,omitempty"`
+	Status             string         `json:"status"`
+	Score              float64        `json:"score"`
+	MaxScore           float64        `json:"max_score"`
+	Result             map[string]any `json:"result,omitempty"`
+	SubmissionID       *uint64        `json:"submission_id,omitempty"`
+	JudgedAt           *time.Time     `json:"judged_at,omitempty"`
 }
 
 type recordEventRequest struct {
@@ -297,6 +412,32 @@ func (r addPaperQuestionRequest) command() library.AddPaperQuestionCommand {
 	return library.AddPaperQuestionCommand{QuestionID: r.QuestionID, Score: r.Score, SortOrder: r.SortOrder}
 }
 
+func (r updatePaperQuestionRequest) command() library.UpdatePaperQuestionCommand {
+	return library.UpdatePaperQuestionCommand{Score: r.Score, SortOrder: r.SortOrder}
+}
+
+func (r savePaperOutlineRequest) command() library.SavePaperOutlineCommand {
+	sections := make([]library.SavePaperSectionCommand, 0, len(r.Sections))
+	for _, section := range r.Sections {
+		questions := make([]library.SavePaperSectionQuestionCommand, 0, len(section.Questions))
+		for _, question := range section.Questions {
+			questions = append(questions, library.SavePaperSectionQuestionCommand{
+				QuestionID: question.QuestionID,
+				Score:      question.Score,
+				SortOrder:  question.SortOrder,
+			})
+		}
+		sections = append(sections, library.SavePaperSectionCommand{
+			ID:          section.ID,
+			Title:       section.Title,
+			Description: section.Description,
+			SortOrder:   section.SortOrder,
+			Questions:   questions,
+		})
+	}
+	return library.SavePaperOutlineCommand{Sections: sections}
+}
+
 func (r saveExamRequest) command(createdBy uint64) exam.SaveExamCommand {
 	return exam.SaveExamCommand{Title: r.Title, Description: r.Description, PaperID: r.PaperID, Status: r.Status, DurationMinutes: r.DurationMinutes, CreatedBy: createdBy}
 }
@@ -347,11 +488,55 @@ func toTestCaseResponse(tc library.TestCase, includeExpected bool) testCaseRespo
 }
 
 func toPaperResponse(p library.Paper) paperResponse {
-	return paperResponse{ID: p.ID, Title: p.Title, Description: p.Description, Status: p.Status, CreatedBy: p.CreatedBy, CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt}
+	return paperResponse{ID: p.ID, Title: p.Title, Description: p.Description, Status: p.Status, CreatedBy: p.CreatedBy, CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt, QuestionCount: p.QuestionCount, TotalScore: p.TotalScore}
 }
 
 func toPaperQuestionResponse(pq library.PaperQuestion) paperQuestionResponse {
-	return paperQuestionResponse{ID: pq.ID, PaperID: pq.PaperID, QuestionID: pq.QuestionID, Score: pq.Score, SortOrder: pq.SortOrder, CreatedAt: pq.CreatedAt}
+	return paperQuestionResponse{ID: pq.ID, PaperID: pq.PaperID, SectionID: pq.SectionID, QuestionID: pq.QuestionID, Score: pq.Score, SortOrder: pq.SortOrder, CreatedAt: pq.CreatedAt}
+}
+
+func toPaperQuestionListResponse(pq library.PaperQuestionWithQuestion) paperQuestionListResponse {
+	return paperQuestionListResponse{
+		ID:         pq.ID,
+		PaperID:    pq.PaperID,
+		SectionID:  pq.SectionID,
+		QuestionID: pq.QuestionID,
+		Score:      pq.Score,
+		SortOrder:  pq.SortOrder,
+		CreatedAt:  pq.CreatedAt,
+		Title:      pq.QuestionTitle,
+		Type:       pq.QuestionType,
+		Difficulty: pq.QuestionDifficulty,
+		Status:     pq.QuestionStatus,
+	}
+}
+
+func toPaperOutlineResponse(outline *library.PaperOutline) paperOutlineResponse {
+	sections := make([]paperSectionResponse, 0, len(outline.Sections))
+	for _, section := range outline.Sections {
+		questions := make([]paperQuestionListResponse, 0, len(section.Questions))
+		for _, question := range section.Questions {
+			questions = append(questions, toPaperQuestionListResponse(question))
+		}
+		sections = append(sections, paperSectionResponse{
+			ID:            section.ID,
+			PaperID:       section.PaperID,
+			Title:         section.Title,
+			Description:   section.Description,
+			SortOrder:     section.SortOrder,
+			QuestionCount: section.QuestionCount,
+			TotalScore:    section.TotalScore,
+			CreatedAt:     section.CreatedAt,
+			UpdatedAt:     section.UpdatedAt,
+			Questions:     questions,
+		})
+	}
+	return paperOutlineResponse{
+		Paper:         toPaperResponse(outline.Paper),
+		Sections:      sections,
+		QuestionCount: outline.QuestionCount,
+		TotalScore:    outline.TotalScore,
+	}
 }
 
 func toExamResponse(e exam.Exam) examResponse {
@@ -360,6 +545,42 @@ func toExamResponse(e exam.Exam) examResponse {
 
 func toSubmissionResponse(s exam.Submission) submissionResponse {
 	return submissionResponse{ID: s.ID, ExamID: s.ExamID, UserID: s.UserID, QuestionID: s.QuestionID, Answer: s.Answer, Code: s.Code, Language: s.Language, Status: s.Status, Score: s.Score, Result: s.Result, SubmittedAt: s.SubmittedAt, JudgedAt: s.JudgedAt}
+}
+
+func toExamResultResponse(r exam.ExamResult, includeSensitive bool) examResultResponse {
+	questions := make([]questionResultResponse, 0, len(r.Questions))
+	for _, q := range r.Questions {
+		item := toQuestionResultResponse(q, includeSensitive)
+		questions = append(questions, item)
+	}
+	sections := make([]examResultSectionResponse, 0, len(r.Sections))
+	for _, section := range r.Sections {
+		sectionQuestions := make([]questionResultResponse, 0, len(section.Questions))
+		for _, q := range section.Questions {
+			sectionQuestions = append(sectionQuestions, toQuestionResultResponse(q, includeSensitive))
+		}
+		sections = append(sections, examResultSectionResponse{
+			SectionSnapshotID: section.SectionSnapshotID,
+			Title:             section.Title,
+			Description:       section.Description,
+			SortOrder:         section.SortOrder,
+			Score:             section.Score,
+			MaxScore:          section.MaxScore,
+			QuestionCount:     section.QuestionCount,
+			Questions:         sectionQuestions,
+		})
+	}
+	return examResultResponse{ID: r.ID, ExamID: r.ExamID, ExamSnapshotID: r.ExamSnapshotID, ExamSessionID: r.ExamSessionID, UserID: r.UserID, Status: r.Status, Score: r.Score, MaxScore: r.MaxScore, SubmittedAt: r.SubmittedAt, GradedAt: r.GradedAt, Sections: sections, Questions: questions}
+}
+
+func toQuestionResultResponse(q exam.QuestionResult, includeSensitive bool) questionResultResponse {
+	item := questionResultResponse{ID: q.ID, SectionSnapshotID: q.SectionSnapshotID, QuestionSnapshotID: q.QuestionSnapshotID, QuestionID: q.QuestionID, Type: q.Type, SortOrder: q.SortOrder, QuestionSortOrder: q.QuestionSortOrder, Status: q.Status, Score: q.Score, MaxScore: q.MaxScore, JudgedAt: q.JudgedAt}
+	if includeSensitive {
+		item.Answer = q.Answer
+		item.Result = q.Result
+		item.SubmissionID = q.SubmissionID
+	}
+	return item
 }
 
 func toClientEventResponse(ev exam.ClientEvent) clientEventResponse {
@@ -385,23 +606,22 @@ func toExamSnapshotResponse(s exam.ExamSnapshot) examSnapshotResponse {
 func toCandidatePaperResponse(p *exam.CandidatePaper) candidatePaperResponse {
 	questions := make([]candidateQuestionResponse, 0, len(p.Questions))
 	for _, q := range p.Questions {
-		sampleCases := make([]sampleTestCaseResponse, 0, len(q.SampleTestCases))
-		for _, sc := range q.SampleTestCases {
-			sampleCases = append(sampleCases, sampleTestCaseResponse{
-				Input:          sc.Input,
-				ExpectedOutput: sc.ExpectedOutput,
-			})
+		questions = append(questions, toCandidateQuestionResponse(q))
+	}
+	sections := make([]candidatePaperSectionResponse, 0, len(p.Sections))
+	for _, section := range p.Sections {
+		sectionQuestions := make([]candidateQuestionResponse, 0, len(section.Questions))
+		for _, q := range section.Questions {
+			sectionQuestions = append(sectionQuestions, toCandidateQuestionResponse(q))
 		}
-		questions = append(questions, candidateQuestionResponse{
-			SnapshotID:      q.SnapshotID,
-			Type:            q.Type,
-			Title:           q.Title,
-			Content:         q.Content,
-			Score:           q.Score,
-			SortOrder:       q.SortOrder,
-			SampleTestCases: sampleCases,
-			StarterCode:     q.StarterCode,
-			TimeLimitMs:     q.TimeLimitMs,
+		sections = append(sections, candidatePaperSectionResponse{
+			SnapshotID:    section.SnapshotID,
+			Title:         section.Title,
+			Description:   section.Description,
+			SortOrder:     section.SortOrder,
+			QuestionCount: section.QuestionCount,
+			TotalScore:    section.TotalScore,
+			Questions:     sectionQuestions,
 		})
 	}
 	return candidatePaperResponse{
@@ -411,7 +631,30 @@ func toCandidatePaperResponse(p *exam.CandidatePaper) candidatePaperResponse {
 		EndTime:          p.EndTime,
 		DurationMinutes:  p.DurationMinutes,
 		RemainingSeconds: p.RemainingSeconds,
+		Sections:         sections,
 		Questions:        questions,
+	}
+}
+
+func toCandidateQuestionResponse(q exam.CandidateQuestion) candidateQuestionResponse {
+	sampleCases := make([]sampleTestCaseResponse, 0, len(q.SampleTestCases))
+	for _, sc := range q.SampleTestCases {
+		sampleCases = append(sampleCases, sampleTestCaseResponse{
+			Input:          sc.Input,
+			ExpectedOutput: sc.ExpectedOutput,
+		})
+	}
+	return candidateQuestionResponse{
+		SnapshotID:      q.SnapshotID,
+		QuestionID:      q.QuestionID,
+		Type:            q.Type,
+		Title:           q.Title,
+		Content:         q.Content,
+		Score:           q.Score,
+		SortOrder:       q.SortOrder,
+		SampleTestCases: sampleCases,
+		StarterCode:     q.StarterCode,
+		TimeLimitMs:     q.TimeLimitMs,
 	}
 }
 

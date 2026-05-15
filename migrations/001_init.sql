@@ -90,16 +90,30 @@ CREATE TABLE IF NOT EXISTS papers (
 );
 CREATE INDEX IF NOT EXISTS idx_papers_created_at ON papers(created_at);
 
+-- paper_sections
+CREATE TABLE IF NOT EXISTS paper_sections (
+    id BIGSERIAL PRIMARY KEY,
+    paper_id BIGINT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_paper_sections_paper_id ON paper_sections(paper_id);
+
 -- paper_questions
 CREATE TABLE IF NOT EXISTS paper_questions (
     id BIGSERIAL PRIMARY KEY,
     paper_id BIGINT NOT NULL,
+    section_id BIGINT,
     question_id BIGINT NOT NULL,
     score DOUBLE PRECISION NOT NULL DEFAULT 0,
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_paper_questions_paper_id ON paper_questions(paper_id);
+CREATE INDEX IF NOT EXISTS idx_paper_questions_section_id ON paper_questions(section_id);
 CREATE INDEX IF NOT EXISTS idx_paper_questions_question_id ON paper_questions(question_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_paper_questions_paper_question ON paper_questions(paper_id, question_id);
 

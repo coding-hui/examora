@@ -1,30 +1,30 @@
-import { GlobalOutlined } from "@ant-design/icons";
-import { Dropdown } from "antd";
-import React from "react";
 import {
+  getAllLocales,
   getLocale,
   setLocale,
-  getAllLocales,
-} from "@@/plugin-locale/localeExports";
-import { createStyles } from "antd-style";
+} from '@@/plugin-locale/localeExports';
+import { GlobalOutlined } from '@ant-design/icons';
+import { Dropdown } from 'antd';
+import { createStyles } from 'antd-style';
+import React from 'react';
 
 const useStyles = createStyles(() => ({
   trigger: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 12,
-    cursor: "pointer",
+    cursor: 'pointer',
     fontSize: 18,
-    color: "inherit",
-    transition: "background 0.2s",
-    "&:hover": { background: "rgba(0,0,0,0.04)" },
+    color: 'inherit',
+    transition: 'background 0.2s',
+    '&:hover': { background: 'rgba(0,0,0,0.04)' },
   },
 }));
 
 const localeLabels: Record<string, string> = {
-  "zh-CN": "简体中文",
-  "en-US": "English",
+  'zh-CN': '简体中文',
+  'en-US': 'English',
 };
 
 export const SelectLang: React.FC = () => {
@@ -40,7 +40,7 @@ export const SelectLang: React.FC = () => {
           label: localeLabels[loc] || loc,
         })),
       }}
-      trigger={["click"]}
+      trigger={['click']}
     >
       <span className={styles.trigger}>
         <GlobalOutlined />
@@ -49,4 +49,4 @@ export const SelectLang: React.FC = () => {
   );
 };
 
-export type SiderTheme = "light" | "dark";
+export type SiderTheme = 'light' | 'dark';

@@ -275,6 +275,14 @@ func normalizeAndValidateQuestionCommand(cmd *SaveQuestionCommand) error {
 	cmd.Type = strings.TrimSpace(cmd.Type)
 	cmd.Title = strings.TrimSpace(cmd.Title)
 	cmd.Status = strings.TrimSpace(cmd.Status)
+	if cmd.Difficulty != nil {
+		difficulty := strings.ToUpper(strings.TrimSpace(*cmd.Difficulty))
+		if difficulty == "" {
+			cmd.Difficulty = nil
+		} else {
+			cmd.Difficulty = &difficulty
+		}
+	}
 	if cmd.Status == "" {
 		cmd.Status = QuestionStatusDraft
 	}
@@ -303,6 +311,9 @@ func normalizeAndValidateQuestionCommand(cmd *SaveQuestionCommand) error {
 	if cmd.MemoryLimitMB < 1 {
 		return fmt.Errorf("%w: memory limit must be positive", ErrInvalidQuestion)
 	}
+	if !validQuestionDifficulty(cmd.Difficulty) {
+		return fmt.Errorf("%w: unsupported question difficulty", ErrInvalidQuestion)
+	}
 
 	if err := validateQuestionShape(cmd.Type, cmd.Content, cmd.Answer); err != nil {
 		return err
@@ -311,6 +322,8 @@ func normalizeAndValidateQuestionCommand(cmd *SaveQuestionCommand) error {
 		if err := validateProgrammingFields(cmd.Language, cmd.TestCases); err != nil {
 			return err
 		}
+	} else if len(cmd.TestCases) > 0 {
+		return fmt.Errorf("%w: test cases are only supported for programming questions", ErrInvalidQuestion)
 	}
 	return nil
 }
@@ -559,6 +572,18 @@ func validQuestionType(questionType string) bool {
 		QuestionTypeFillBlank,
 		QuestionTypeShortAnswer,
 		QuestionTypeProgramming:
+		return true
+	default:
+		return false
+	}
+}
+
+func validQuestionDifficulty(difficulty *string) bool {
+	if difficulty == nil {
+		return true
+	}
+	switch *difficulty {
+	case "EASY", "MEDIUM", "HARD":
 		return true
 	default:
 		return false

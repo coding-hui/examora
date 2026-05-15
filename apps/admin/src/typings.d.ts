@@ -1,17 +1,17 @@
-declare module "slash2";
-declare module "*.css";
-declare module "*.less";
-declare module "*.scss";
-declare module "*.sass";
-declare module "*.svg";
-declare module "*.png";
-declare module "*.jpg";
-declare module "*.jpeg";
-declare module "*.gif";
-declare module "*.bmp";
-declare module "*.tiff";
-declare module "omit.js";
-declare module "mockjs";
+declare module 'slash2';
+declare module '*.css';
+declare module '*.less';
+declare module '*.scss';
+declare module '*.sass';
+declare module '*.svg';
+declare module '*.png';
+declare module '*.jpg';
+declare module '*.jpeg';
+declare module '*.gif';
+declare module '*.bmp';
+declare module '*.tiff';
+declare module 'omit.js';
+declare module 'mockjs';
 
 declare const __APP_VERSION__: string;
 
@@ -29,14 +29,14 @@ declare namespace API {
   type CurrentUser = CurrentUser;
 }
 
-declare module "@umijs/max" {
-  import type { AxiosRequestConfig } from "axios";
-  import type { ProLayoutProps, HeaderProps } from "@ant-design/pro-components";
-  import type { History } from "history";
+declare module '@umijs/max' {
+  import type { AxiosRequestConfig } from 'axios';
+  import type { ProLayoutProps, HeaderProps } from '@ant-design/pro-components';
+  import type { History } from 'history';
 
   // Re-export everything that @umijs/max provides at runtime
   // @ts-ignore - @umijs/max types are incomplete at package install time
-  export * from "@umijs/max";
+  export * from '@umijs/max';
 
   // Add missing type exports
   export interface RequestConfig<T = any> extends AxiosRequestConfig {}
@@ -53,7 +53,7 @@ declare module "@umijs/max" {
 
   export type RunTimeLayoutConfig = (initData: InitDataType) => Omit<
     ProLayoutProps,
-    "rightContentRender"
+    'rightContentRender'
   > & {
     childrenRender?: (dom: React.ReactNode, props: any) => React.ReactNode;
     unAccessible?: React.ReactNode;
@@ -66,15 +66,15 @@ declare module "@umijs/max" {
             userConfig: any;
             runtimeConfig: RunTimeLayoutConfig;
             loading: boolean;
-            initialState: InitDataType["initialState"];
-            setInitialState: InitDataType["setInitialState"];
-          }
+            initialState: InitDataType['initialState'];
+            setInitialState: InitDataType['setInitialState'];
+          },
         ) => React.ReactNode)
       | false;
     rightRender?: (
-      initialState: InitDataType["initialState"],
-      setInitialState: InitDataType["setInitialState"],
-      runtimeConfig: RunTimeLayoutConfig
+      initialState: InitDataType['initialState'],
+      setInitialState: InitDataType['setInitialState'],
+      runtimeConfig: RunTimeLayoutConfig,
     ) => React.ReactNode;
   };
 
@@ -87,7 +87,7 @@ declare module "@umijs/max" {
     children?: React.ReactNode;
   }
   export const Link: React.FC<LinkProps>;
-  export function useModel(model: "@@initialState"): {
+  export function useModel(model: '@@initialState'): {
     initialState?: {
       currentUser?: API.CurrentUser | null;
       forbidden?: boolean;
@@ -101,7 +101,7 @@ declare module "@umijs/max" {
   export interface IntlShape {
     formatMessage: (
       id: { id: string; defaultMessage?: string },
-      values?: Record<string, unknown>
+      values?: Record<string, unknown>,
     ) => string;
   }
   export function useIntl(): IntlShape;

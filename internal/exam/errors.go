@@ -6,6 +6,7 @@ var (
 	ErrForbidden                   = errors.New("submission does not belong to current user")
 	ErrExamNotFound                = errors.New("exam not found")
 	ErrSubmissionNotFound          = errors.New("submission not found")
+	ErrQuestionResultNotFound      = errors.New("question result not found")
 	ErrInvalidExamStatusTransition = errors.New("invalid exam status transition")
 	ErrSnapshotNotFound            = errors.New("snapshot not found")
 	ErrSessionNotFound             = errors.New("exam session not found")
@@ -18,6 +19,7 @@ var (
 func IsNotFound(err error) bool {
 	return errors.Is(err, ErrExamNotFound) ||
 		errors.Is(err, ErrSubmissionNotFound) ||
+		errors.Is(err, ErrQuestionResultNotFound) ||
 		errors.Is(err, ErrSnapshotNotFound) ||
 		errors.Is(err, ErrSessionNotFound)
 }

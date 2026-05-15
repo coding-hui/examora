@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/coding-hui/examora/internal/exam"
 	"github.com/coding-hui/examora/internal/transport/http/response"
 )
 
@@ -13,6 +14,8 @@ func (s *Server) registerExamAdminRoutes(admin *gin.RouterGroup) {
 	admin.PUT("/exams/:id", s.updateExam)
 	admin.POST("/exams/:id/publish", s.publishExamWithSnapshot)
 	admin.POST("/exams/:id/close", s.closeExam)
+	admin.GET("/exams/:id/results", s.listExamResults)
+	admin.GET("/exam-results/:id", s.getExamResult)
 }
 
 func (s *Server) registerExamClientRoutes(client *gin.RouterGroup) {
@@ -22,6 +25,7 @@ func (s *Server) registerExamClientRoutes(client *gin.RouterGroup) {
 	client.GET("/exams/:id/sessions/current", s.getCurrentSession)
 	client.POST("/exams/:id/answers", s.saveAnswers)
 	client.POST("/exams/:id/submit", s.submitExam)
+	client.GET("/exams/:id/result", s.getMyExamResult)
 
 	client.POST("/exams/:id/submissions", s.createSubmission)
 	client.GET("/submissions/:id", s.getSubmission)
@@ -204,6 +208,48 @@ func (s *Server) getSubmission(c *gin.Context) {
 		return
 	}
 	response.Success(c, toSubmissionResponse(*submission))
+}
+
+func (s *Server) listExamResults(c *gin.Context) {
+	examID, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	pageNum, pageSize := pageQuery(c)
+	items, total, err := s.exam.ListExamResults(c.Request.Context(), examID, pageNum, pageSize)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.PageSuccessWith(c, items, total, pageNum, pageSize, func(item exam.ExamResult) examResultResponse {
+		return toExamResultResponse(item, false)
+	})
+}
+
+func (s *Server) getExamResult(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	result, err := s.exam.GetExamResult(c.Request.Context(), id)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toExamResultResponse(*result, true))
+}
+
+func (s *Server) getMyExamResult(c *gin.Context) {
+	examID, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	result, err := s.exam.GetExamResultForUser(c.Request.Context(), examID, currentUserID(c))
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toExamResultResponse(*result, false))
 }
 
 func (s *Server) recordClientEvent(defaultType string) gin.HandlerFunc {

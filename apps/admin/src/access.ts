@@ -4,7 +4,7 @@
 export default function access(
   initialState:
     | { currentUser?: API.CurrentUser; forbidden?: boolean }
-    | undefined
+    | undefined,
 ) {
   const { currentUser, forbidden } = initialState ?? {};
 
@@ -14,7 +14,7 @@ export default function access(
   }
 
   // Check for admin role in the user's roles array
-  const isAdmin = currentUser?.roles?.includes("admin") ?? false;
+  const isAdmin = currentUser?.roles?.includes('admin') ?? false;
   return {
     canAdmin: isAdmin,
   };

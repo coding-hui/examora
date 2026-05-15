@@ -22,6 +22,7 @@ type examFixture struct {
 	examStore    *examstore.Store
 	library      *library.Service
 	libraryStore *librarystore.Store
+	judge        *recordingJudgeDispatcher
 }
 
 func newExamFixture(t *testing.T) *examFixture {
@@ -36,7 +37,8 @@ func newExamFixture(t *testing.T) *examFixture {
 	require.NoError(t, err)
 
 	examStore := examstore.New(db)
-	examService, err := exam.ProvideService(examStore, libraryStore, nil, db)
+	judgeDispatcher := &recordingJudgeDispatcher{}
+	examService, err := exam.ProvideService(examStore, libraryStore, judgeDispatcher, db)
 	require.NoError(t, err)
 
 	return &examFixture{
@@ -44,7 +46,29 @@ func newExamFixture(t *testing.T) *examFixture {
 		examStore:    examStore,
 		library:      libraryService,
 		libraryStore: libraryStore,
+		judge:        judgeDispatcher,
 	}
+}
+
+type recordedJudgeTask struct {
+	SubmissionID uint64
+	QuestionID   uint64
+	UserID       uint64
+	Language     string
+}
+
+type recordingJudgeDispatcher struct {
+	tasks []recordedJudgeTask
+}
+
+func (r *recordingJudgeDispatcher) CreateAndEnqueue(_ context.Context, submissionID, questionID, userID uint64, language string) error {
+	r.tasks = append(r.tasks, recordedJudgeTask{
+		SubmissionID: submissionID,
+		QuestionID:   questionID,
+		UserID:       userID,
+		Language:     language,
+	})
+	return nil
 }
 
 func strPtr(value string) *string {
@@ -105,6 +129,93 @@ func publishableExam(t *testing.T, fx *examFixture) *exam.Exam {
 	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
 		Title:           "M1 exam",
 		Description:     "snapshot flow",
+		PaperID:         &paper.ID,
+		Status:          exam.StatusDraft,
+		DurationMinutes: 60,
+	})
+	require.NoError(t, err)
+	return created
+}
+
+func objectiveExam(t *testing.T, fx *examFixture) *exam.Exam {
+	t.Helper()
+	ctx := context.Background()
+
+	questions := []struct {
+		title   string
+		qtype   string
+		content map[string]any
+		answer  map[string]any
+		score   float64
+	}{
+		{
+			title: "Single choice",
+			qtype: library.QuestionTypeSingleChoice,
+			content: map[string]any{
+				"text": "Pick A",
+				"options": []any{
+					map[string]any{"key": "A", "text": "A"},
+					map[string]any{"key": "B", "text": "B"},
+				},
+			},
+			answer: map[string]any{"choice": "A"},
+			score:  10,
+		},
+		{
+			title: "Multiple choice",
+			qtype: library.QuestionTypeMultipleChoice,
+			content: map[string]any{
+				"text": "Pick A and C",
+				"options": []any{
+					map[string]any{"key": "A", "text": "A"},
+					map[string]any{"key": "B", "text": "B"},
+					map[string]any{"key": "C", "text": "C"},
+				},
+			},
+			answer: map[string]any{"choices": []any{"A", "C"}},
+			score:  10,
+		},
+		{
+			title:   "True false",
+			qtype:   library.QuestionTypeTrueFalse,
+			content: map[string]any{"text": "Examora is an exam platform."},
+			answer:  map[string]any{"correct": true},
+			score:   10,
+		},
+		{
+			title:   "Fill blank",
+			qtype:   library.QuestionTypeFillBlank,
+			content: map[string]any{"text": "Fill two blanks."},
+			answer:  map[string]any{"blanks": []any{"alpha", "beta"}},
+			score:   10,
+		},
+	}
+
+	paper, err := fx.library.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Objective paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+
+	for index, item := range questions {
+		created, err := fx.library.CreateQuestion(ctx, library.SaveQuestionCommand{
+			Type:    item.qtype,
+			Title:   item.title,
+			Content: item.content,
+			Answer:  item.answer,
+			Status:  library.QuestionStatusPublished,
+		})
+		require.NoError(t, err)
+		_, err = fx.library.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+			QuestionID: created.ID,
+			Score:      item.score,
+			SortOrder:  index + 1,
+		})
+		require.NoError(t, err)
+	}
+
+	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
+		Title:           "Objective exam",
 		PaperID:         &paper.ID,
 		Status:          exam.StatusDraft,
 		DurationMinutes: 60,
@@ -179,6 +290,110 @@ func TestCandidatePaperIsSafeAndUsesExamTitle(t *testing.T) {
 	require.Equal(t, "hello", programming.SampleTestCases[0].ExpectedOutput)
 }
 
+func TestPublishSnapshotFreezesPaperSections(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	first, err := fx.library.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeSingleChoice,
+		Title:   "Pick A",
+		Content: map[string]any{"text": "Pick A", "options": []any{map[string]any{"key": "A", "text": "A"}, map[string]any{"key": "B", "text": "B"}}},
+		Answer:  map[string]any{"choice": "A"},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	second, err := fx.library.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeShortAnswer,
+		Title:   "Explain HTTP",
+		Content: map[string]any{"text": "Explain HTTP"},
+		Answer:  map[string]any{"reference": "protocol"},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	paper, err := fx.library.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Structured paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	outline, err := fx.library.SavePaperOutline(ctx, paper.ID, library.SavePaperOutlineCommand{
+		Sections: []library.SavePaperSectionCommand{
+			{
+				Title:       "第一大题 单选题",
+				Description: "每题 2 分",
+				SortOrder:   1,
+				Questions: []library.SavePaperSectionQuestionCommand{
+					{QuestionID: first.ID, Score: 2, SortOrder: 1},
+				},
+			},
+			{
+				Title:       "第二大题 简答题",
+				Description: "按要点给分",
+				SortOrder:   2,
+				Questions: []library.SavePaperSectionQuestionCommand{
+					{QuestionID: second.ID, Score: 10, SortOrder: 1},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
+		Title:           "Structured exam",
+		PaperID:         &paper.ID,
+		Status:          exam.StatusDraft,
+		DurationMinutes: 60,
+	})
+	require.NoError(t, err)
+
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+
+	sections, err := fx.examStore.ListPaperSectionSnapshots(ctx, snapshot.ID)
+	require.NoError(t, err)
+	require.Len(t, sections, 2)
+	require.Equal(t, outline.Sections[0].ID, sections[0].SourceSectionID)
+	require.Equal(t, "第一大题 单选题", sections[0].Title)
+	require.Equal(t, 2.0, sections[0].TotalScore)
+	require.Equal(t, "第二大题 简答题", sections[1].Title)
+
+	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
+	require.NoError(t, err)
+	require.Len(t, snaps, 2)
+	require.Equal(t, sections[0].ID, snaps[0].SectionSnapshotID)
+	require.Equal(t, 1, snaps[0].QuestionSortOrder)
+	require.Equal(t, sections[1].ID, snaps[1].SectionSnapshotID)
+
+	_, err = fx.library.SavePaperOutline(ctx, paper.ID, library.SavePaperOutlineCommand{
+		Sections: []library.SavePaperSectionCommand{
+			{
+				ID:        outline.Sections[0].ID,
+				Title:     "修改后的大题",
+				SortOrder: 1,
+				Questions: []library.SavePaperSectionQuestionCommand{
+					{QuestionID: first.ID, Score: 99, SortOrder: 1},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	sections, err = fx.examStore.ListPaperSectionSnapshots(ctx, snapshot.ID)
+	require.NoError(t, err)
+	require.Equal(t, "第一大题 单选题", sections[0].Title)
+	require.Equal(t, 2.0, sections[0].TotalScore)
+
+	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.NoError(t, err)
+	candidatePaper, err := fx.exams.GetCandidatePaper(ctx, created.ID, 42)
+	require.NoError(t, err)
+	require.Len(t, candidatePaper.Sections, 2)
+	require.Equal(t, "第一大题 单选题", candidatePaper.Sections[0].Title)
+	require.Len(t, candidatePaper.Sections[0].Questions, 1)
+	require.Equal(t, first.ID, candidatePaper.Sections[0].Questions[0].QuestionID)
+	require.Equal(t, "第二大题 简答题", candidatePaper.Sections[1].Title)
+}
+
 func TestSaveAnswersRequiresInProgressSessionAndKnownSnapshotQuestion(t *testing.T) {
 	fx := newExamFixture(t)
 	ctx := context.Background()
@@ -227,6 +442,135 @@ func TestSubmitExamIsIdempotent(t *testing.T) {
 	require.NotNil(t, session.SubmittedAt)
 	require.NotNil(t, session.RemainingSeconds)
 	require.Zero(t, *session.RemainingSeconds)
+}
+
+func TestSubmitExamGradesStrictObjectiveQuestions(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+	created := objectiveExam(t, fx)
+
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+	session, err := fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.NoError(t, err)
+
+	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
+	require.NoError(t, err)
+	require.Len(t, snaps, 4)
+
+	require.NoError(t, fx.exams.SaveAnswers(ctx, created.ID, 42, map[string]map[string]any{
+		strconv.FormatUint(snaps[0].ID, 10): {"choice": "A"},
+		strconv.FormatUint(snaps[1].ID, 10): {"choices": []any{"C", "A"}},
+		strconv.FormatUint(snaps[2].ID, 10): {"correct": true},
+		strconv.FormatUint(snaps[3].ID, 10): {"blanks": []any{"alpha", "wrong"}},
+	}))
+
+	require.NoError(t, fx.exams.SubmitExam(ctx, created.ID, 42))
+
+	result, err := fx.exams.GetExamResultForUser(ctx, created.ID, 42)
+	require.NoError(t, err)
+	require.Equal(t, session.ID, result.ExamSessionID)
+	require.Equal(t, exam.ResultStatusGraded, result.Status)
+	require.Equal(t, 40.0, result.MaxScore)
+	require.Equal(t, 30.0, result.Score)
+	require.Len(t, result.Questions, 4)
+	require.Equal(t, 10.0, result.Questions[0].Score)
+	require.Equal(t, 10.0, result.Questions[1].Score)
+	require.Equal(t, 10.0, result.Questions[2].Score)
+	require.Equal(t, 0.0, result.Questions[3].Score)
+}
+
+func TestSubmitExamCreatesProgrammingJudgeTaskFromDraft(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+	created := publishableExam(t, fx)
+
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.NoError(t, err)
+	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
+	require.NoError(t, err)
+
+	require.NoError(t, fx.exams.SaveAnswers(ctx, created.ID, 42, map[string]map[string]any{
+		strconv.FormatUint(snaps[0].ID, 10): {"choice": "A"},
+		strconv.FormatUint(snaps[1].ID, 10): {"code": "package main\nfunc main() {}", "language": "GO"},
+	}))
+
+	require.NoError(t, fx.exams.SubmitExam(ctx, created.ID, 42))
+	require.NoError(t, fx.exams.SubmitExam(ctx, created.ID, 42))
+
+	result, err := fx.exams.GetExamResultForUser(ctx, created.ID, 42)
+	require.NoError(t, err)
+	require.Equal(t, exam.ResultStatusJudging, result.Status)
+	require.Equal(t, 30.0, result.MaxScore)
+	require.Equal(t, 10.0, result.Score)
+	require.Len(t, fx.judge.tasks, 1)
+	require.Equal(t, snaps[1].ID, fx.judge.tasks[0].QuestionID)
+	require.Equal(t, uint64(42), fx.judge.tasks[0].UserID)
+	require.Equal(t, "GO", fx.judge.tasks[0].Language)
+}
+
+func TestJudgeResultUpdatesProgrammingQuestionAndExamScore(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+	created := publishableExam(t, fx)
+
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.NoError(t, err)
+	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
+	require.NoError(t, err)
+
+	require.NoError(t, fx.exams.SaveAnswers(ctx, created.ID, 42, map[string]map[string]any{
+		strconv.FormatUint(snaps[0].ID, 10): {"choice": "A"},
+		strconv.FormatUint(snaps[1].ID, 10): {"code": "package main\nfunc main() {}", "language": "GO"},
+	}))
+	require.NoError(t, fx.exams.SubmitExam(ctx, created.ID, 42))
+	require.Len(t, fx.judge.tasks, 1)
+
+	require.NoError(t, fx.examStore.UpdateJudgeResult(ctx, fx.judge.tasks[0].SubmissionID, "WRONG_ANSWER", 50, map[string]any{
+		"total_cases":  2,
+		"passed_cases": 1,
+		"final_status": "WRONG_ANSWER",
+	}))
+
+	result, err := fx.exams.GetExamResultForUser(ctx, created.ID, 42)
+	require.NoError(t, err)
+	require.Equal(t, exam.ResultStatusGraded, result.Status)
+	require.Equal(t, 20.0, result.Score)
+	require.Equal(t, 30.0, result.MaxScore)
+	require.Equal(t, 10.0, result.Questions[1].Score)
+	require.Equal(t, "WRONG_ANSWER", result.Questions[1].Status)
+	require.NotNil(t, result.GradedAt)
+}
+
+func TestJudgeTestCasesComeFromFrozenQuestionSnapshot(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+	created := publishableExam(t, fx)
+
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
+	require.NoError(t, err)
+
+	cases, err := fx.examStore.ListJudgeTestCases(ctx, snaps[1].ID)
+	require.NoError(t, err)
+	require.Len(t, cases, 2)
+	require.Equal(t, "", cases[0].Input)
+	require.Equal(t, "hello", cases[0].ExpectedOutput)
+	require.Equal(t, "hidden", cases[1].Input)
+	require.Equal(t, "secret", cases[1].ExpectedOutput)
 }
 
 func TestPublishRejectsInvalidTimeWindow(t *testing.T) {

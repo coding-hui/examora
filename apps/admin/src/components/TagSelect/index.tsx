@@ -1,9 +1,9 @@
-import { DownOutlined, UpOutlined } from "@ant-design/icons";
-import { useMergedState } from "@rc-component/util";
-import { Tag } from "antd";
-import { clsx } from "clsx";
-import React, { type FC, useMemo, useState } from "react";
-import useStyles from "./index.style";
+import { DownOutlined, UpOutlined } from '@ant-design/icons';
+import { useMergedState } from '@rc-component/util';
+import { Tag } from 'antd';
+import { clsx } from 'clsx';
+import React, { type FC, useMemo, useState } from 'react';
+import useStyles from './index.style';
 
 const { CheckableTag } = Tag;
 export interface TagSelectOptionProps {
@@ -68,18 +68,18 @@ const TagSelect: FC<TagSelectProps> & {
       value: props.value,
       defaultValue: props.defaultValue,
       onChange: props.onChange,
-    }
+    },
   );
 
   const isTagSelectOption = (node: TagSelectOptionElement) =>
     node?.type &&
     (node.type.isTagSelectOption ||
-      node.type.displayName === "TagSelectOption");
+      node.type.displayName === 'TagSelectOption');
 
   // Memoize all tags to avoid recalculating on every render
   const allTags = useMemo(() => {
     const childrenArray = React.Children.toArray(
-      children
+      children,
     ) as TagSelectOptionElement[];
     return childrenArray
       .filter((child) => isTagSelectOption(child))
@@ -103,9 +103,9 @@ const TagSelect: FC<TagSelectProps> & {
   };
   const checkedAll = allTags.length === value?.length && allTags.length > 0;
   const {
-    expandText = "展开",
-    collapseText = "收起",
-    selectAllText = "全部",
+    expandText = '展开',
+    collapseText = '收起',
+    selectAllText = '全部',
   } = actionsText;
   const cls = clsx(styles.tagSelect, className, {
     [styles.hasExpandTag]: expandable,

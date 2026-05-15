@@ -4,7 +4,7 @@ import {
   line as d3Line,
   scaleLinear,
   scalePoint,
-} from "d3";
+} from 'd3';
 
 export type TrendPoint = {
   label: string;
@@ -38,11 +38,11 @@ const chartWidth = 640;
 const toSeries = ({
   data,
   series,
-  color = "#18181b",
+  color = '#18181b',
   showArea = false,
 }: Pick<
   TrendLineChartProps,
-  "data" | "series" | "color" | "showArea"
+  'data' | 'series' | 'color' | 'showArea'
 >): TrendSeries[] => {
   if (series?.length) {
     return series;
@@ -50,8 +50,8 @@ const toSeries = ({
 
   return [
     {
-      key: "trend",
-      label: "趋势",
+      key: 'trend',
+      label: '趋势',
       color,
       data: data ?? [],
       showArea,
@@ -131,7 +131,7 @@ const TrendLineChart: React.FC<TrendLineChartProps> = ({
 
   return (
     <div
-      className={compact ? "trend-chart trend-chart-compact" : "trend-chart"}
+      className={compact ? 'trend-chart trend-chart-compact' : 'trend-chart'}
     >
       {showLegend && (
         <div className="trend-chart-legend">
@@ -179,7 +179,7 @@ const TrendLineChart: React.FC<TrendLineChartProps> = ({
                   className="trend-chart-line"
                   d={linePath}
                   stroke={item.color}
-                  strokeDasharray={item.dashed ? "5 5" : undefined}
+                  strokeDasharray={item.dashed ? '5 5' : undefined}
                 />
               )}
               {showDots &&

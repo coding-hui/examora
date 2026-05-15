@@ -1,5 +1,18 @@
 export type RoleCode = "SUPER_ADMIN" | "TEACHER" | "PROCTOR" | "STUDENT";
 
+export interface ApiEnvelope<T = unknown> {
+  code: number;
+  message: string;
+  data: T;
+}
+
+export interface PageResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
 export type QuestionType =
   | "SINGLE_CHOICE"
   | "MULTIPLE_CHOICE"
@@ -61,6 +74,8 @@ export type ExamStatus =
   | "CLOSED"
   | "ARCHIVED";
 
+export type PaperStatus = "DRAFT" | "PUBLISHED";
+
 export type ExamSessionStatus =
   | "NOT_STARTED"
   | "IN_PROGRESS"
@@ -69,6 +84,7 @@ export type ExamSessionStatus =
 
 export type SubmissionStatus =
   | "PENDING"
+  | "QUEUED"
   | "JUDGING"
   | "COMPILING"
   | "RUNNING"
@@ -81,6 +97,19 @@ export type SubmissionStatus =
   | "MEMORY_LIMIT_EXCEEDED"
   | "OUTPUT_LIMIT_EXCEEDED"
   | "SYSTEM_ERROR";
+
+export type JudgeStatus =
+  | "PENDING"
+  | "QUEUED"
+  | "RUNNING"
+  | "ACCEPTED"
+  | "WRONG_ANSWER"
+  | "COMPILE_ERROR"
+  | "RUNTIME_ERROR"
+  | "TIME_LIMIT_EXCEEDED"
+  | "MEMORY_LIMIT_EXCEEDED"
+  | "SYSTEM_ERROR"
+  | "CANCELED";
 
 // =====================================================================
 // M1: Admin-facing types (includes sensitive data)
@@ -135,6 +164,8 @@ export interface QuestionPageResponse {
   page_size: number;
 }
 
+export type AdminQuestionPageResponse = PageResponse<AdminQuestion>;
+
 export interface SaveQuestionPayload {
   type: QuestionType;
   title: string;
@@ -148,6 +179,110 @@ export interface SaveQuestionPayload {
   status: string;
   test_cases?: Omit<AdminTestCase, "id" | "question_id">[];
 }
+
+export interface AdminPaper {
+  id: number;
+  title: string;
+  description: string;
+  status: PaperStatus;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  question_count?: number;
+  total_score?: number;
+}
+
+export interface SavePaperPayload {
+  title: string;
+  description: string;
+  status: PaperStatus;
+}
+
+export interface AdminPaperQuestion {
+  id: number;
+  paper_id: number;
+  section_id: number;
+  question_id: number;
+  score: number;
+  sort_order: number;
+  created_at: string;
+  title?: string;
+  type?: QuestionType;
+  difficulty?: string;
+  status?: string;
+}
+
+export interface AddPaperQuestionPayload {
+  question_id: number;
+  score: number;
+  sort_order: number;
+}
+
+export interface AdminPaperSection {
+  id: number;
+  paper_id: number;
+  title: string;
+  description: string;
+  sort_order: number;
+  question_count: number;
+  total_score: number;
+  created_at: string;
+  updated_at: string;
+  questions: AdminPaperQuestion[];
+}
+
+export interface AdminPaperOutline {
+  paper: AdminPaper;
+  sections: AdminPaperSection[];
+  question_count: number;
+  total_score: number;
+}
+
+export interface SavePaperOutlinePayload {
+  sections: Array<{
+    id?: number;
+    title: string;
+    description?: string;
+    sort_order: number;
+    questions: Array<{
+      question_id: number;
+      score: number;
+      sort_order: number;
+    }>;
+  }>;
+}
+
+export type AdminPaperPageResponse = PageResponse<AdminPaper>;
+
+export interface AdminExam {
+  id: number;
+  title: string;
+  description: string;
+  paper_id: number | null;
+  status: ExamStatus;
+  start_time: string | null;
+  end_time: string | null;
+  duration_minutes: number;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SaveExamPayload {
+  title: string;
+  description: string;
+  paper_id?: number | null;
+  status: ExamStatus;
+  duration_minutes: number;
+}
+
+export interface PublishExamPayload {
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+}
+
+export type AdminExamPageResponse = PageResponse<AdminExam>;
 
 // =====================================================================
 // M1: Candidate-facing types (excludes answer and hidden test cases)
@@ -183,12 +318,24 @@ export interface CandidatePaper {
   end_time: string;
   duration_minutes: number;
   remaining_seconds: number;
+  sections?: CandidatePaperSection[];
+  questions: CandidateQuestion[];
+}
+
+export interface CandidatePaperSection {
+  snapshot_id: number;
+  title: string;
+  description: string;
+  sort_order: number;
+  question_count: number;
+  total_score: number;
   questions: CandidateQuestion[];
 }
 
 /** Candidate-facing question snapshot */
 export interface CandidateQuestion {
   snapshot_id: number;
+  question_id?: number;
   type: QuestionType;
   title: string;
   content: Record<string, unknown>;
@@ -216,4 +363,57 @@ export interface ProgrammingSubmission {
   question_id: number;
   code: string;
   language: string;
+}
+
+export type ExamResultStatus = "GRADED" | "JUDGING" | "MANUAL_REQUIRED";
+
+export type QuestionResultStatus =
+  | "CORRECT"
+  | "INCORRECT"
+  | "UNANSWERED"
+  | "JUDGING"
+  | "MANUAL_REQUIRED"
+  | JudgeStatus;
+
+export interface ExamResult {
+  id: number;
+  exam_id: number;
+  exam_snapshot_id: number;
+  exam_session_id: number;
+  user_id: number;
+  status: ExamResultStatus;
+  score: number;
+  max_score: number;
+  submitted_at: string;
+  graded_at?: string;
+  sections?: ExamResultSection[];
+  questions?: QuestionResult[];
+}
+
+export interface ExamResultSection {
+  section_snapshot_id: number;
+  title: string;
+  description?: string;
+  sort_order: number;
+  score: number;
+  max_score: number;
+  question_count: number;
+  questions?: QuestionResult[];
+}
+
+export interface QuestionResult {
+  id: number;
+  section_snapshot_id: number;
+  question_snapshot_id: number;
+  question_id: number;
+  type: QuestionType;
+  sort_order: number;
+  question_sort_order: number;
+  answer?: Record<string, unknown>;
+  status: QuestionResultStatus;
+  score: number;
+  max_score: number;
+  result?: Record<string, unknown>;
+  submission_id?: number;
+  judged_at?: string;
 }

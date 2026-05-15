@@ -1,14 +1,20 @@
-import { request, useIntl } from "@umijs/max";
+import { PageContainer } from '@ant-design/pro-components';
+import { history, request, useIntl } from '@umijs/max';
 import {
+  Alert,
   App as AntdApp,
   Button,
   Card,
   DatePicker,
+  Descriptions,
   Form,
   InputNumber,
-} from "antd";
-import type dayjs from "dayjs";
-import React, { useEffect, useState } from "react";
+  Space,
+  Tag,
+} from 'antd';
+import type dayjs from 'dayjs';
+import React, { useEffect, useState } from 'react';
+import { requestErrorMessage } from '@/utils/request';
 
 interface Exam {
   id: number;
@@ -19,24 +25,23 @@ interface Exam {
   duration_minutes: number;
 }
 
-const ExamPublish: React.FC = () => {
+const ExamPublishContent: React.FC = () => {
   const intl = useIntl();
   const { message } = AntdApp.useApp();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [exam, setExam] = useState<Exam | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Get exam ID from URL path: /exams/:id/publish
-  const pathParts = window.location.pathname.split("/");
-  const examId = pathParts[pathParts.length - 2]; // 'publish' is last, id is second to last
+  const pathParts = window.location.pathname.split('/');
+  const examId = pathParts[pathParts.length - 2];
 
   useEffect(() => {
     if (!examId) return;
 
     setLoading(true);
     request<{ code: number; data: Exam }>(`/api/admin/exams/${examId}`, {
-      method: "GET",
+      method: 'GET',
+      skipErrorHandler: true,
     })
       .then((response) => {
         if (response.data) {
@@ -46,12 +51,13 @@ const ExamPublish: React.FC = () => {
           });
         }
       })
-      .catch(() =>
+      .catch((error) =>
         message.error(
-          intl.formatMessage({
-            id: "pages.exams.publish.fetchError",
-            defaultMessage: "获取考试信息失败",
-          }),
+          requestErrorMessage(error) ||
+            intl.formatMessage({
+              id: 'pages.exams.publish.fetchError',
+              defaultMessage: '获取考试信息失败',
+            }),
         ),
       )
       .finally(() => setLoading(false));
@@ -69,7 +75,8 @@ const ExamPublish: React.FC = () => {
       const response = await request<{ code: number; message: string }>(
         `/api/admin/exams/${examId}/publish`,
         {
-          method: "POST",
+          method: 'POST',
+          skipErrorHandler: true,
           data: {
             start_time: values.start_time.toISOString(),
             end_time: values.end_time.toISOString(),
@@ -80,26 +87,27 @@ const ExamPublish: React.FC = () => {
       if (response.code === 0) {
         message.success(
           intl.formatMessage({
-            id: "pages.exams.publish.success",
-            defaultMessage: "考试发布成功",
+            id: 'pages.exams.publish.success',
+            defaultMessage: '考试发布成功',
           }),
         );
-        window.location.href = "/exams";
+        history.push('/examination/exams');
       } else {
         message.error(
           response.message ||
             intl.formatMessage({
-              id: "pages.exams.publish.fail",
-              defaultMessage: "发布失败",
+              id: 'pages.exams.publish.fail',
+              defaultMessage: '发布失败',
             }),
         );
       }
-    } catch {
+    } catch (error) {
       message.error(
-        intl.formatMessage({
-          id: "pages.exams.publish.error",
-          defaultMessage: "发布考试失败",
-        }),
+        requestErrorMessage(error) ||
+          intl.formatMessage({
+            id: 'pages.exams.publish.error',
+            defaultMessage: '发布考试失败',
+          }),
       );
     } finally {
       setSubmitting(false);
@@ -107,105 +115,173 @@ const ExamPublish: React.FC = () => {
   };
 
   return (
-    <Card
+    <PageContainer
       loading={loading}
       title={intl.formatMessage({
-        id: "pages.exams.publish.title",
-        defaultMessage: "发布考试",
+        id: 'pages.exams.publish.title',
+        defaultMessage: '发布考试',
       })}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        initialValues={{ duration_minutes: 60 }}
-      >
+      <Card>
         {exam && (
-          <div className="mb-6">
-            <h3>{exam.title}</h3>
-            {exam.description && (
-              <p className="text-gray-500">{exam.description}</p>
+          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+            <Descriptions
+              column={{ xs: 1, sm: 2, md: 3 }}
+              items={[
+                {
+                  key: 'title',
+                  label: intl.formatMessage({
+                    id: 'pages.exams.columns.title',
+                    defaultMessage: '考试名称',
+                  }),
+                  children: exam.title,
+                },
+                {
+                  key: 'status',
+                  label: intl.formatMessage({
+                    id: 'pages.exams.columns.status',
+                    defaultMessage: '状态',
+                  }),
+                  children: <Tag color="default">{exam.status}</Tag>,
+                },
+                {
+                  key: 'paper',
+                  label: intl.formatMessage({
+                    id: 'pages.exams.columns.paper',
+                    defaultMessage: '试卷 ID',
+                  }),
+                  children: exam.paper_id ?? '-',
+                },
+              ]}
+            />
+            {!exam.paper_id && (
+              <Alert
+                type="warning"
+                showIcon
+                message={intl.formatMessage({
+                  id: 'pages.exams.publish.noPaperWarning',
+                  defaultMessage:
+                    '该考试尚未绑定试卷，发布前请先在考试中选择试卷。',
+                })}
+              />
             )}
-          </div>
+            {exam.status !== 'DRAFT' && (
+              <Alert
+                type="info"
+                showIcon
+                message={intl.formatMessage({
+                  id: 'pages.exams.publish.statusWarning',
+                  defaultMessage: '只有草稿状态的考试可以发布。',
+                })}
+              />
+            )}
+          </Space>
         )}
-
-        <Form.Item
-          name="duration_minutes"
-          label={intl.formatMessage({
-            id: "pages.exams.publish.durationLabel",
-            defaultMessage: "考试时长（分钟）",
-          })}
-          rules={[
-            {
-              required: true,
-              message: intl.formatMessage({
-                id: "pages.exams.publish.durationRequired",
-                defaultMessage: "请输入考试时长",
-              }),
-            },
-          ]}
+        <Form
+          form={form}
+          layout="vertical"
+          variant="outlined"
+          onFinish={handleSubmit}
+          initialValues={{ duration_minutes: 60 }}
         >
-          <InputNumber min={1} max={480} style={{ width: 200 }} />
-        </Form.Item>
+          {exam && (
+            <div className="mb-6 mt-6">
+              <h3>{exam.title}</h3>
+              {exam.description && (
+                <p className="text-gray-500">{exam.description}</p>
+              )}
+            </div>
+          )}
 
-        <Form.Item
-          name="start_time"
-          label={intl.formatMessage({
-            id: "pages.exams.publish.startTimeLabel",
-            defaultMessage: "开始时间",
-          })}
-          rules={[
-            {
-              required: true,
-              message: intl.formatMessage({
-                id: "pages.exams.publish.startTimeRequired",
-                defaultMessage: "请选择开始时间",
-              }),
-            },
-          ]}
-        >
-          <DatePicker showTime format="YYYY-MM-DD HH:mm" />
-        </Form.Item>
-
-        <Form.Item
-          name="end_time"
-          label={intl.formatMessage({
-            id: "pages.exams.publish.endTimeLabel",
-            defaultMessage: "结束时间",
-          })}
-          rules={[
-            {
-              required: true,
-              message: intl.formatMessage({
-                id: "pages.exams.publish.endTimeRequired",
-                defaultMessage: "请选择结束时间",
-              }),
-            },
-          ]}
-        >
-          <DatePicker showTime format="YYYY-MM-DD HH:mm" />
-        </Form.Item>
-
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={submitting}>
-            {intl.formatMessage({
-              id: "common.publish",
-              defaultMessage: "发布",
+          <Form.Item
+            name="duration_minutes"
+            label={intl.formatMessage({
+              id: 'pages.exams.publish.durationLabel',
+              defaultMessage: '考试时长（分钟）',
             })}
-          </Button>
-          <Button
-            className="ml-4"
-            onClick={() => (window.location.href = "/exams")}
+            rules={[
+              {
+                required: true,
+                message: intl.formatMessage({
+                  id: 'pages.exams.publish.durationRequired',
+                  defaultMessage: '请输入考试时长',
+                }),
+              },
+            ]}
           >
-            {intl.formatMessage({
-              id: "common.cancel",
-              defaultMessage: "取消",
+            <InputNumber min={1} max={480} style={{ width: 200 }} />
+          </Form.Item>
+
+          <Form.Item
+            name="start_time"
+            label={intl.formatMessage({
+              id: 'pages.exams.publish.startTimeLabel',
+              defaultMessage: '开始时间',
             })}
-          </Button>
-        </Form.Item>
-      </Form>
-    </Card>
+            rules={[
+              {
+                required: true,
+                message: intl.formatMessage({
+                  id: 'pages.exams.publish.startTimeRequired',
+                  defaultMessage: '请选择开始时间',
+                }),
+              },
+            ]}
+          >
+            <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+          </Form.Item>
+
+          <Form.Item
+            name="end_time"
+            label={intl.formatMessage({
+              id: 'pages.exams.publish.endTimeLabel',
+              defaultMessage: '结束时间',
+            })}
+            rules={[
+              {
+                required: true,
+                message: intl.formatMessage({
+                  id: 'pages.exams.publish.endTimeRequired',
+                  defaultMessage: '请选择结束时间',
+                }),
+              },
+            ]}
+          >
+            <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+          </Form.Item>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={submitting}
+              disabled={!exam?.paper_id || exam?.status !== 'DRAFT'}
+            >
+              {intl.formatMessage({
+                id: 'common.publish',
+                defaultMessage: '发布',
+              })}
+            </Button>
+            <Button
+              className="ml-4"
+              onClick={() => history.push('/examination/exams')}
+            >
+              {intl.formatMessage({
+                id: 'common.cancel',
+                defaultMessage: '取消',
+              })}
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
+    </PageContainer>
   );
 };
+
+const ExamPublish: React.FC = () => (
+  <AntdApp>
+    <ExamPublishContent />
+  </AntdApp>
+);
 
 export default ExamPublish;

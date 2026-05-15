@@ -122,10 +122,9 @@ func (c *Container) provideExam() (*exam.Service, error) {
 func (c *Container) provideJudge() (*judge.Service, error) {
 	judgeTaskStore := judgestore.New(c.DB)
 	examStore := examstore.New(c.DB)
-	libraryStore := librarystore.New(c.DB)
 	tx := transaction.NewManager(c.DB)
 	asynqClient := asynq.NewClient(asynq.RedisClientOpt{Addr: c.Config.RedisAddr, Password: c.Config.RedisPassword, DB: c.Config.RedisDB})
 	sandboxRunner := judgesandbox.New(c.Config.SandboxAddr)
 
-	return judge.ProvideService(judgeTaskStore, examStore, libraryStore, judgequeue.New(asynqClient), sandboxRunner, tx)
+	return judge.ProvideService(judgeTaskStore, examStore, examStore, judgequeue.New(asynqClient), sandboxRunner, tx)
 }

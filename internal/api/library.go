@@ -22,7 +22,11 @@ func (s *Server) registerLibraryAdminRoutes(admin *gin.RouterGroup) {
 	admin.GET("/papers/:id", s.getPaper)
 	admin.PUT("/papers/:id", s.updatePaper)
 	admin.DELETE("/papers/:id", s.deletePaper)
+	admin.GET("/papers/:id/outline", s.getPaperOutline)
+	admin.PUT("/papers/:id/outline", s.savePaperOutline)
+	admin.GET("/papers/:id/questions", s.listPaperQuestions)
 	admin.POST("/papers/:id/questions", s.addPaperQuestion)
+	admin.PATCH("/papers/:id/questions/:question_id", s.updatePaperQuestion)
 	admin.DELETE("/papers/:id/questions/:question_id", s.removePaperQuestion)
 }
 
@@ -169,7 +173,12 @@ func (s *Server) listTestCases(c *gin.Context) {
 
 func (s *Server) listPapers(c *gin.Context) {
 	pageNum, pageSize := pageQuery(c)
-	items, total, err := s.library.ListPapers(c.Request.Context(), pageNum, pageSize)
+	items, total, err := s.library.ListPapers(c.Request.Context(), library.PaperFilter{
+		Keyword:  c.Query("keyword"),
+		Status:   c.Query("status"),
+		PageNum:  pageNum,
+		PageSize: pageSize,
+	})
 	if err != nil {
 		writeError(c, err)
 		return
@@ -232,6 +241,36 @@ func (s *Server) deletePaper(c *gin.Context) {
 	response.NoContent(c)
 }
 
+func (s *Server) getPaperOutline(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	outline, err := s.library.GetPaperOutline(c.Request.Context(), id)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toPaperOutlineResponse(outline))
+}
+
+func (s *Server) savePaperOutline(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	req, ok := bindJSON[savePaperOutlineRequest](c)
+	if !ok {
+		return
+	}
+	outline, err := s.library.SavePaperOutline(c.Request.Context(), id, req.command())
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toPaperOutlineResponse(outline))
+}
+
 func (s *Server) addPaperQuestion(c *gin.Context) {
 	id, ok := parseUintParam(c, "id")
 	if !ok {
@@ -247,6 +286,44 @@ func (s *Server) addPaperQuestion(c *gin.Context) {
 		return
 	}
 	response.Created(c, toPaperQuestionResponse(*pq))
+}
+
+func (s *Server) listPaperQuestions(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	items, err := s.library.ListPaperQuestions(c.Request.Context(), id)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	resp := make([]paperQuestionListResponse, 0, len(items))
+	for _, item := range items {
+		resp = append(resp, toPaperQuestionListResponse(item))
+	}
+	response.Success(c, resp)
+}
+
+func (s *Server) updatePaperQuestion(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	questionID, ok := parseUintParam(c, "question_id")
+	if !ok {
+		return
+	}
+	req, ok := bindJSON[updatePaperQuestionRequest](c)
+	if !ok {
+		return
+	}
+	pq, err := s.library.UpdatePaperQuestion(c.Request.Context(), id, questionID, req.command())
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, toPaperQuestionListResponse(*pq))
 }
 
 func (s *Server) removePaperQuestion(c *gin.Context) {

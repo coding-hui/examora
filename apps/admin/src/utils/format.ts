@@ -1,4 +1,4 @@
-const numberFormatter = new Intl.NumberFormat("en-US");
+const numberFormatter = new Intl.NumberFormat('en-US');
 
 /**
  * Format a number with thousand separators.
@@ -6,7 +6,7 @@ const numberFormatter = new Intl.NumberFormat("en-US");
  */
 export const formatNumber = (val: number | string): string => {
   const parsed = Number(val);
-  return Number.isFinite(parsed) ? numberFormatter.format(parsed) : "";
+  return Number.isFinite(parsed) ? numberFormatter.format(parsed) : '';
 };
 
 /**
