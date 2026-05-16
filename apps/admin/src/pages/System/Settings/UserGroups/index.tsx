@@ -264,14 +264,40 @@ const UserGroupsContent: React.FC = () => {
         id: 'menu.system.settings.userGroups',
         defaultMessage: '用户组',
       })}
-      content={intl.formatMessage({
-        id: 'pages.userGroups.description',
-        defaultMessage: '维护可复用的用户范围，考试可按用户或用户组分配。',
-      })}
+      content={
+        <p
+          style={{
+            margin: 0,
+            color: 'var(--examora-text-secondary)',
+            fontSize: 14,
+          }}
+        >
+          {intl.formatMessage({
+            id: 'pages.userGroups.description',
+            defaultMessage: '维护可复用的用户范围，考试可按用户或用户组分配。',
+          })}
+        </p>
+      }
     >
       <ProTable<AdminUserGroup>
         actionRef={actionRef}
+        cardBordered={{
+          search: true,
+          table: true,
+        }}
         columns={columns}
+        columnsState={{
+          persistenceKey: 'examora-system-user-groups-table-columns',
+          persistenceType: 'localStorage',
+        }}
+        columnEmptyText="-"
+        dateFormatter="string"
+        debounceTime={300}
+        defaultSize="middle"
+        headerTitle={intl.formatMessage({
+          id: 'pages.userGroups.listTitle',
+          defaultMessage: '用户组列表',
+        })}
         rowKey="id"
         request={async ({ current, pageSize, keyword, source }) => {
           try {
@@ -279,7 +305,7 @@ const UserGroupsContent: React.FC = () => {
               page: String(current || 1),
               page_size: String(pageSize || 20),
             });
-            if (keyword) params.set('keyword', String(keyword));
+            if (keyword) params.set('keyword', String(keyword).trim());
             if (source) params.set('source', String(source));
             const data = await fetchEnvelope<{
               items: AdminUserGroup[];
@@ -301,13 +327,49 @@ const UserGroupsContent: React.FC = () => {
             return { data: [], total: 0, success: false };
           }
         }}
-        search={{ labelWidth: 'auto', defaultCollapsed: false }}
+        search={{
+          labelWidth: 'auto',
+          span: {
+            xs: 24,
+            sm: 12,
+            md: 8,
+            lg: 6,
+            xl: 6,
+            xxl: 4,
+          },
+          defaultCollapsed: true,
+          searchText: intl.formatMessage({
+            id: 'common.search',
+            defaultMessage: '搜索',
+          }),
+          resetText: intl.formatMessage({
+            id: 'common.reset',
+            defaultMessage: '重置',
+          }),
+        }}
+        beforeSearchSubmit={(params) => ({
+          ...params,
+          keyword:
+            typeof params.keyword === 'string'
+              ? params.keyword.trim()
+              : params.keyword,
+        })}
         pagination={{
           defaultPageSize: 20,
           showSizeChanger: true,
+          pageSizeOptions: [10, 20, 50, 100],
+          showTotal: (total) =>
+            intl.formatMessage(
+              {
+                id: 'pages.userGroups.total',
+                defaultMessage: '共 {total} 条',
+              },
+              { total },
+            ),
         }}
         options={{
           density: true,
+          fullScreen: false,
           reload: true,
           setting: true,
         }}

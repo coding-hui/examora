@@ -29,6 +29,7 @@ export default {
   'common.delete': 'Delete',
   'common.refresh': 'Refresh',
   'common.search': 'Search',
+  'common.reset': 'Reset',
   // Login page
   'pages.login.title': 'Sign In',
   'pages.login.subtitle':
@@ -671,6 +672,8 @@ export default {
   // User groups
   'pages.userGroups.description':
     'Maintain reusable user scopes. Exams can be assigned by user or user group.',
+  'pages.userGroups.listTitle': 'User Group List',
+  'pages.userGroups.total': 'Total {total} records',
   'pages.userGroups.keyword': 'Keyword',
   'pages.userGroups.searchPlaceholder': 'Search name or description',
   'pages.userGroups.source': 'Source',

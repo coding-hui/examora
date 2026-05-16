@@ -28,6 +28,7 @@ export default {
   'common.delete': '删除',
   'common.refresh': '刷新',
   'common.search': '搜索',
+  'common.reset': '重置',
   // Login page
   'pages.login.title': '登录后台',
   'pages.login.subtitle': '使用管理员账号进入 Examora 控制台。',
@@ -637,6 +638,8 @@ export default {
   // User groups
   'pages.userGroups.description':
     '维护可复用的用户范围，考试可按用户或用户组分配。',
+  'pages.userGroups.listTitle': '用户组列表',
+  'pages.userGroups.total': '共 {total} 条',
   'pages.userGroups.keyword': '关键词',
   'pages.userGroups.searchPlaceholder': '搜索名称、说明',
   'pages.userGroups.source': '来源',

@@ -29,24 +29,18 @@ export default [
       },
     ],
   },
-  // Overview section
+  // Dashboard
   {
     path: '/overview',
-    name: 'overview',
+    hideInMenu: true,
+    redirect: '/overview/dashboard',
+  },
+  {
+    path: '/overview/dashboard',
+    name: 'dashboard',
+    icon: 'DashboardOutlined',
+    component: './Welcome',
     access: 'canAdmin',
-    routes: [
-      {
-        path: '/overview',
-        redirect: '/overview/dashboard',
-      },
-      {
-        path: '/overview/dashboard',
-        name: 'dashboard',
-        icon: 'DashboardOutlined',
-        component: './Welcome',
-        access: 'canAdmin',
-      },
-    ],
   },
   // Content section
   {
@@ -130,6 +124,27 @@ export default [
         component: './Examination/ExamDetail',
         access: 'canAdmin',
       },
+      {
+        path: '/examination/submissions',
+        name: 'submissions',
+        icon: 'TrophyOutlined',
+        component: './Assessment/Results/Submissions',
+        access: 'canAdmin',
+      },
+      {
+        path: '/examination/judge-tasks',
+        name: 'judgeTasks',
+        icon: 'ThunderboltOutlined',
+        component: './Assessment/Results/JudgeTasks',
+        access: 'canAdmin',
+      },
+      {
+        path: '/examination/events',
+        name: 'events',
+        icon: 'SafetyOutlined',
+        component: './Monitoring/Proctoring/Events',
+        access: 'canAdmin',
+      },
     ],
   },
   // Exam actions
@@ -153,58 +168,42 @@ export default [
     component: './Examination/ExamPublish',
     access: 'canAdmin',
   },
-  // Monitoring section
+  // Legacy monitoring redirects
   {
     path: '/monitoring',
-    name: 'monitoring',
-    access: 'canAdmin',
-    routes: [
-      {
-        path: '/monitoring',
-        redirect: '/monitoring/proctoring/events',
-      },
-      {
-        path: '/monitoring/proctoring',
-        redirect: '/monitoring/proctoring/events',
-      },
-      {
-        path: '/monitoring/proctoring/events',
-        name: 'events',
-        icon: 'SafetyOutlined',
-        component: './Monitoring/Proctoring/Events',
-        access: 'canAdmin',
-      },
-    ],
+    hideInMenu: true,
+    redirect: '/examination/events',
   },
-  // Assessment section
+  {
+    path: '/monitoring/proctoring',
+    hideInMenu: true,
+    redirect: '/examination/events',
+  },
+  {
+    path: '/monitoring/proctoring/events',
+    hideInMenu: true,
+    redirect: '/examination/events',
+  },
+  // Legacy assessment redirects
   {
     path: '/assessment',
-    name: 'assessment',
-    access: 'canAdmin',
-    routes: [
-      {
-        path: '/assessment',
-        redirect: '/assessment/results/submissions',
-      },
-      {
-        path: '/assessment/results',
-        redirect: '/assessment/results/submissions',
-      },
-      {
-        path: '/assessment/results/submissions',
-        name: 'submissions',
-        icon: 'TrophyOutlined',
-        component: './Assessment/Results/Submissions',
-        access: 'canAdmin',
-      },
-      {
-        path: '/assessment/results/judge-tasks',
-        name: 'judgeTasks',
-        icon: 'ThunderboltOutlined',
-        component: './Assessment/Results/JudgeTasks',
-        access: 'canAdmin',
-      },
-    ],
+    hideInMenu: true,
+    redirect: '/examination/submissions',
+  },
+  {
+    path: '/assessment/results',
+    hideInMenu: true,
+    redirect: '/examination/submissions',
+  },
+  {
+    path: '/assessment/results/submissions',
+    hideInMenu: true,
+    redirect: '/examination/submissions',
+  },
+  {
+    path: '/assessment/results/judge-tasks',
+    hideInMenu: true,
+    redirect: '/examination/judge-tasks',
   },
   // System section
   {
