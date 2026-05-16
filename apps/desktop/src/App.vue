@@ -1,109 +1,118 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 // Types matching packages/types
 interface ExamSession {
-  id: string
-  examSnapshotId: string
-  userId: string
-  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED'
-  startedAt?: string
-  submittedAt?: string
-  remainingSeconds?: number
+  id: string;
+  examSnapshotId: string;
+  userId: string;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED';
+  startedAt?: string;
+  submittedAt?: string;
+  remainingSeconds?: number;
 }
 
 interface CandidateQuestion {
-  snapshotId: string
-  type: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_BLANK' | 'SHORT_ANSWER' | 'PROGRAMMING'
-  title: string
-  content: Record<string, unknown>
-  score: number
-  sortOrder: number
-  sampleTestCases?: { input: string; expectedOutput: string }[]
-  starterCode?: string
-  timeLimitMs: number
+  snapshotId: string;
+  type:
+    | 'SINGLE_CHOICE'
+    | 'MULTIPLE_CHOICE'
+    | 'TRUE_FALSE'
+    | 'FILL_BLANK'
+    | 'SHORT_ANSWER'
+    | 'PROGRAMMING';
+  title: string;
+  content: Record<string, unknown>;
+  score: number;
+  sortOrder: number;
+  sampleTestCases?: { input: string; expectedOutput: string }[];
+  starterCode?: string;
+  timeLimitMs: number;
 }
 
 interface ChoiceOption {
-  key: string
-  text: string
+  key: string;
+  text: string;
 }
 
 interface CandidatePaper {
-  examSnapshotId: string
-  title: string
-  startTime: string
-  endTime: string
-  durationMinutes: number
-  remainingSeconds: number
-  questions: CandidateQuestion[]
+  examSnapshotId: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  remainingSeconds: number;
+  questions: CandidateQuestion[];
 }
 
 // State
-const currentView = ref<'login' | 'list' | 'exam'>('login')
-const examId = ref<number>(1)
-const username = ref('')
-const password = ref('')
-const loginError = ref('')
-const loginLoading = ref(false)
+const currentView = ref<'login' | 'list' | 'exam'>('login');
+const examId = ref<number>(1);
+const username = ref('');
+const password = ref('');
+const loginError = ref('');
+const loginLoading = ref(false);
 
-const sessions = ref<{ id: number; title: string; status: string }[]>([])
-const currentSession = ref<ExamSession | null>(null)
-const paper = ref<CandidatePaper | null>(null)
-const currentQuestionIndex = ref(0)
-const answers = ref<Map<string, Record<string, unknown>>>(new Map())
-const submitLoading = ref(false)
-const autoSaveStatus = ref<'idle' | 'saving' | 'saved'>('idle')
+const sessions = ref<{ id: number; title: string; status: string }[]>([]);
+const currentSession = ref<ExamSession | null>(null);
+const paper = ref<CandidatePaper | null>(null);
+const currentQuestionIndex = ref(0);
+const answers = ref<Map<string, Record<string, unknown>>>(new Map());
+const submitLoading = ref(false);
+const autoSaveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
 
-let timerInterval: number | null = null
-let autoSaveInterval: number | null = null
+let timerInterval: number | null = null;
+let autoSaveInterval: number | null = null;
 
 const currentQuestion = computed(() => {
-  if (!paper.value || !paper.value.questions.length) return null
-  return paper.value.questions[currentQuestionIndex.value]
-})
+  if (!paper.value?.questions.length) return null;
+  return paper.value.questions[currentQuestionIndex.value];
+});
 
 const formattedTime = computed(() => {
-  if (!paper.value) return '00:00'
-  const secs = paper.value.remainingSeconds
-  const mins = Math.floor(secs / 60)
-  const secsRem = secs % 60
-  return `${String(mins).padStart(2, '0')}:${String(secsRem).padStart(2, '0')}`
-})
+  if (!paper.value) return '00:00';
+  const secs = paper.value.remainingSeconds;
+  const mins = Math.floor(secs / 60);
+  const secsRem = secs % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secsRem).padStart(2, '0')}`;
+});
 
 // Login
 async function handleLogin() {
   if (!username.value || !password.value) {
-    loginError.value = '请输入用户名和密码'
-    return
+    loginError.value = '请输入用户名和密码';
+    return;
   }
-  loginLoading.value = true
-  loginError.value = ''
+  loginLoading.value = true;
+  loginError.value = '';
   try {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.value, password: password.value }),
-    })
-    const data = await res.json()
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value,
+      }),
+    });
+    const data = await res.json();
     if (data.code === 0) {
-      localStorage.setItem('token', data.data.token)
+      localStorage.setItem('token', data.data.token);
       // Fetch user info after login to get user ID
       const meRes = await fetch('/api/auth/me', {
         headers: { Authorization: `Bearer ${data.data.token}` },
-      })
-      const meData = await meRes.json()
+      });
+      const meData = await meRes.json();
       if (meData.code === 0) {
-        localStorage.setItem('userId', String(meData.data.id))
+        localStorage.setItem('userId', String(meData.data.id));
       }
-      loadExamList()
+      loadExamList();
     } else {
-      loginError.value = data.message || '登录失败'
+      loginError.value = data.message || '登录失败';
     }
   } catch {
-    loginError.value = '网络错误'
+    loginError.value = '网络错误';
   } finally {
-    loginLoading.value = false
+    loginLoading.value = false;
   }
 }
 
@@ -111,46 +120,49 @@ async function loadExamList() {
   try {
     const res = await fetch('/api/client/exams', {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    })
-    const data = await res.json()
+    });
+    const data = await res.json();
     if (data.code === 0) {
-      sessions.value = data.data.items || []
+      sessions.value = data.data.items || [];
     }
   } catch (e) {
-    console.error('Failed to load exam list:', e)
+    console.error('Failed to load exam list:', e);
   }
-  currentView.value = 'list'
+  currentView.value = 'list';
 }
 
 function selectExam(id: number) {
-  examId.value = id
-  startExam()
+  examId.value = id;
+  startExam();
 }
 
 async function startExam() {
-  const userId = localStorage.getItem('userId')
-  if (!userId) return
+  const userId = localStorage.getItem('userId');
+  if (!userId) return;
 
   try {
     // Start session
-    const res = await fetch(`/api/client/exams/${examId.value}/sessions/start`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
+    const res = await fetch(
+      `/api/client/exams/${examId.value}/sessions/start`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ device_id: 'desktop-001' }),
       },
-      body: JSON.stringify({ device_id: 'desktop-001' }),
-    })
-    const data = await res.json()
+    );
+    const data = await res.json();
     if (data.code === 0) {
-      currentSession.value = data.data
+      currentSession.value = data.data;
     }
 
     // Get paper
     const paperRes = await fetch(`/api/client/exams/${examId.value}/paper`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    })
-    const paperData = await paperRes.json()
+    });
+    const paperData = await paperRes.json();
     if (paperData.code === 0) {
       // Map snake_case backend fields to camelCase
       paper.value = {
@@ -174,33 +186,33 @@ async function startExam() {
           starterCode: q.starter_code,
           timeLimitMs: q.time_limit_ms,
         })),
-      }
-      currentView.value = 'exam'
-      startTimer()
-      startAutoSave()
+      };
+      currentView.value = 'exam';
+      startTimer();
+      startAutoSave();
     }
   } catch (e) {
-    console.error('Failed to start exam:', e)
+    console.error('Failed to start exam:', e);
   }
 }
 
 function startTimer() {
   timerInterval = window.setInterval(() => {
     if (paper.value && paper.value.remainingSeconds > 0) {
-      paper.value.remainingSeconds--
+      paper.value.remainingSeconds--;
     }
-  }, 1000)
+  }, 1000);
 }
 
 function startAutoSave() {
   autoSaveInterval = window.setInterval(() => {
-    saveDraft()
-  }, 30000) // every 30 seconds
+    saveDraft();
+  }, 30000); // every 30 seconds
 }
 
 async function saveDraft() {
-  if (!paper.value) return
-  autoSaveStatus.value = 'saving'
+  if (!paper.value) return;
+  autoSaveStatus.value = 'saving';
   try {
     await fetch(`/api/client/exams/${examId.value}/answers`, {
       method: 'POST',
@@ -209,100 +221,113 @@ async function saveDraft() {
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify({ answers: Object.fromEntries(answers.value) }),
-    })
-    autoSaveStatus.value = 'saved'
-    setTimeout(() => { autoSaveStatus.value = 'idle' }, 2000)
+    });
+    autoSaveStatus.value = 'saved';
+    setTimeout(() => {
+      autoSaveStatus.value = 'idle';
+    }, 2000);
   } catch {
-    autoSaveStatus.value = 'idle'
+    autoSaveStatus.value = 'idle';
   }
 }
 
 async function submitExam() {
-  if (!confirm('确定要交卷吗？')) return
-  submitLoading.value = true
+  if (!confirm('确定要交卷吗？')) return;
+  submitLoading.value = true;
   try {
     await fetch(`/api/client/exams/${examId.value}/submit`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    })
-    alert('提交成功')
-    cleanup()
-    currentView.value = 'list'
+    });
+    alert('提交成功');
+    cleanup();
+    currentView.value = 'list';
   } catch {
-    alert('提交失败')
+    alert('提交失败');
   } finally {
-    submitLoading.value = false
+    submitLoading.value = false;
   }
 }
 
 function cleanup() {
-  if (timerInterval) clearInterval(timerInterval)
-  if (autoSaveInterval) clearInterval(autoSaveInterval)
+  if (timerInterval) clearInterval(timerInterval);
+  if (autoSaveInterval) clearInterval(autoSaveInterval);
 }
 
 function handleAnswer(questionId: string, answer: Record<string, unknown>) {
-  answers.value.set(questionId, answer)
+  answers.value.set(questionId, answer);
+}
+
+function getAnswerString(questionId: string, key: string): string {
+  const value = answers.value.get(questionId)?.[key];
+  return typeof value === 'string' ? value : '';
 }
 
 function getChoiceOptions(question: CandidateQuestion): ChoiceOption[] {
-  const options = question.content.options
+  const options = question.content.options;
   if (Array.isArray(options)) {
     return options
       .map((option, index) => {
         if (typeof option === 'string') {
-          return { key: String.fromCharCode(65 + index), text: option }
+          return { key: String.fromCharCode(65 + index), text: option };
         }
-        const item = option as Record<string, unknown>
+        const item = option as Record<string, unknown>;
         return {
           key: String(item.key || String.fromCharCode(65 + index)),
           text: String(item.text || ''),
-        }
+        };
       })
-      .filter((option) => option.text)
+      .filter((option) => option.text);
   }
 
   if (options && typeof options === 'object') {
-    return Object.entries(options as Record<string, unknown>).map(([key, text]) => ({
-      key,
-      text: String(text),
-    }))
+    return Object.entries(options as Record<string, unknown>).map(
+      ([key, text]) => ({
+        key,
+        text: String(text),
+      }),
+    );
   }
 
-  return []
+  return [];
 }
 
 function getQuestionText(question: CandidateQuestion): string {
-  return String(question.content.text || '')
+  return String(question.content.text || '');
 }
 
 function isChoiceSelected(questionId: string, key: string): boolean {
-  const choices = answers.value.get(questionId)?.choices
-  return Array.isArray(choices) && choices.includes(key)
+  const choices = answers.value.get(questionId)?.choices;
+  return Array.isArray(choices) && choices.includes(key);
 }
 
-function toggleMultipleChoice(questionId: string, key: string, checked: boolean) {
-  const current = answers.value.get(questionId)?.choices
-  const choices = Array.isArray(current) ? current.map(String) : []
+function toggleMultipleChoice(
+  questionId: string,
+  key: string,
+  checked: boolean,
+) {
+  const current = answers.value.get(questionId)?.choices;
+  const choices = Array.isArray(current) ? current.map(String) : [];
   const next = checked
     ? Array.from(new Set([...choices, key]))
-    : choices.filter((choice) => choice !== key)
-  handleAnswer(questionId, { choices: next })
+    : choices.filter((choice) => choice !== key);
+  handleAnswer(questionId, { choices: next });
 }
 
 function navigateQuestion(index: number) {
-  currentQuestionIndex.value = index
+  currentQuestionIndex.value = index;
 }
 
 onMounted(() => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token');
   if (token) {
-    loadExamList()
+    loadExamList();
   }
-})
+});
 
 onUnmounted(() => {
-  cleanup()
-})
+  cleanup();
+});
 </script>
 
 <template>
@@ -414,7 +439,7 @@ onUnmounted(() => {
               </template>
               <template v-else-if="currentQuestion.type === 'PROGRAMMING'">
                 <textarea
-                  :value="answers.get(currentQuestion.snapshotId)?.code || ''"
+                  :value="getAnswerString(currentQuestion.snapshotId, 'code')"
                   @input="handleAnswer(currentQuestion.snapshotId, { code: ($event.target as HTMLTextAreaElement).value })"
                   placeholder="请输入代码..."
                   class="code-editor"
@@ -428,7 +453,7 @@ onUnmounted(() => {
               </template>
               <template v-else>
                 <textarea
-                  :value="answers.get(currentQuestion.snapshotId)?.text || ''"
+                  :value="getAnswerString(currentQuestion.snapshotId, 'text')"
                   @input="handleAnswer(currentQuestion.snapshotId, { text: ($event.target as HTMLTextAreaElement).value })"
                   placeholder="请输入答案..."
                 ></textarea>

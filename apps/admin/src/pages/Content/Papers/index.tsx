@@ -6,6 +6,7 @@ import {
 } from '@ant-design/icons';
 import {
   type ActionType,
+  FooterToolbar,
   PageContainer,
   type ProColumns,
   ProTable,
@@ -13,8 +14,12 @@ import {
 import { history, request, useIntl } from '@umijs/max';
 import { App as AntdApp, Button, Dropdown, Space, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
-import React, { useMemo, useRef } from 'react';
-import { proTableSortParams, requestErrorMessage } from '@/utils/request';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+  type BatchActionResult,
+  proTableSortParams,
+  requestErrorMessage,
+} from '@/utils/request';
 import './index.less';
 
 interface Paper {
@@ -35,6 +40,7 @@ const PapersPageContent: React.FC = () => {
   const intl = useIntl();
   const { message, modal } = AntdApp.useApp();
   const actionRef = useRef<ActionType>(null);
+  const [selectedRows, setSelectedRows] = useState<Paper[]>([]);
 
   const statusLabelMap: Record<string, string> = useMemo(
     () => ({
@@ -95,6 +101,102 @@ const PapersPageContent: React.FC = () => {
               defaultMessage: '试卷已删除',
             }),
           );
+          actionRef.current?.reload();
+        } catch (error) {
+          message.error(
+            requestErrorMessage(error) ||
+              intl.formatMessage({
+                id: 'pages.papers.deleteError',
+                defaultMessage: '删除试卷失败',
+              }),
+          );
+        }
+      },
+    });
+  };
+
+  const showBatchResult = (result?: BatchActionResult) => {
+    if (!result) {
+      return;
+    }
+    if (result.failed_count > 0) {
+      modal.warning({
+        title: intl.formatMessage({
+          id: 'pages.batch.partialFailure',
+          defaultMessage: '部分操作失败',
+        }),
+        content: (
+          <div>
+            <p>
+              {intl.formatMessage(
+                {
+                  id: 'pages.batch.summary',
+                  defaultMessage: '成功 {success} 项，失败 {failed} 项。',
+                },
+                {
+                  success: result.success_count,
+                  failed: result.failed_count,
+                },
+              )}
+            </p>
+            <ul className="paper-batch-failures">
+              {result.failures.slice(0, 5).map((failure) => (
+                <li key={failure.id}>
+                  #{failure.id}: {failure.reason}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ),
+      });
+      return;
+    }
+    message.success(
+      intl.formatMessage(
+        {
+          id: 'pages.batch.success',
+          defaultMessage: '成功处理 {count} 项',
+        },
+        { count: result.success_count },
+      ),
+    );
+  };
+
+  const runBatchDeletePapers = () => {
+    modal.confirm({
+      title: intl.formatMessage({
+        id: 'pages.papers.batchDeleteConfirmTitle',
+        defaultMessage: '确认批量删除',
+      }),
+      content: intl.formatMessage(
+        {
+          id: 'pages.papers.batchDeleteConfirmContent',
+          defaultMessage:
+            '确定要删除已选择的 {count} 份试卷吗？此操作不可撤销。',
+        },
+        { count: selectedRows.length },
+      ),
+      okText: intl.formatMessage({
+        id: 'pages.papers.delete',
+        defaultMessage: '删除',
+      }),
+      okType: 'danger',
+      cancelText: intl.formatMessage({
+        id: 'pages.papers.cancel',
+        defaultMessage: '取消',
+      }),
+      onOk: async () => {
+        try {
+          const response = await request<{
+            code: number;
+            data: BatchActionResult;
+          }>('/api/admin/papers/batch', {
+            method: 'DELETE',
+            data: { ids: selectedRows.map((item) => item.id) },
+            skipErrorHandler: true,
+          });
+          showBatchResult(response.data);
+          setSelectedRows([]);
           actionRef.current?.reload();
         } catch (error) {
           message.error(
@@ -315,6 +417,10 @@ const PapersPageContent: React.FC = () => {
           setting: true,
         }}
         rowKey="id"
+        rowSelection={{
+          selectedRowKeys: selectedRows.map((item) => item.id),
+          onChange: (_, rows) => setSelectedRows(rows),
+        }}
         search={{
           labelWidth: 'auto',
           span: {
@@ -403,6 +509,28 @@ const PapersPageContent: React.FC = () => {
           </Button>,
         ]}
       />
+      {selectedRows.length > 0 && (
+        <FooterToolbar
+          extra={intl.formatMessage(
+            {
+              id: 'pages.batch.selected',
+              defaultMessage: '已选择 {count} 项',
+            },
+            { count: selectedRows.length },
+          )}
+        >
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={runBatchDeletePapers}
+          >
+            {intl.formatMessage({
+              id: 'pages.papers.delete',
+              defaultMessage: '删除',
+            })}
+          </Button>
+        </FooterToolbar>
+      )}
     </PageContainer>
   );
 };

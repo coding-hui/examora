@@ -27,10 +27,8 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   SortableContext,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import type { AdminPaperOutline, AdminQuestion } from '@examora/types';
 import { DIFFICULTY_OPTIONS, QUESTION_TYPE_OPTIONS } from '@examora/types';
 import { history, request, useIntl } from '@umijs/max';
@@ -50,6 +48,8 @@ import {
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import { requestErrorMessage } from '@/utils/request';
+import { SectionTitle } from './components/SectionTitle';
+import { SortableQuestionWrapper } from './components/SortableQuestionWrapper';
 import {
   moveQuestionWithinSection,
   normalizeQuestions,
@@ -127,50 +127,6 @@ const parseQuestionDragId = (id: string) => {
     sectionKey: id.slice('question:'.length, index),
     questionID: Number(id.slice(index + 1)),
   };
-};
-
-const SectionTitle: React.FC<{
-  children: React.ReactNode;
-  extra?: React.ReactNode;
-}> = ({ children, extra }) => (
-  <div className="pdetail-section-heading">
-    <h3 className="pdetail-section-title">{children}</h3>
-    {extra}
-  </div>
-);
-
-interface SortableQuestionWrapperProps {
-  id: string;
-  children: (handlers: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    listeners: any;
-    setActivatorNodeRef: (node: HTMLElement | null) => void;
-  }) => React.ReactNode;
-}
-
-const SortableQuestionWrapper: React.FC<SortableQuestionWrapperProps> = ({
-  id,
-  children,
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id });
-
-  const style: React.CSSProperties = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      {children({ listeners, setActivatorNodeRef })}
-    </div>
-  );
 };
 
 const PaperDetailContent: React.FC = () => {

@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import {
   type ActionType,
+  FooterToolbar,
   PageContainer,
   type ProColumns,
   ProTable,
@@ -31,8 +32,12 @@ import {
   Tooltip,
 } from 'antd';
 import dayjs from 'dayjs';
-import React, { useMemo, useRef } from 'react';
-import { proTableSortParams, requestErrorMessage } from '@/utils/request';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+  type BatchActionResult,
+  proTableSortParams,
+  requestErrorMessage,
+} from '@/utils/request';
 import './index.less';
 
 const DIFFICULTY_CLASS: Record<string, string> = {
@@ -57,8 +62,9 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
   fixedType,
 }) => {
   const intl = useIntl();
-  const { message } = AntdApp.useApp();
+  const { message, modal } = AntdApp.useApp();
   const actionRef = useRef<ActionType>(null);
+  const [selectedRows, setSelectedRows] = useState<AdminQuestion[]>([]);
   const isProgrammingOnly = fixedType === 'PROGRAMMING';
 
   // i18n label maps
@@ -275,6 +281,157 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
               intl.formatMessage({
                 id: 'pages.questions.statusUpdateError',
                 defaultMessage: '状态更新失败',
+              }),
+          );
+        }
+      },
+    });
+  };
+
+  const reloadAndClearSelection = () => {
+    setSelectedRows([]);
+    actionRef.current?.reload();
+  };
+
+  const showBatchResult = (result?: BatchActionResult) => {
+    if (!result) {
+      return;
+    }
+    if (result.failed_count > 0) {
+      modal.warning({
+        title: intl.formatMessage({
+          id: 'pages.batch.partialFailure',
+          defaultMessage: '部分操作失败',
+        }),
+        content: (
+          <div>
+            <p>
+              {intl.formatMessage(
+                {
+                  id: 'pages.batch.summary',
+                  defaultMessage: '成功 {success} 项，失败 {failed} 项。',
+                },
+                {
+                  success: result.success_count,
+                  failed: result.failed_count,
+                },
+              )}
+            </p>
+            <ul className="question-batch-failures">
+              {result.failures.slice(0, 5).map((failure) => (
+                <li key={failure.id}>
+                  #{failure.id}: {failure.reason}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ),
+      });
+      return;
+    }
+    message.success(
+      intl.formatMessage(
+        {
+          id: 'pages.batch.success',
+          defaultMessage: '成功处理 {count} 项',
+        },
+        { count: result.success_count },
+      ),
+    );
+  };
+
+  const runBatchQuestionStatus = (status: 'DRAFT' | 'PUBLISHED') => {
+    const isPublishing = status === 'PUBLISHED';
+    modal.confirm({
+      title: intl.formatMessage({
+        id: isPublishing
+          ? 'pages.questions.batchPublishConfirmTitle'
+          : 'pages.questions.batchUnpublishConfirmTitle',
+        defaultMessage: isPublishing ? '确认批量发布' : '确认批量下架',
+      }),
+      content: intl.formatMessage(
+        {
+          id: 'pages.questions.batchStatusConfirmContent',
+          defaultMessage: '将处理已选择的 {count} 道题目。',
+        },
+        { count: selectedRows.length },
+      ),
+      okText: intl.formatMessage({
+        id: isPublishing
+          ? 'pages.questions.publish'
+          : 'pages.questions.unpublish',
+        defaultMessage: isPublishing ? '发布' : '下架',
+      }),
+      cancelText: intl.formatMessage({
+        id: 'pages.questions.cancel',
+        defaultMessage: '取消',
+      }),
+      onOk: async () => {
+        try {
+          const response = await request<{
+            code: number;
+            data: BatchActionResult;
+          }>('/api/admin/questions/batch/status', {
+            method: 'PATCH',
+            data: { ids: selectedRows.map((item) => item.id), status },
+            skipErrorHandler: true,
+          });
+          showBatchResult(response.data);
+          reloadAndClearSelection();
+        } catch (error) {
+          message.error(
+            requestErrorMessage(error) ||
+              intl.formatMessage({
+                id: 'pages.questions.statusUpdateError',
+                defaultMessage: '状态更新失败',
+              }),
+          );
+        }
+      },
+    });
+  };
+
+  const runBatchDeleteQuestions = () => {
+    modal.confirm({
+      title: intl.formatMessage({
+        id: 'pages.questions.batchDeleteConfirmTitle',
+        defaultMessage: '确认批量删除',
+      }),
+      content: intl.formatMessage(
+        {
+          id: 'pages.questions.batchDeleteConfirmContent',
+          defaultMessage:
+            '确定要删除已选择的 {count} 道题目吗？此操作不可撤销。',
+        },
+        { count: selectedRows.length },
+      ),
+      okText: intl.formatMessage({
+        id: 'pages.questions.delete',
+        defaultMessage: '删除',
+      }),
+      okType: 'danger',
+      cancelText: intl.formatMessage({
+        id: 'pages.questions.cancel',
+        defaultMessage: '取消',
+      }),
+      onOk: async () => {
+        try {
+          const response = await request<{
+            code: number;
+            data: BatchActionResult;
+          }>('/api/admin/questions/batch', {
+            method: 'DELETE',
+            data: { ids: selectedRows.map((item) => item.id) },
+            skipErrorHandler: true,
+          });
+          showBatchResult(response.data);
+          reloadAndClearSelection();
+        } catch (error) {
+          message.error(
+            requestErrorMessage(error) ||
+              intl.formatMessage({
+                id: 'pages.questions.deleteError',
+                defaultMessage: '删除题目失败',
               }),
           );
         }
@@ -525,6 +682,10 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
           setting: true,
         }}
         rowKey="id"
+        rowSelection={{
+          selectedRowKeys: selectedRows.map((item) => item.id),
+          onChange: (_, rows) => setSelectedRows(rows),
+        }}
         search={{
           labelWidth: 'auto',
           span: {
@@ -625,6 +786,40 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
           </Button>,
         ]}
       />
+      {selectedRows.length > 0 && (
+        <FooterToolbar
+          extra={intl.formatMessage(
+            {
+              id: 'pages.batch.selected',
+              defaultMessage: '已选择 {count} 项',
+            },
+            { count: selectedRows.length },
+          )}
+        >
+          <Button onClick={() => runBatchQuestionStatus('PUBLISHED')}>
+            {intl.formatMessage({
+              id: 'pages.questions.publish',
+              defaultMessage: '发布',
+            })}
+          </Button>
+          <Button onClick={() => runBatchQuestionStatus('DRAFT')}>
+            {intl.formatMessage({
+              id: 'pages.questions.unpublish',
+              defaultMessage: '下架',
+            })}
+          </Button>
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={runBatchDeleteQuestions}
+          >
+            {intl.formatMessage({
+              id: 'pages.questions.delete',
+              defaultMessage: '删除',
+            })}
+          </Button>
+        </FooterToolbar>
+      )}
     </PageContainer>
   );
 };

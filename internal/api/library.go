@@ -10,6 +10,8 @@ import (
 func (s *Server) registerLibraryAdminRoutes(admin *gin.RouterGroup) {
 	admin.GET("/questions", s.listQuestions)
 	admin.POST("/questions", s.createQuestion)
+	admin.PATCH("/questions/batch/status", s.batchPatchQuestionStatus)
+	admin.DELETE("/questions/batch", s.batchDeleteQuestions)
 	admin.GET("/questions/:id", s.getQuestion)
 	admin.PUT("/questions/:id", s.updateQuestion)
 	admin.PATCH("/questions/:id", s.patchQuestion)
@@ -19,6 +21,7 @@ func (s *Server) registerLibraryAdminRoutes(admin *gin.RouterGroup) {
 
 	admin.GET("/papers", s.listPapers)
 	admin.POST("/papers", s.createPaper)
+	admin.DELETE("/papers/batch", s.batchDeletePapers)
 	admin.GET("/papers/:id", s.getPaper)
 	admin.PUT("/papers/:id", s.updatePaper)
 	admin.DELETE("/papers/:id", s.deletePaper)
@@ -137,6 +140,32 @@ func (s *Server) deleteQuestion(c *gin.Context) {
 	response.NoContent(c)
 }
 
+func (s *Server) batchPatchQuestionStatus(c *gin.Context) {
+	req, ok := bindJSON[batchQuestionStatusRequest](c)
+	if !ok {
+		return
+	}
+	if len(normalizeBatchIDs(req.IDs)) == 0 {
+		response.BadRequest(c, "ids are required")
+		return
+	}
+	result := s.library.BatchPatchQuestionStatus(c.Request.Context(), req.IDs, req.Status)
+	response.Success(c, result)
+}
+
+func (s *Server) batchDeleteQuestions(c *gin.Context) {
+	req, ok := bindJSON[batchIDsRequest](c)
+	if !ok {
+		return
+	}
+	if len(normalizeBatchIDs(req.IDs)) == 0 {
+		response.BadRequest(c, "ids are required")
+		return
+	}
+	result := s.library.BatchDeleteQuestions(c.Request.Context(), req.IDs)
+	response.Success(c, result)
+}
+
 func (s *Server) addTestCase(c *gin.Context) {
 	id, ok := parseUintParam(c, "id")
 	if !ok {
@@ -239,6 +268,19 @@ func (s *Server) deletePaper(c *gin.Context) {
 		return
 	}
 	response.NoContent(c)
+}
+
+func (s *Server) batchDeletePapers(c *gin.Context) {
+	req, ok := bindJSON[batchIDsRequest](c)
+	if !ok {
+		return
+	}
+	if len(normalizeBatchIDs(req.IDs)) == 0 {
+		response.BadRequest(c, "ids are required")
+		return
+	}
+	result := s.library.BatchDeletePapers(c.Request.Context(), req.IDs)
+	response.Success(c, result)
 }
 
 func (s *Server) getPaperOutline(c *gin.Context) {
