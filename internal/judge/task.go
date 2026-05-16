@@ -19,7 +19,14 @@ const (
 	StatusCanceled            = "CANCELED"
 )
 
-var ErrInvalidStatusTransition = errors.New("invalid judge status transition")
+var (
+	ErrInvalidStatusTransition = errors.New("invalid judge status transition")
+	ErrTaskNotFound            = errors.New("judge task not found")
+)
+
+func IsNotFound(err error) bool {
+	return errors.Is(err, ErrTaskNotFound)
+}
 
 type Task struct {
 	ID            uint64         `json:"id"`

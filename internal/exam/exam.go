@@ -63,8 +63,57 @@ func (s *Service) ListExams(ctx context.Context, pageNum, pageSize int) ([]Exam,
 	return s.store.ListExams(ctx, pageNum, pageSize)
 }
 
+func (s *Service) ListExamSessionsByUser(ctx context.Context, userID uint64) ([]ExamSession, error) {
+	return s.store.ListExamSessionsByUser(ctx, userID)
+}
+
 func (s *Service) GetExam(ctx context.Context, id uint64) (*Exam, error) {
 	return s.store.GetExam(ctx, id)
+}
+
+func (s *Service) GetExamSnapshot(ctx context.Context, id uint64) (*ExamSnapshot, error) {
+	return s.store.GetExamSnapshot(ctx, id)
+}
+
+func (s *Service) ListAvailableExams(ctx context.Context, userID uint64) ([]ExamSessionItem, error) {
+	snapshots, err := s.store.ListExamSnapshots(ctx)
+	if err != nil {
+		return nil, err
+	}
+	sessions, err := s.store.ListExamSessionsByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	sessionMap := make(map[uint64]*ExamSession, len(sessions))
+	for i := range sessions {
+		sessionMap[sessions[i].ExamSnapshotID] = &sessions[i]
+	}
+	items := make([]ExamSessionItem, 0, len(snapshots))
+	for _, snap := range snapshots {
+		exam, err := s.store.GetExam(ctx, snap.ExamID)
+		if err != nil {
+			return nil, err
+		}
+		if exam.Status == StatusClosed || exam.Status == StatusArchived {
+			continue
+		}
+		status := SessionStatusNotStarted
+		if sess, ok := sessionMap[snap.ID]; ok {
+			status = sess.Status
+		}
+		items = append(items, ExamSessionItem{
+			ID:     snap.ExamID,
+			Title:  exam.Title,
+			Status: status,
+		})
+	}
+	return items, nil
+}
+
+type ExamSessionItem struct {
+	ID     uint64 `json:"id"`
+	Title  string `json:"title"`
+	Status string `json:"status"`
 }
 
 func (s *Service) CreateExam(ctx context.Context, cmd SaveExamCommand) (*Exam, error) {

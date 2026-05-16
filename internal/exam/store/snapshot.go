@@ -24,6 +24,18 @@ func (s *Store) GetExamSnapshotByExamID(ctx context.Context, examID uint64) (*ex
 	return toExamSnapshot(&row), nil
 }
 
+func (s *Store) ListExamSnapshots(ctx context.Context) ([]exam.ExamSnapshot, error) {
+	var rows []database.ExamSnapshotModel
+	if err := s.db(ctx).Order("published_at DESC").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	items := make([]exam.ExamSnapshot, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, *toExamSnapshot(&row))
+	}
+	return items, nil
+}
+
 func (s *Store) GetExamSnapshot(ctx context.Context, id uint64) (*exam.ExamSnapshot, error) {
 	var row database.ExamSnapshotModel
 	if err := s.db(ctx).First(&row, "id = ?", id).Error; err != nil {

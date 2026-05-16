@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/coding-hui/examora/internal/exam"
+	"github.com/coding-hui/examora/internal/judge"
 	"github.com/coding-hui/examora/internal/library"
 	"github.com/coding-hui/examora/internal/transport/http/response"
 )
@@ -19,7 +20,7 @@ func writeError(c *gin.Context, err error) {
 	if err == nil {
 		return
 	}
-	if library.IsNotFound(err) || exam.IsNotFound(err) {
+	if library.IsNotFound(err) || exam.IsNotFound(err) || judge.IsNotFound(err) {
 		c.JSON(http.StatusNotFound, response.Envelope{Code: response.CodeNotFound, Message: err.Error()})
 		return
 	}

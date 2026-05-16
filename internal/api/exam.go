@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/coding-hui/examora/internal/exam"
+	examSvc "github.com/coding-hui/examora/internal/exam"
 	"github.com/coding-hui/examora/internal/transport/http/response"
 )
 
@@ -19,16 +19,28 @@ func (s *Server) registerExamAdminRoutes(admin *gin.RouterGroup) {
 	admin.GET("/exam-results/:id", s.getExamResult)
 }
 
-func (s *Server) registerExamClientRoutes(client *gin.RouterGroup) {
-	// M1: Candidate exam flow
-	client.GET("/exams/:id/paper", s.getCandidatePaper)
-	client.POST("/exams/:id/sessions/start", s.startExamSession)
-	client.GET("/exams/:id/sessions/current", s.getCurrentSession)
-	client.POST("/exams/:id/answers", s.saveAnswers)
-	client.POST("/exams/:id/submit", s.submitExam)
-	client.GET("/exams/:id/result", s.getMyExamResult)
+func (s *Server) listCandidateExams(c *gin.Context) {
+	userID := currentUserID(c)
+	items, err := s.exam.ListAvailableExams(c.Request.Context(), userID)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, map[string]any{"items": items})
+}
 
-	client.POST("/exams/:id/submissions", s.createSubmission)
+func (s *Server) registerExamClientRoutes(client *gin.RouterGroup) {
+	client.GET("/available", s.listCandidateExams)
+	client.GET("/:id/paper", s.getCandidatePaper)
+	client.POST("/:id/sessions/start", s.startExamSession)
+	client.GET("/:id/sessions/current", s.getCurrentSession)
+	client.POST("/:id/answers", s.saveAnswers)
+	client.POST("/:id/submit", s.submitExam)
+	client.GET("/:id/result", s.getMyExamResult)
+}
+
+func (s *Server) registerClientCommonRoutes(client *gin.RouterGroup) {
+	client.POST("/submissions", s.createSubmission)
 	client.GET("/submissions/:id", s.getSubmission)
 	client.GET("/submissions/:id/result", s.getSubmission)
 	client.POST("/heartbeat", s.recordClientEvent("HEARTBEAT"))
@@ -195,15 +207,15 @@ func (s *Server) submitExam(c *gin.Context) {
 }
 
 func (s *Server) createSubmission(c *gin.Context) {
-	examID, ok := parseUintParam(c, "id")
-	if !ok {
-		return
-	}
 	req, ok := bindJSON[createSubmissionRequest](c)
 	if !ok {
 		return
 	}
-	created, err := s.exam.CreateSubmission(c.Request.Context(), examID, currentUserID(c), req.command())
+	if req.ExamID == 0 || req.QuestionID == 0 {
+		response.BadRequest(c, "exam_id and question_id are required")
+		return
+	}
+	created, err := s.exam.CreateSubmission(c.Request.Context(), req.ExamID, currentUserID(c), req.command())
 	if err != nil {
 		writeError(c, err)
 		return
@@ -235,7 +247,7 @@ func (s *Server) listExamResults(c *gin.Context) {
 		writeError(c, err)
 		return
 	}
-	response.PageSuccessWith(c, items, total, pageNum, pageSize, func(item exam.ExamResult) examResultResponse {
+	response.PageSuccessWith(c, items, total, pageNum, pageSize, func(item examSvc.ExamResult) examResultResponse {
 		return toExamResultResponse(item, false)
 	})
 }

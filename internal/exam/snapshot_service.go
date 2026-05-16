@@ -218,6 +218,9 @@ func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, st
 
 // GetCandidatePaper returns a candidate-safe view of the exam paper (no answers, no hidden test cases)
 func (s *Service) GetCandidatePaper(ctx context.Context, examID, userID uint64) (*CandidatePaper, error) {
+	if err := s.ensureCandidateExamOpen(ctx, examID); err != nil {
+		return nil, err
+	}
 	e, err := s.store.GetExam(ctx, examID)
 	if err != nil {
 		return nil, err
@@ -311,6 +314,10 @@ func (s *Service) GetCandidatePaper(ctx context.Context, examID, userID uint64) 
 
 // StartExamSession creates or resumes an exam session for a candidate
 func (s *Service) StartExamSession(ctx context.Context, examID, userID uint64, ipAddress, deviceID string) (*ExamSession, error) {
+	if err := s.ensureCandidateExamOpen(ctx, examID); err != nil {
+		return nil, err
+	}
+
 	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, examID)
 	if err != nil {
 		return nil, err
@@ -362,6 +369,9 @@ func (s *Service) StartExamSession(ctx context.Context, examID, userID uint64, i
 
 // SubmitExam finalizes the exam session and triggers grading
 func (s *Service) SubmitExam(ctx context.Context, examID, userID uint64) error {
+	if err := s.ensureCandidateExamOpen(ctx, examID); err != nil {
+		return err
+	}
 	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, examID)
 	if err != nil {
 		return err
@@ -389,6 +399,9 @@ func (s *Service) SubmitExam(ctx context.Context, examID, userID uint64) error {
 
 // GetCurrentSession returns the current exam session for a user
 func (s *Service) GetCurrentSession(ctx context.Context, examID, userID uint64) (*ExamSession, error) {
+	if err := s.ensureCandidateExamOpen(ctx, examID); err != nil {
+		return nil, err
+	}
 	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, examID)
 	if err != nil {
 		return nil, err
@@ -405,6 +418,9 @@ func (s *Service) GetCurrentSession(ctx context.Context, examID, userID uint64) 
 
 // SaveAnswers saves candidate answer drafts
 func (s *Service) SaveAnswers(ctx context.Context, examID, userID uint64, answers map[string]map[string]any) error {
+	if err := s.ensureCandidateExamOpen(ctx, examID); err != nil {
+		return err
+	}
 	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, examID)
 	if err != nil {
 		return err
@@ -451,6 +467,17 @@ func (s *Service) SaveAnswers(ctx context.Context, examID, userID uint64, answer
 		if err := s.store.SaveAnswerDraft(ctx, session.ID, questionID, answer); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (s *Service) ensureCandidateExamOpen(ctx context.Context, examID uint64) error {
+	e, err := s.store.GetExam(ctx, examID)
+	if err != nil {
+		return err
+	}
+	if e.Status == StatusClosed || e.Status == StatusArchived {
+		return ErrInvalidExamStatusTransition
 	}
 	return nil
 }

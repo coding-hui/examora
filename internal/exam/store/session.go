@@ -24,6 +24,18 @@ func (s *Store) GetExamSession(ctx context.Context, examSnapshotID, userID uint6
 	return toExamSession(&row), nil
 }
 
+func (s *Store) ListExamSessionsByUser(ctx context.Context, userID uint64) ([]exam.ExamSession, error) {
+	var rows []database.ExamSessionModel
+	if err := s.db(ctx).Where("user_id = ?", userID).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	sessions := make([]exam.ExamSession, 0, len(rows))
+	for _, row := range rows {
+		sessions = append(sessions, *toExamSession(&row))
+	}
+	return sessions, nil
+}
+
 func (s *Store) UpdateExamSession(ctx context.Context, session *exam.ExamSession) error {
 	row := toExamSessionModel(session)
 	return s.db(ctx).

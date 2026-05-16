@@ -26,6 +26,7 @@ type Submission struct {
 }
 
 type CreateSubmissionCommand struct {
+	ExamID     uint64
 	QuestionID uint64
 	Answer     map[string]any
 	Code       string
@@ -37,6 +38,37 @@ type CreatedSubmission struct {
 }
 
 func (s *Service) CreateSubmission(ctx context.Context, examID uint64, userID uint64, cmd CreateSubmissionCommand) (*CreatedSubmission, error) {
+	if cmd.ExamID != 0 && cmd.ExamID != examID {
+		return nil, ErrForbidden
+	}
+	if err := s.ensureCandidateExamOpen(ctx, examID); err != nil {
+		return nil, err
+	}
+	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, examID)
+	if err != nil {
+		return nil, err
+	}
+	session, err := s.store.GetExamSession(ctx, snapshot.ID, userID)
+	if err != nil {
+		return nil, ErrForbidden
+	}
+	if session.Status != SessionStatusInProgress {
+		return nil, ErrForbidden
+	}
+	questionSnapshots, err := s.store.ListQuestionSnapshots(ctx, snapshot.ID)
+	if err != nil {
+		return nil, err
+	}
+	questionBelongsToExam := false
+	for _, questionSnapshot := range questionSnapshots {
+		if questionSnapshot.ID == cmd.QuestionID {
+			questionBelongsToExam = true
+			break
+		}
+	}
+	if !questionBelongsToExam {
+		return nil, ErrForbidden
+	}
 	status := SubmissionStatusPending
 	sub := &Submission{ExamID: examID, UserID: userID, QuestionID: cmd.QuestionID, Answer: cmd.Answer, Code: cmd.Code, Language: cmd.Language, Status: status}
 	if err := s.store.CreateSubmission(ctx, sub); err != nil {

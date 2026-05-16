@@ -26,6 +26,7 @@ import {
 } from '@dnd-kit/sortable';
 import type { AdminQuestion, QuestionType } from '@examora/types';
 import {
+  API_PATHS,
   DIFFICULTY_OPTIONS,
   QUESTION_STATUS_OPTIONS,
   QUESTION_TYPE_OPTIONS,
@@ -1212,7 +1213,7 @@ const QuestionsDetailContent: React.FC = () => {
     setLoading(true);
     try {
       const response = await request<QuestionEnvelope>(
-        `/api/admin/questions/${questionId}`,
+        API_PATHS.admin.question(questionId),
       );
       setQuestion(response.data);
     } catch (_error) {
@@ -1234,7 +1235,6 @@ const QuestionsDetailContent: React.FC = () => {
         status: 'DRAFT',
         time_limit_ms: 2000,
         memory_limit_mb: 256,
-        content: { text: '' },
         ...(initialType
           ? {
               type: initialType,
@@ -1291,7 +1291,7 @@ const QuestionsDetailContent: React.FC = () => {
         }
         setSaving(true);
         const response = await request<QuestionEnvelope>(
-          '/api/admin/questions',
+          API_PATHS.admin.questions,
           { method: 'POST', data: payload, skipErrorHandler: true },
         );
         message.success(
@@ -1317,7 +1317,7 @@ const QuestionsDetailContent: React.FC = () => {
         delete payload.test_cases;
       }
       setSaving(true);
-      await request(`/api/admin/questions/${question.id}`, {
+      await request(API_PATHS.admin.question(question.id), {
         method: 'PUT',
         data: payload,
         skipErrorHandler: true,
@@ -1381,7 +1381,7 @@ const QuestionsDetailContent: React.FC = () => {
   const deleteQuestion = async () => {
     if (!question) return;
     try {
-      await request(`/api/admin/questions/${question.id}`, {
+      await request(API_PATHS.admin.question(question.id), {
         method: 'DELETE',
         skipErrorHandler: true,
       });

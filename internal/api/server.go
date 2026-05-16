@@ -28,14 +28,18 @@ func (s *Server) RegisterRoutes(router *gin.Engine) {
 	router.GET("/api/health", s.health)
 
 	authMW := middleware.Authenticator(s.auth)
-	s.registerAuthRoutes(router, authMW)
+	v1 := router.Group("/api/v1")
+	s.registerAuthRoutes(v1, authMW)
 
-	admin := router.Group("/api/admin", authMW, middleware.RequireAdmin(s.auth))
+	admin := v1.Group("", authMW, middleware.RequireAdmin(s.auth))
 	s.registerUserAdminRoutes(admin)
 	s.registerLibraryAdminRoutes(admin)
 	s.registerExamAdminRoutes(admin)
 	s.registerJudgeRoutes(admin)
 
-	client := router.Group("/api/client", authMW, middleware.RequireClient(s.auth))
+	client := v1.Group("/exams", authMW, middleware.RequireClient(s.auth))
 	s.registerExamClientRoutes(client)
+
+	clientCommon := v1.Group("", authMW, middleware.RequireClient(s.auth))
+	s.registerClientCommonRoutes(clientCommon)
 }

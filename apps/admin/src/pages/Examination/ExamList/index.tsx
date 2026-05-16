@@ -6,6 +6,7 @@ import {
   type ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
+import { API_PATHS } from '@examora/types';
 import { history, request, useIntl } from '@umijs/max';
 import { App as AntdApp, Button, Dropdown, Space, Tag } from 'antd';
 import dayjs from 'dayjs';
@@ -163,7 +164,7 @@ const ExamListContent: React.FC = () => {
           const response = await request<{
             code: number;
             data: BatchActionResult;
-          }>('/api/admin/exams/batch/close', {
+          }>(API_PATHS.admin.examBatchClose, {
             method: 'POST',
             data: { ids: closableSelectedRows.map((item) => item.id) },
             skipErrorHandler: true,
@@ -370,7 +371,7 @@ const ExamListContent: React.FC = () => {
             const response = await request<{
               code: number;
               data: { items: Exam[]; total: number };
-            }>('/api/admin/exams', {
+            }>(API_PATHS.admin.exams, {
               skipErrorHandler: true,
               params: {
                 page: params.current,

@@ -13,6 +13,82 @@ export interface PageResponse<T> {
   page_size: number;
 }
 
+export interface AuthConfig {
+  auth_mode: string;
+  logto_enabled: boolean;
+  has_local_users: boolean;
+}
+
+export interface LoginPayload {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  expires_at: number;
+  user?: AuthMeData;
+}
+
+export interface AuthMeData {
+  id: number;
+  username: string;
+  display_name?: string;
+  roles?: string[];
+  permissions?: Record<string, string[]>;
+  external_subject?: string;
+}
+
+export const API_PATHS = {
+  auth: {
+    config: "/api/v1/auth/config",
+    login: "/api/v1/auth/login",
+    logout: "/api/v1/auth/logout",
+    me: "/api/v1/auth/me",
+    logtoLogin: "/api/v1/auth/logto/login",
+  },
+  candidate: {
+    availableExams: "/api/v1/exams/available",
+    paper: (examID: number | string) => `/api/v1/exams/${examID}/paper`,
+    startSession: (examID: number | string) =>
+      `/api/v1/exams/${examID}/sessions/start`,
+    currentSession: (examID: number | string) =>
+      `/api/v1/exams/${examID}/sessions/current`,
+    answers: (examID: number | string) => `/api/v1/exams/${examID}/answers`,
+    submit: (examID: number | string) => `/api/v1/exams/${examID}/submit`,
+    result: (examID: number | string) => `/api/v1/exams/${examID}/result`,
+    submissions: "/api/v1/submissions",
+    submission: (submissionID: number | string) =>
+      `/api/v1/submissions/${submissionID}`,
+    heartbeat: "/api/v1/heartbeat",
+    deviceBind: "/api/v1/device-bind",
+    securityReport: "/api/v1/security-report",
+    examEvents: "/api/v1/exam-events",
+  },
+  admin: {
+    users: "/api/v1/users",
+    user: (userID: number | string) => `/api/v1/users/${userID}`,
+    questions: "/api/v1/questions",
+    question: (questionID: number | string) => `/api/v1/questions/${questionID}`,
+    questionBatchStatus: "/api/v1/questions/batch/status",
+    questionBatch: "/api/v1/questions/batch",
+    papers: "/api/v1/papers",
+    paper: (paperID: number | string) => `/api/v1/papers/${paperID}`,
+    paperOutline: (paperID: number | string) =>
+      `/api/v1/papers/${paperID}/outline`,
+    paperQuestions: (paperID: number | string) =>
+      `/api/v1/papers/${paperID}/questions`,
+    paperQuestion: (paperID: number | string, questionID: number | string) =>
+      `/api/v1/papers/${paperID}/questions/${questionID}`,
+    paperBatch: "/api/v1/papers/batch",
+    exams: "/api/v1/exams",
+    exam: (examID: number | string) => `/api/v1/exams/${examID}`,
+    examPublish: (examID: number | string) =>
+      `/api/v1/exams/${examID}/publish`,
+    examBatchClose: "/api/v1/exams/batch/close",
+  },
+} as const;
+
 export type QuestionType =
   | "SINGLE_CHOICE"
   | "MULTIPLE_CHOICE"
@@ -299,6 +375,16 @@ export interface ExamSnapshot {
   published_at: string;
 }
 
+export interface CandidateExamItem {
+  id: number;
+  title: string;
+  status: ExamSessionStatus;
+}
+
+export interface CandidateExamList {
+  items: CandidateExamItem[];
+}
+
 /** Candidate exam session */
 export interface ExamSession {
   id: number;
@@ -354,15 +440,48 @@ export interface SampleTestCase {
 
 /** Candidate submission for objective questions */
 export interface CandidateSubmission {
+  exam_id: number;
   question_id: number;
   answer: Record<string, unknown>;
 }
 
 /** Programming submission */
 export interface ProgrammingSubmission {
+  exam_id: number;
   question_id: number;
   code: string;
   language: string;
+}
+
+export interface SaveAnswersPayload {
+  answers: Record<string, Record<string, unknown>>;
+}
+
+export interface CreateSubmissionPayload {
+  exam_id: number;
+  question_id: number;
+  answer?: Record<string, unknown>;
+  code?: string;
+  language?: string;
+}
+
+export interface SubmissionRecord {
+  id: number;
+  exam_id: number;
+  user_id: number;
+  question_id: number;
+  answer?: Record<string, unknown>;
+  code?: string;
+  language?: string;
+  status: SubmissionStatus;
+  score: number;
+  result?: Record<string, unknown>;
+  submitted_at: string;
+  judged_at?: string;
+}
+
+export interface CreatedSubmission {
+  submission: SubmissionRecord;
 }
 
 export type ExamResultStatus = "GRADED" | "JUDGING" | "MANUAL_REQUIRED";

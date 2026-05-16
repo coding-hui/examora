@@ -1,49 +1,19 @@
 <script setup lang="ts">
+import { ApiClient } from '@examora/client';
+import type {
+  CandidateExamItem,
+  CandidatePaper,
+  CandidateQuestion,
+  ExamSession,
+} from '@examora/types';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-
-// Types matching packages/types
-interface ExamSession {
-  id: string;
-  examSnapshotId: string;
-  userId: string;
-  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED';
-  startedAt?: string;
-  submittedAt?: string;
-  remainingSeconds?: number;
-}
-
-interface CandidateQuestion {
-  snapshotId: string;
-  type:
-    | 'SINGLE_CHOICE'
-    | 'MULTIPLE_CHOICE'
-    | 'TRUE_FALSE'
-    | 'FILL_BLANK'
-    | 'SHORT_ANSWER'
-    | 'PROGRAMMING';
-  title: string;
-  content: Record<string, unknown>;
-  score: number;
-  sortOrder: number;
-  sampleTestCases?: { input: string; expectedOutput: string }[];
-  starterCode?: string;
-  timeLimitMs: number;
-}
 
 interface ChoiceOption {
   key: string;
   text: string;
 }
 
-interface CandidatePaper {
-  examSnapshotId: string;
-  title: string;
-  startTime: string;
-  endTime: string;
-  durationMinutes: number;
-  remainingSeconds: number;
-  questions: CandidateQuestion[];
-}
+const apiClient = new ApiClient({ baseUrl: '' });
 
 // State
 const currentView = ref<'login' | 'list' | 'exam'>('login');
@@ -51,15 +21,18 @@ const examId = ref<number>(1);
 const username = ref('');
 const password = ref('');
 const loginError = ref('');
+const listError = ref('');
+const examError = ref('');
 const loginLoading = ref(false);
 
-const sessions = ref<{ id: number; title: string; status: string }[]>([]);
+const sessions = ref<CandidateExamItem[]>([]);
 const currentSession = ref<ExamSession | null>(null);
 const paper = ref<CandidatePaper | null>(null);
 const currentQuestionIndex = ref(0);
 const answers = ref<Map<string, Record<string, unknown>>>(new Map());
 const submitLoading = ref(false);
 const autoSaveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
+const examActive = ref(false);
 
 let timerInterval: number | null = null;
 let autoSaveInterval: number | null = null;
@@ -71,11 +44,20 @@ const currentQuestion = computed(() => {
 
 const formattedTime = computed(() => {
   if (!paper.value) return '00:00';
-  const secs = paper.value.remainingSeconds;
+  const secs = paper.value.remaining_seconds;
   const mins = Math.floor(secs / 60);
   const secsRem = secs % 60;
   return `${String(mins).padStart(2, '0')}:${String(secsRem).padStart(2, '0')}`;
 });
+
+function syncClientTokenFromStorage() {
+  const token = localStorage.getItem('token');
+  if (token) {
+    apiClient.setAccessToken(token);
+  } else {
+    apiClient.clearAccessToken();
+  }
+}
 
 // Login
 async function handleLogin() {
@@ -86,53 +68,39 @@ async function handleLogin() {
   loginLoading.value = true;
   loginError.value = '';
   try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: username.value,
-        password: password.value,
-      }),
+    const loginData = await apiClient.authLogin({
+      username: username.value,
+      password: password.value,
     });
-    const data = await res.json();
-    if (data.code === 0) {
-      localStorage.setItem('token', data.data.token);
-      // Fetch user info after login to get user ID
-      const meRes = await fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${data.data.token}` },
-      });
-      const meData = await meRes.json();
-      if (meData.code === 0) {
-        localStorage.setItem('userId', String(meData.data.id));
-      }
-      loadExamList();
-    } else {
-      loginError.value = data.message || '登录失败';
-    }
-  } catch {
-    loginError.value = '网络错误';
+    localStorage.setItem('token', loginData.token);
+    const meData = await apiClient.authMe();
+    localStorage.setItem('userId', String(meData.id));
+    await loadExamList();
+  } catch (error) {
+    loginError.value = error instanceof Error ? error.message : '网络错误';
   } finally {
     loginLoading.value = false;
   }
 }
 
 async function loadExamList() {
+  listError.value = '';
   try {
-    const res = await fetch('/api/client/exams', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
-    const data = await res.json();
-    if (data.code === 0) {
-      sessions.value = data.data.items || [];
-    }
-  } catch (e) {
-    console.error('Failed to load exam list:', e);
+    syncClientTokenFromStorage();
+    const data = await apiClient.listAvailableExams();
+    sessions.value = data.items || [];
+  } catch (error) {
+    listError.value =
+      error instanceof Error ? error.message : '考试列表加载失败';
   }
   currentView.value = 'list';
 }
 
 function selectExam(id: number) {
   examId.value = id;
+  currentQuestionIndex.value = 0;
+  answers.value.clear();
+  examActive.value = false;
   startExam();
 }
 
@@ -140,87 +108,45 @@ async function startExam() {
   const userId = localStorage.getItem('userId');
   if (!userId) return;
 
+  examError.value = '';
   try {
-    // Start session
-    const res = await fetch(
-      `/api/client/exams/${examId.value}/sessions/start`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ device_id: 'desktop-001' }),
-      },
-    );
-    const data = await res.json();
-    if (data.code === 0) {
-      currentSession.value = data.data;
-    }
-
-    // Get paper
-    const paperRes = await fetch(`/api/client/exams/${examId.value}/paper`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    syncClientTokenFromStorage();
+    currentSession.value = await apiClient.startExamSession(examId.value, {
+      device_id: 'desktop-001',
     });
-    const paperData = await paperRes.json();
-    if (paperData.code === 0) {
-      // Map snake_case backend fields to camelCase
-      paper.value = {
-        examSnapshotId: String(paperData.data.exam_snapshot_id),
-        title: paperData.data.title || '',
-        startTime: paperData.data.start_time,
-        endTime: paperData.data.end_time,
-        durationMinutes: paperData.data.duration_minutes,
-        remainingSeconds: paperData.data.remaining_seconds,
-        questions: (paperData.data.questions || []).map((q: any) => ({
-          snapshotId: String(q.snapshot_id),
-          type: q.type,
-          title: q.title,
-          content: q.content || {},
-          score: q.score,
-          sortOrder: q.sort_order,
-          sampleTestCases: (q.sample_test_cases || []).map((tc: any) => ({
-            input: tc.input,
-            expectedOutput: tc.expected_output,
-          })),
-          starterCode: q.starter_code,
-          timeLimitMs: q.time_limit_ms,
-        })),
-      };
-      currentView.value = 'exam';
-      startTimer();
-      startAutoSave();
-    }
-  } catch (e) {
-    console.error('Failed to start exam:', e);
+    paper.value = await apiClient.getCandidatePaper(examId.value);
+    examActive.value = true;
+    currentView.value = 'exam';
+    startTimer();
+    startAutoSave();
+  } catch (error) {
+    examError.value = error instanceof Error ? error.message : '考试启动失败';
   }
 }
 
 function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
   timerInterval = window.setInterval(() => {
-    if (paper.value && paper.value.remainingSeconds > 0) {
-      paper.value.remainingSeconds--;
+    if (paper.value && paper.value.remaining_seconds > 0) {
+      paper.value.remaining_seconds--;
     }
   }, 1000);
 }
 
 function startAutoSave() {
+  if (autoSaveInterval) clearInterval(autoSaveInterval);
   autoSaveInterval = window.setInterval(() => {
     saveDraft();
   }, 30000); // every 30 seconds
 }
 
 async function saveDraft() {
-  if (!paper.value) return;
+  if (!paper.value || !examActive.value || submitLoading.value) return;
   autoSaveStatus.value = 'saving';
   try {
-    await fetch(`/api/client/exams/${examId.value}/answers`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-      },
-      body: JSON.stringify({ answers: Object.fromEntries(answers.value) }),
+    syncClientTokenFromStorage();
+    await apiClient.saveAnswers(examId.value, {
+      answers: Object.fromEntries(answers.value),
     });
     autoSaveStatus.value = 'saved';
     setTimeout(() => {
@@ -235,14 +161,19 @@ async function submitExam() {
   if (!confirm('确定要交卷吗？')) return;
   submitLoading.value = true;
   try {
-    await fetch(`/api/client/exams/${examId.value}/submit`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
-    alert('提交成功');
+    syncClientTokenFromStorage();
+    examActive.value = false;
     cleanup();
+    await apiClient.submitExam(examId.value);
+    alert('提交成功');
+    paper.value = null;
+    currentSession.value = null;
+    answers.value.clear();
     currentView.value = 'list';
   } catch {
+    examActive.value = true;
+    startTimer();
+    startAutoSave();
     alert('提交失败');
   } finally {
     submitLoading.value = false;
@@ -252,6 +183,9 @@ async function submitExam() {
 function cleanup() {
   if (timerInterval) clearInterval(timerInterval);
   if (autoSaveInterval) clearInterval(autoSaveInterval);
+  timerInterval = null;
+  autoSaveInterval = null;
+  autoSaveStatus.value = 'idle';
 }
 
 function handleAnswer(questionId: string, answer: Record<string, unknown>) {
@@ -318,9 +252,24 @@ function navigateQuestion(index: number) {
   currentQuestionIndex.value = index;
 }
 
+async function handleLogout() {
+  try {
+    syncClientTokenFromStorage();
+    await apiClient.authLogout();
+  } catch {
+    apiClient.clearAccessToken();
+  }
+  localStorage.removeItem('token');
+  localStorage.removeItem('userId');
+  examActive.value = false;
+  cleanup();
+  currentView.value = 'login';
+}
+
 onMounted(() => {
   const token = localStorage.getItem('token');
   if (token) {
+    syncClientTokenFromStorage();
     loadExamList();
   }
 });
@@ -334,21 +283,35 @@ onUnmounted(() => {
   <main class="layout">
     <!-- Login View -->
     <div v-if="currentView === 'login'" class="login-panel">
-      <div class="login-card">
+      <form class="login-card" @submit.prevent="handleLogin">
         <h2>候选人登录</h2>
         <div class="form-group">
-          <label>用户名</label>
-          <input v-model="username" type="text" placeholder="请输入用户名" />
+          <label for="login-username">用户名</label>
+          <input
+            id="login-username"
+            v-model="username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            placeholder="请输入用户名"
+          />
         </div>
         <div class="form-group">
-          <label>密码</label>
-          <input v-model="password" type="password" placeholder="请输入密码" />
+          <label for="login-password">密码</label>
+          <input
+            id="login-password"
+            v-model="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="请输入密码"
+          />
         </div>
         <p v-if="loginError" class="error">{{ loginError }}</p>
-        <button @click="handleLogin" :disabled="loginLoading" class="btn-primary">
+        <button type="submit" :disabled="loginLoading" class="btn-primary">
           {{ loginLoading ? '登录中...' : '登录' }}
         </button>
-      </div>
+      </form>
     </div>
 
     <!-- Exam List View -->
@@ -358,8 +321,10 @@ onUnmounted(() => {
           <p class="kicker">Examora Desktop</p>
           <h1>选择考试</h1>
         </div>
-        <button @click="currentView = 'login'" class="btn-secondary">退出登录</button>
+        <button @click="handleLogout" class="btn-secondary">退出登录</button>
       </header>
+      <p v-if="listError" class="error">{{ listError }}</p>
+      <p v-if="examError" class="error">{{ examError }}</p>
       <div class="exam-grid">
         <div v-for="exam in sessions" :key="exam.id" class="exam-card">
           <h3>{{ exam.title }}</h3>
@@ -377,7 +342,7 @@ onUnmounted(() => {
           <h1>{{ paper.title }}</h1>
         </div>
         <div class="status">
-          <span :class="{ warning: paper.remainingSeconds < 300 }">
+          <span :class="{ warning: paper.remaining_seconds < 300 }">
             Timer: {{ formattedTime }}
           </span>
           <span>Autosave: {{ autoSaveStatus }}</span>
@@ -391,8 +356,8 @@ onUnmounted(() => {
           <div class="question-nav">
             <button
               v-for="(q, index) in paper.questions"
-              :key="q.snapshotId"
-              :class="{ active: index === currentQuestionIndex, answered: answers.has(q.snapshotId) }"
+              :key="q.snapshot_id"
+              :class="{ active: index === currentQuestionIndex, answered: answers.has(String(q.snapshot_id)) }"
               @click="navigateQuestion(index)"
             >
               {{ index + 1 }}
@@ -416,10 +381,10 @@ onUnmounted(() => {
                 <label v-for="opt in getChoiceOptions(currentQuestion)" :key="opt.key">
                   <input
                     type="radio"
-                    :name="'q-' + currentQuestion.snapshotId"
+                    :name="'q-' + currentQuestion.snapshot_id"
                     :value="opt.key"
-                    :checked="answers.get(currentQuestion.snapshotId)?.choice === opt.key"
-                    @change="handleAnswer(currentQuestion.snapshotId, { choice: opt.key })"
+                    :checked="answers.get(String(currentQuestion.snapshot_id))?.choice === opt.key"
+                    @change="handleAnswer(String(currentQuestion.snapshot_id), { choice: opt.key })"
                   />
                   <span class="option-key">{{ opt.key }}</span>
                   {{ opt.text }}
@@ -430,8 +395,8 @@ onUnmounted(() => {
                   <input
                     type="checkbox"
                     :value="opt.key"
-                    :checked="isChoiceSelected(currentQuestion.snapshotId, opt.key)"
-                    @change="toggleMultipleChoice(currentQuestion.snapshotId, opt.key, ($event.target as HTMLInputElement).checked)"
+                    :checked="isChoiceSelected(String(currentQuestion.snapshot_id), opt.key)"
+                    @change="toggleMultipleChoice(String(currentQuestion.snapshot_id), opt.key, ($event.target as HTMLInputElement).checked)"
                   />
                   <span class="option-key">{{ opt.key }}</span>
                   {{ opt.text }}
@@ -439,22 +404,22 @@ onUnmounted(() => {
               </template>
               <template v-else-if="currentQuestion.type === 'PROGRAMMING'">
                 <textarea
-                  :value="getAnswerString(currentQuestion.snapshotId, 'code')"
-                  @input="handleAnswer(currentQuestion.snapshotId, { code: ($event.target as HTMLTextAreaElement).value })"
+                  :value="getAnswerString(String(currentQuestion.snapshot_id), 'code')"
+                  @input="handleAnswer(String(currentQuestion.snapshot_id), { code: ($event.target as HTMLTextAreaElement).value })"
                   placeholder="请输入代码..."
                   class="code-editor"
                 ></textarea>
-                <p v-if="currentQuestion.sampleTestCases?.length" class="sample-cases">
+                <div v-if="currentQuestion.sample_test_cases?.length" class="sample-cases">
                   示例用例：
-                  <div v-for="(tc, i) in currentQuestion.sampleTestCases" :key="i">
-                    输入: {{ tc.input }} → 输出: {{ tc.expectedOutput }}
+                  <div v-for="(tc, i) in currentQuestion.sample_test_cases" :key="i">
+                    输入: {{ tc.input }} → 输出: {{ tc.expected_output }}
                   </div>
-                </p>
+                </div>
               </template>
               <template v-else>
                 <textarea
-                  :value="getAnswerString(currentQuestion.snapshotId, 'text')"
-                  @input="handleAnswer(currentQuestion.snapshotId, { text: ($event.target as HTMLTextAreaElement).value })"
+                  :value="getAnswerString(String(currentQuestion.snapshot_id), 'text')"
+                  @input="handleAnswer(String(currentQuestion.snapshot_id), { text: ($event.target as HTMLTextAreaElement).value })"
                   placeholder="请输入答案..."
                 ></textarea>
               </template>

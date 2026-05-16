@@ -7,86 +7,92 @@ import {
   TrophyOutlined,
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
+import { useIntl } from '@umijs/max';
 import { Button, Card, Result, Space, Typography } from 'antd';
 import React from 'react';
 
 const moduleMeta: Record<
   string,
   {
-    title: string;
-    description: string;
+    titleId: string;
+    descriptionId: string;
     icon: React.ReactNode;
   }
 > = {
-  '/library/questions': {
-    title: '题库管理',
-    description: '题目列表、题型配置、答案与解析维护即将接入。',
+  '/content/library/questions': {
+    titleId: 'pages.comingSoon.questions.title',
+    descriptionId: 'pages.comingSoon.questions.description',
     icon: <DatabaseOutlined />,
   },
-  '/library/programming': {
-    title: '编程题与测试用例',
-    description: '编程题模板、样例用例、隐藏用例和运行限制将在这里管理。',
+  '/content/library/programming': {
+    titleId: 'pages.comingSoon.programming.title',
+    descriptionId: 'pages.comingSoon.programming.description',
     icon: <DatabaseOutlined />,
   },
-  '/papers': {
-    title: '试卷管理',
-    description: '组卷、题目排序、分值配置和试卷状态流转即将接入。',
+  '/content/papers': {
+    titleId: 'pages.comingSoon.papers.title',
+    descriptionId: 'pages.comingSoon.papers.description',
     icon: <FileTextOutlined />,
   },
-  '/exams/create': {
-    title: '创建考试',
-    description: '考试基本信息、试卷绑定和发布前配置将在这里接入。',
+  '/examination/exams/create': {
+    titleId: 'pages.comingSoon.examCreate.title',
+    descriptionId: 'pages.comingSoon.examCreate.description',
     icon: <FileTextOutlined />,
   },
-  '/candidates': {
-    title: '考生管理',
-    description: '考生账号、考试授权、分组和导入导出能力即将接入。',
+  '/examination/candidates': {
+    titleId: 'pages.comingSoon.candidates.title',
+    descriptionId: 'pages.comingSoon.candidates.description',
     icon: <TeamOutlined />,
   },
-  '/proctoring/events': {
-    title: '监考审计',
-    description: '桌面端事件、设备绑定、异常行为记录将在这里查看。',
+  '/monitoring/proctoring/events': {
+    titleId: 'pages.comingSoon.events.title',
+    descriptionId: 'pages.comingSoon.events.description',
     icon: <SafetyOutlined />,
   },
-  '/results/submissions': {
-    title: '提交记录',
-    description: '候选人答卷、编程提交和判分状态将在这里汇总。',
+  '/assessment/results/submissions': {
+    titleId: 'pages.comingSoon.submissions.title',
+    descriptionId: 'pages.comingSoon.submissions.description',
     icon: <TrophyOutlined />,
   },
-  '/results/judge-tasks': {
-    title: '判题任务',
-    description: '异步判题任务、重试状态和沙箱结果将在这里跟踪。',
+  '/assessment/results/judge-tasks': {
+    titleId: 'pages.comingSoon.judgeTasks.title',
+    descriptionId: 'pages.comingSoon.judgeTasks.description',
     icon: <TrophyOutlined />,
   },
 };
 
 const fallbackMeta = {
-  title: '模块建设中',
-  description: '该管理模块已预留导航入口，业务页面会在后续迭代接入。',
+  titleId: 'pages.comingSoon.title',
+  descriptionId: 'pages.comingSoon.description',
   icon: <ClockCircleOutlined />,
 };
 
 const ComingSoon: React.FC = () => {
+  const intl = useIntl();
   const meta = moduleMeta[window.location.pathname] ?? fallbackMeta;
+  const title = intl.formatMessage({ id: meta.titleId });
+  const description = intl.formatMessage({ id: meta.descriptionId });
 
   return (
-    <PageContainer title={meta.title}>
+    <PageContainer title={title}>
       <Card>
         <Result
           icon={meta.icon}
-          title={meta.title}
-          subTitle={meta.description}
+          title={title}
+          subTitle={description}
           extra={
             <Space>
-              <Button type="primary" href="/dashboard">
-                返回工作台
+              <Button type="primary" href="/overview/dashboard">
+                {intl.formatMessage({ id: 'pages.comingSoon.backDashboard' })}
               </Button>
-              <Button href="/exams">查看考试管理</Button>
+              <Button href="/examination/exams">
+                {intl.formatMessage({ id: 'pages.comingSoon.viewExams' })}
+              </Button>
             </Space>
           }
         />
         <Typography.Paragraph type="secondary" style={{ textAlign: 'center' }}>
-          当前入口用于固定后台信息架构，避免后续业务页面上线时反复调整主菜单。
+          {intl.formatMessage({ id: 'pages.comingSoon.note' })}
         </Typography.Paragraph>
       </Card>
     </PageContainer>

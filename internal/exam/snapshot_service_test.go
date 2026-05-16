@@ -2,6 +2,7 @@ package exam_test
 
 import (
 	"context"
+	"encoding/json"
 	"path/filepath"
 	"strconv"
 	"testing"
@@ -669,4 +670,123 @@ func TestPublishRejectsInvalidPublishedQuestionShape(t *testing.T) {
 
 	_, err = fx.exams.PublishExamWithSnapshot(ctx, created.ID, time.Now(), time.Now().Add(time.Hour), 60)
 	require.ErrorIs(t, err, library.ErrInvalidQuestion)
+}
+
+func TestStartExamSessionRejectsClosedExam(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	created := publishableExam(t, fx)
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	_, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+
+	// Close the exam
+	require.NoError(t, fx.exams.CloseExam(ctx, created.ID))
+
+	// Attempting to start a session should be rejected
+	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+}
+
+func TestAvailableExamItemUsesCandidateWireShape(t *testing.T) {
+	payload, err := json.Marshal(exam.ExamSessionItem{
+		ID:     1,
+		Title:  "Final exam",
+		Status: exam.SessionStatusNotStarted,
+	})
+	require.NoError(t, err)
+	require.JSONEq(t, `{"id":1,"title":"Final exam","status":"NOT_STARTED"}`, string(payload))
+}
+
+func TestStartExamSessionRejectsArchivedExam(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	created := publishableExam(t, fx)
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	_, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+
+	// Manually set status to archived via UpdateExam
+	_, err = fx.exams.UpdateExam(ctx, created.ID, exam.SaveExamCommand{
+		Title:           created.Title,
+		Status:          exam.StatusArchived,
+		DurationMinutes: created.DurationMinutes,
+		CreatedBy:       created.CreatedBy,
+	})
+	require.NoError(t, err)
+
+	// Attempting to start a session should be rejected
+	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+}
+
+func TestClosedExamRejectsExistingSessionCandidateActions(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	created := publishableExam(t, fx)
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.NoError(t, err)
+	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, snaps)
+
+	require.NoError(t, fx.exams.CloseExam(ctx, created.ID))
+
+	_, err = fx.exams.GetCandidatePaper(ctx, created.ID, 42)
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+	_, err = fx.exams.GetCurrentSession(ctx, created.ID, 42)
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+	err = fx.exams.SaveAnswers(ctx, created.ID, 42, map[string]map[string]any{
+		strconv.FormatUint(snaps[0].ID, 10): {"choice": "A"},
+	})
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+	err = fx.exams.SubmitExam(ctx, created.ID, 42)
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+}
+
+func TestCreateSubmissionRequiresActiveExamSessionAndSnapshotQuestion(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	created := publishableExam(t, fx)
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
+	require.NoError(t, err)
+	require.Len(t, snaps, 2)
+
+	_, err = fx.exams.CreateSubmission(ctx, created.ID, 42, exam.CreateSubmissionCommand{
+		QuestionID: snaps[1].ID,
+		Code:       "package main\nfunc main() {}",
+		Language:   "GO",
+	})
+	require.ErrorIs(t, err, exam.ErrForbidden)
+
+	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.NoError(t, err)
+	_, err = fx.exams.CreateSubmission(ctx, created.ID, 42, exam.CreateSubmissionCommand{
+		QuestionID: 999999,
+		Code:       "package main\nfunc main() {}",
+		Language:   "GO",
+	})
+	require.ErrorIs(t, err, exam.ErrForbidden)
+
+	require.NoError(t, fx.exams.SubmitExam(ctx, created.ID, 42))
+	_, err = fx.exams.CreateSubmission(ctx, created.ID, 42, exam.CreateSubmissionCommand{
+		QuestionID: snaps[1].ID,
+		Code:       "package main\nfunc main() {}",
+		Language:   "GO",
+	})
+	require.ErrorIs(t, err, exam.ErrForbidden)
 }

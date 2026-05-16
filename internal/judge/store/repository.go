@@ -32,7 +32,7 @@ func (r *Store) Create(ctx context.Context, t *judge.Task) error {
 func (r *Store) FindByID(ctx context.Context, id uint64) (*judge.Task, error) {
 	var row database.JudgeTaskModel
 	if err := transaction.DBFromContext(ctx, r.db).First(&row, "id = ?", id).Error; err != nil {
-		return nil, err
+		return nil, database.MapNotFound(err, judge.ErrTaskNotFound)
 	}
 	return toTaskModel(&row), nil
 }

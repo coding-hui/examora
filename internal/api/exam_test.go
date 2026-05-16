@@ -45,7 +45,7 @@ func newExamAPIRouter(t *testing.T) (*gin.Engine, *exam.Service) {
 
 	server := &Server{exam: service}
 	router := gin.New()
-	admin := router.Group("/api/admin")
+	admin := router.Group("/api/v1")
 	server.registerExamAdminRoutes(admin)
 	return router, service
 }
@@ -67,7 +67,7 @@ func TestBatchCloseExamsEndpointReturnsPartialFailures(t *testing.T) {
 
 	bodyBytes, err := json.Marshal(map[string]any{"ids": []uint64{published.ID, draft.ID}})
 	require.NoError(t, err)
-	req := httptest.NewRequest(http.MethodPost, "/api/admin/exams/batch/close", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/exams/batch/close", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)

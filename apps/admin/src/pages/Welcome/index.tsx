@@ -18,6 +18,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
+import { useIntl } from '@umijs/max';
 import {
   Badge,
   Button,
@@ -38,81 +39,94 @@ import './welcome.less';
 const { Text, Title } = Typography;
 
 const Welcome: React.FC = () => {
+  const intl = useIntl();
+  const f = (id: string, values?: Record<string, string | number>) =>
+    intl.formatMessage({ id }, values);
+  const weekDays = [
+    f('pages.dashboard.week.mon'),
+    f('pages.dashboard.week.tue'),
+    f('pages.dashboard.week.wed'),
+    f('pages.dashboard.week.thu'),
+    f('pages.dashboard.week.fri'),
+    f('pages.dashboard.week.sat'),
+    f('pages.dashboard.week.sun'),
+  ];
+
   const stats = [
     {
       key: 'candidates',
-      label: '注册考生',
+      label: f('pages.dashboard.stats.candidates.label'),
       value: 1247,
       trend: '+12.8%',
-      caption: '较上周新增 146 人',
+      caption: f('pages.dashboard.stats.candidates.caption'),
       icon: <UserOutlined />,
       tone: 'blue',
       chartColor: '#18181b',
       trendData: [
-        { label: '周一', value: 1018 },
-        { label: '周二', value: 1042 },
-        { label: '周三', value: 1096 },
-        { label: '周四', value: 1124 },
-        { label: '周五', value: 1190 },
-        { label: '周六', value: 1216 },
-        { label: '周日', value: 1247 },
+        { label: weekDays[0], value: 1018 },
+        { label: weekDays[1], value: 1042 },
+        { label: weekDays[2], value: 1096 },
+        { label: weekDays[3], value: 1124 },
+        { label: weekDays[4], value: 1190 },
+        { label: weekDays[5], value: 1216 },
+        { label: weekDays[6], value: 1247 },
       ],
     },
     {
       key: 'activeExams',
-      label: '进行中考试',
+      label: f('pages.dashboard.stats.activeExams.label'),
       value: 38,
-      trend: '45 人在线',
-      caption: '覆盖 6 个考场',
+      trend: f('pages.dashboard.stats.activeExams.trend'),
+      caption: f('pages.dashboard.stats.activeExams.caption'),
       icon: <FireOutlined />,
       tone: 'amber',
       chartColor: '#f97316',
       trendData: [
-        { label: '周一', value: 24 },
-        { label: '周二', value: 31 },
-        { label: '周三', value: 28 },
-        { label: '周四', value: 34 },
-        { label: '周五', value: 38 },
-        { label: '周六', value: 33 },
-        { label: '周日', value: 38 },
+        { label: weekDays[0], value: 24 },
+        { label: weekDays[1], value: 31 },
+        { label: weekDays[2], value: 28 },
+        { label: weekDays[3], value: 34 },
+        { label: weekDays[4], value: 38 },
+        { label: weekDays[5], value: 33 },
+        { label: weekDays[6], value: 38 },
       ],
     },
     {
       key: 'papers',
-      label: '试卷总数',
+      label: f('pages.dashboard.stats.papers.label'),
       value: 156,
       trend: '+8',
-      caption: '本月发布试卷',
+      caption: f('pages.dashboard.stats.papers.caption'),
       icon: <FileProtectOutlined />,
       tone: 'green',
       chartColor: '#22c55e',
       trendData: [
-        { label: '周一', value: 132 },
-        { label: '周二', value: 138 },
-        { label: '周三', value: 139 },
-        { label: '周四', value: 144 },
-        { label: '周五', value: 150 },
-        { label: '周六', value: 152 },
-        { label: '周日', value: 156 },
+        { label: weekDays[0], value: 132 },
+        { label: weekDays[1], value: 138 },
+        { label: weekDays[2], value: 139 },
+        { label: weekDays[3], value: 144 },
+        { label: weekDays[4], value: 150 },
+        { label: weekDays[5], value: 152 },
+        { label: weekDays[6], value: 156 },
       ],
     },
     {
       key: 'questions',
-      label: '题目总数',
+      label: f('pages.dashboard.stats.questions.label'),
       value: 2843,
       trend: '92%',
-      caption: '题库可复用率',
+      caption: f('pages.dashboard.stats.questions.caption'),
       icon: <DatabaseOutlined />,
       tone: 'violet',
       chartColor: '#404040',
       trendData: [
-        { label: '周一', value: 2660 },
-        { label: '周二', value: 2704 },
-        { label: '周三', value: 2748 },
-        { label: '周四', value: 2768 },
-        { label: '周五', value: 2812 },
-        { label: '周六', value: 2824 },
-        { label: '周日', value: 2843 },
+        { label: weekDays[0], value: 2660 },
+        { label: weekDays[1], value: 2704 },
+        { label: weekDays[2], value: 2748 },
+        { label: weekDays[3], value: 2768 },
+        { label: weekDays[4], value: 2812 },
+        { label: weekDays[5], value: 2824 },
+        { label: weekDays[6], value: 2843 },
       ],
     },
   ];
@@ -120,7 +134,7 @@ const Welcome: React.FC = () => {
   const loadTrendSeries = [
     {
       key: 'online',
-      label: '在线考生',
+      label: f('pages.dashboard.series.online'),
       color: '#18181b',
       showArea: true,
       data: [
@@ -135,7 +149,7 @@ const Welcome: React.FC = () => {
     },
     {
       key: 'queue',
-      label: '判题队列',
+      label: f('pages.dashboard.series.queue'),
       color: '#f97316',
       dashed: true,
       data: [
@@ -150,7 +164,7 @@ const Welcome: React.FC = () => {
     },
     {
       key: 'risk',
-      label: '风险事件',
+      label: f('pages.dashboard.series.risk'),
       color: '#ef4444',
       data: [
         { label: '08:00', value: 2 },
@@ -167,56 +181,59 @@ const Welcome: React.FC = () => {
   const exams = [
     {
       key: 'math-final',
-      name: '2026 春季高等数学期末考试',
+      name: f('pages.dashboard.exams.math'),
       progress: 78,
       active: 45,
       total: 120,
-      status: '进行中',
-      risk: '低风险',
+      status: f('pages.dashboard.status.running'),
+      risk: f('pages.dashboard.risk.low'),
+      riskLevel: 'low',
     },
     {
       key: 'python',
-      name: 'Python 程序设计能力测试',
+      name: f('pages.dashboard.exams.python'),
       progress: 45,
       active: 12,
       total: 60,
-      status: '进行中',
-      risk: '关注',
+      status: f('pages.dashboard.status.running'),
+      risk: f('pages.dashboard.risk.watch'),
+      riskLevel: 'watch',
     },
     {
       key: 'physics',
-      name: '大学物理模拟测试',
+      name: f('pages.dashboard.exams.physics'),
       progress: 100,
       active: 0,
       total: 80,
-      status: '已结束',
-      risk: '正常',
+      status: f('pages.dashboard.status.closed'),
+      risk: f('pages.dashboard.risk.normal'),
+      riskLevel: 'normal',
     },
   ];
 
   const activities = [
     {
       key: 'a1',
-      text: '李娜提交了 Python 程序设计能力测试',
-      meta: '5 分钟前',
+      text: f('pages.dashboard.activities.a1'),
+      meta: f('pages.dashboard.activities.5m'),
       color: '#262626',
     },
     {
       key: 'a2',
-      text: '王磊的考试被系统自动提交',
-      meta: '8 分钟前',
+      text: f('pages.dashboard.activities.a2'),
+      meta: f('pages.dashboard.activities.8m'),
       color: '#f97316',
     },
     {
       key: 'a3',
-      text: '张伟开始作答 2026 春季高等数学',
-      meta: '12 分钟前',
+      text: f('pages.dashboard.activities.a3'),
+      meta: f('pages.dashboard.activities.12m'),
       color: '#22c55e',
     },
     {
       key: 'a4',
-      text: '陈静提交了数据结构与算法测试',
-      meta: '15 分钟前',
+      text: f('pages.dashboard.activities.a4'),
+      meta: f('pages.dashboard.activities.15m'),
       color: '#262626',
     },
   ];
@@ -224,55 +241,61 @@ const Welcome: React.FC = () => {
   const judgeQueues = [
     {
       key: 'waiting',
-      label: '等待判题',
+      label: f('pages.dashboard.queue.waiting'),
       value: 126,
       percent: 64,
       color: '#18181b',
     },
     {
       key: 'running',
-      label: '执行中',
+      label: f('pages.dashboard.queue.running'),
       value: 18,
       percent: 42,
       color: '#f97316',
     },
-    { key: 'failed', label: '需复核', value: 7, percent: 18, color: '#ef4444' },
+    {
+      key: 'failed',
+      label: f('pages.dashboard.queue.failed'),
+      value: 7,
+      percent: 18,
+      color: '#ef4444',
+    },
   ];
 
   const shortcuts = [
     {
       key: 'users',
-      label: '用户管理',
+      label: f('pages.dashboard.shortcuts.users'),
       path: '/system/settings/users',
       icon: <SolutionOutlined />,
     },
     {
       key: 'exams',
-      label: '考试管理',
+      label: f('pages.dashboard.shortcuts.exams'),
       path: '/examination/exams',
       icon: <ProjectOutlined />,
     },
     {
       key: 'papers',
-      label: '试卷管理',
+      label: f('pages.dashboard.shortcuts.papers'),
       path: '/content/papers',
       icon: <BookOutlined />,
     },
     {
       key: 'questions',
-      label: '题库管理',
+      label: f('pages.dashboard.shortcuts.questions'),
       path: '/content/library/questions',
       icon: <DatabaseOutlined />,
     },
     {
       key: 'programming',
-      label: '编程题库',
+      label: f('pages.dashboard.shortcuts.programming'),
       path: '/content/library/programming',
       icon: <CodeOutlined />,
     },
     {
       key: 'submissions',
-      label: '提交记录',
+      label: f('pages.dashboard.shortcuts.submissions'),
       path: '/assessment/results/submissions',
       icon: <AuditOutlined />,
     },
@@ -285,31 +308,31 @@ const Welcome: React.FC = () => {
           <div className="hero-main">
             <div className="hero-title-row">
               <Title level={2} className="hero-title">
-                考试运营工作台
+                {f('pages.dashboard.hero.title')}
               </Title>
               <Space size={8} wrap className="hero-kicker">
                 <span className="hero-status-dot" />
-                <span>实时运营</span>
+                <span>{f('pages.dashboard.hero.kicker')}</span>
                 <Tag className="hero-product-tag" variant="filled">
                   Examora Admin
                 </Tag>
               </Space>
             </div>
             <Text className="hero-subtitle">
-              聚合考试进度、监考事件、题库资产与判题队列，帮助管理员快速判断今天的关键风险。
+              {f('pages.dashboard.hero.subtitle')}
             </Text>
             <div className="hero-pulse">
               <span>
                 <strong>45</strong>
-                在线考生
+                {f('pages.dashboard.hero.online')}
               </span>
               <span>
                 <strong>9</strong>
-                风险关注
+                {f('pages.dashboard.hero.risk')}
               </span>
               <span>
                 <strong>126</strong>
-                等待判题
+                {f('pages.dashboard.hero.queue')}
               </span>
             </div>
           </div>
@@ -319,13 +342,13 @@ const Welcome: React.FC = () => {
               type="primary"
               icon={<ProjectOutlined />}
             >
-              新建考试
+              {f('pages.dashboard.actions.createExam')}
             </Button>
             <Button
               href="/monitoring/proctoring/events"
               icon={<SafetyOutlined />}
             >
-              查看监控
+              {f('pages.dashboard.actions.viewMonitoring')}
             </Button>
           </Space>
         </section>
@@ -349,7 +372,9 @@ const Welcome: React.FC = () => {
                 <Text className="metric-caption">{stat.caption}</Text>
                 <TrendLineChart
                   compact
-                  ariaLabel={`${stat.label} 7 日趋势`}
+                  ariaLabel={f('pages.dashboard.chart.weekAria', {
+                    label: stat.label,
+                  })}
                   data={stat.trendData}
                   color={stat.chartColor}
                   height={52}
@@ -367,31 +392,39 @@ const Welcome: React.FC = () => {
               title={
                 <Space>
                   <BarChartOutlined />
-                  考试负载趋势
+                  {f('pages.dashboard.load.title')}
                 </Space>
               }
-              extra={<Text type="secondary">近 12 小时</Text>}
+              extra={
+                <Text type="secondary">{f('pages.dashboard.load.range')}</Text>
+              }
             >
               <div className="load-trend-layout">
                 <div className="load-trend-summary">
                   <div>
-                    <Text type="secondary">峰值在线</Text>
+                    <Text type="secondary">
+                      {f('pages.dashboard.load.peakOnline')}
+                    </Text>
                     <strong>84</strong>
-                    <span>16:00 达到峰值</span>
+                    <span>{f('pages.dashboard.load.peakOnlineCaption')}</span>
                   </div>
                   <div>
-                    <Text type="secondary">队列峰值</Text>
+                    <Text type="secondary">
+                      {f('pages.dashboard.load.peakQueue')}
+                    </Text>
                     <strong>126</strong>
-                    <span>平均处理 42 秒</span>
+                    <span>{f('pages.dashboard.load.peakQueueCaption')}</span>
                   </div>
                   <div>
-                    <Text type="secondary">风险事件</Text>
+                    <Text type="secondary">
+                      {f('pages.dashboard.load.riskEvents')}
+                    </Text>
                     <strong>9</strong>
-                    <span>较昨日下降 18%</span>
+                    <span>{f('pages.dashboard.load.riskEventsCaption')}</span>
                   </div>
                 </div>
                 <TrendLineChart
-                  ariaLabel="近 12 小时在线考生、判题队列和风险事件趋势"
+                  ariaLabel={f('pages.dashboard.load.aria')}
                   series={loadTrendSeries}
                   height={210}
                   showGrid
@@ -410,7 +443,7 @@ const Welcome: React.FC = () => {
               title={
                 <Space>
                   <BarChartOutlined />
-                  考试进度
+                  {f('pages.dashboard.progress.title')}
                 </Space>
               }
               extra={
@@ -420,7 +453,7 @@ const Welcome: React.FC = () => {
                   icon={<ArrowRightOutlined />}
                   iconPlacement="end"
                 >
-                  全部考试
+                  {f('pages.dashboard.progress.allExams')}
                 </Button>
               }
             >
@@ -433,20 +466,30 @@ const Welcome: React.FC = () => {
                       </Text>
                       <div className="exam-meta">
                         <span>
-                          <TeamOutlined /> {exam.active} 人在考
+                          <TeamOutlined />{' '}
+                          {f('pages.dashboard.progress.activeCount', {
+                            count: exam.active,
+                          })}
                         </span>
                         <span>
-                          <ClockCircleOutlined /> {exam.total} 分钟
+                          <ClockCircleOutlined />{' '}
+                          {f('pages.dashboard.progress.duration', {
+                            count: exam.total,
+                          })}
                         </span>
                       </div>
                     </div>
                     <Space size={8} wrap>
                       <Tag
-                        color={exam.status === '已结束' ? '#22c55e' : '#262626'}
+                        color={exam.key === 'physics' ? '#22c55e' : '#262626'}
                       >
                         {exam.status}
                       </Tag>
-                      <Tag color={exam.risk === '关注' ? '#f97316' : '#262626'}>
+                      <Tag
+                        color={
+                          exam.riskLevel === 'watch' ? '#f97316' : '#262626'
+                        }
+                      >
                         {exam.risk}
                       </Tag>
                     </Space>
@@ -468,12 +511,12 @@ const Welcome: React.FC = () => {
               title={
                 <Space>
                   <AlertOutlined />
-                  监考风险
+                  {f('pages.dashboard.risk.title')}
                 </Space>
               }
               extra={
                 <Tag color="#f97316" variant="filled">
-                  需关注 9
+                  {f('pages.dashboard.risk.watchCount')}
                 </Tag>
               }
             >
@@ -486,26 +529,34 @@ const Welcome: React.FC = () => {
                   railColor="#f4f4f5"
                 />
                 <div>
-                  <Text className="risk-label">今日考试健康度</Text>
+                  <Text className="risk-label">
+                    {f('pages.dashboard.risk.healthLabel')}
+                  </Text>
                   <Title level={3} className="risk-title">
-                    整体稳定
+                    {f('pages.dashboard.risk.healthTitle')}
                   </Title>
                   <Text className="risk-copy">
-                    自动提交、离屏与网络波动事件均处于可控范围。
+                    {f('pages.dashboard.risk.healthCopy')}
                   </Text>
                 </div>
               </div>
               <div className="risk-grid">
                 <div>
-                  <Text type="secondary">离屏事件</Text>
+                  <Text type="secondary">
+                    {f('pages.dashboard.risk.offscreen')}
+                  </Text>
                   <strong>6</strong>
                 </div>
                 <div>
-                  <Text type="secondary">网络波动</Text>
+                  <Text type="secondary">
+                    {f('pages.dashboard.risk.network')}
+                  </Text>
                   <strong>3</strong>
                 </div>
                 <div>
-                  <Text type="secondary">人工复核</Text>
+                  <Text type="secondary">
+                    {f('pages.dashboard.risk.review')}
+                  </Text>
                   <strong>2</strong>
                 </div>
               </div>
@@ -520,7 +571,7 @@ const Welcome: React.FC = () => {
               title={
                 <Space>
                   <ThunderboltOutlined />
-                  判题队列
+                  {f('pages.dashboard.queue.title')}
                 </Space>
               }
             >
@@ -549,10 +600,15 @@ const Welcome: React.FC = () => {
               title={
                 <Space>
                   <FireOutlined />
-                  考试动态
+                  {f('pages.dashboard.activities.title')}
                 </Space>
               }
-              extra={<Badge status="processing" text="实时" />}
+              extra={
+                <Badge
+                  status="processing"
+                  text={f('pages.dashboard.hero.kicker')}
+                />
+              }
             >
               <Timeline
                 className="activity-timeline"
@@ -576,7 +632,7 @@ const Welcome: React.FC = () => {
               title={
                 <Space>
                   <CheckCircleOutlined />
-                  快捷入口
+                  {f('pages.dashboard.shortcuts.title')}
                 </Space>
               }
             >

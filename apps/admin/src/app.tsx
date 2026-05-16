@@ -2,8 +2,9 @@ import {
   type Settings as LayoutSettings,
   SettingDrawer,
 } from '@ant-design/pro-components';
+import { API_PATHS } from '@examora/types';
 import type { RunTimeLayoutConfig } from '@umijs/max';
-import { history, Link } from '@umijs/max';
+import { history, Link, useIntl } from '@umijs/max';
 import { Avatar, Button, ConfigProvider, Result } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -86,7 +87,7 @@ export async function getInitialState(): Promise<{
     if (!token) return null;
 
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(API_PATHS.auth.me, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -255,13 +256,14 @@ export const request: any = {
 
 // 无权限页面组件
 const ForbiddenPage: React.FC = () => {
+  const intl = useIntl();
   const [loading, setLoading] = React.useState(false);
 
   const handleLogout = async () => {
     setLoading(true);
     try {
       const token = getAccessToken();
-      await fetch('/api/auth/logout', {
+      await fetch(API_PATHS.auth.logout, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -275,11 +277,11 @@ const ForbiddenPage: React.FC = () => {
   return (
     <Result
       status="403"
-      title="无权访问后台"
-      subTitle="您的账户尚未激活或没有后台访问权限，请联系管理员开通权限。"
+      title={intl.formatMessage({ id: 'pages.forbidden.title' })}
+      subTitle={intl.formatMessage({ id: 'pages.forbidden.subTitle' })}
       extra={
         <Button type="primary" loading={loading} onClick={handleLogout}>
-          重新登录
+          {intl.formatMessage({ id: 'pages.forbidden.relogin' })}
         </Button>
       }
     />

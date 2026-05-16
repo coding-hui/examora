@@ -1,4 +1,5 @@
 import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { API_PATHS } from '@examora/types';
 import { history, request, useIntl, useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
 import { Spin } from 'antd';
@@ -48,7 +49,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   const intl = useIntl();
   const loginOut = async () => {
     try {
-      await request('/api/auth/logout', { method: 'POST' });
+      await request(API_PATHS.auth.logout, { method: 'POST' });
     } catch (_) {
       // ignore logout errors
     }

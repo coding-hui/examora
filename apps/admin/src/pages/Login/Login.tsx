@@ -5,6 +5,7 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons';
+import { API_PATHS } from '@examora/types';
 import { request, useIntl } from '@umijs/max';
 import {
   Alert,
@@ -18,6 +19,7 @@ import {
 import { useEffect, useState } from 'react';
 import type { AuthConfig, LoginResponse } from '@/auth/token';
 import { setAccessToken, setLocalProfile } from '@/auth/token';
+import { SelectLang } from '@/components';
 import './Login.less';
 
 const { Text, Title } = Typography;
@@ -66,7 +68,7 @@ const Login: React.FC = () => {
     const loadConfig = async () => {
       try {
         const response = await request<AuthConfig | ApiEnvelope<AuthConfig>>(
-          '/api/auth/config',
+          API_PATHS.auth.config,
           {
             method: 'GET',
           },
@@ -98,7 +100,7 @@ const Login: React.FC = () => {
     try {
       const response = await request<
         LoginResponse | ApiEnvelope<LoginResponse>
-      >('/api/auth/login', {
+      >(API_PATHS.auth.login, {
         method: 'POST',
         data: values,
         skipErrorHandler: true,
@@ -129,11 +131,14 @@ const Login: React.FC = () => {
   };
 
   const handleLogtoLogin = () => {
-    window.location.href = '/api/auth/logto/login';
+    window.location.href = API_PATHS.auth.logtoLogin;
   };
 
   return (
     <main className="examora-login">
+      <div className="examora-login__lang">
+        <SelectLang />
+      </div>
       <section className="examora-login__brand" aria-label="Examora overview">
         <div className="examora-login__brand-top">
           <img src="/logo.svg" alt="Examora" className="examora-login__logo" />

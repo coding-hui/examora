@@ -30,7 +30,11 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import type { AdminPaperOutline, AdminQuestion } from '@examora/types';
-import { DIFFICULTY_OPTIONS, QUESTION_TYPE_OPTIONS } from '@examora/types';
+import {
+  API_PATHS,
+  DIFFICULTY_OPTIONS,
+  QUESTION_TYPE_OPTIONS,
+} from '@examora/types';
 import { history, request, useIntl } from '@umijs/max';
 import {
   App as AntdApp,
@@ -282,7 +286,7 @@ const PaperDetailContent: React.FC = () => {
         const response = await request<{
           code: number;
           data: AdminPaperOutline;
-        }>(`/api/admin/papers/${paperId}/outline`);
+        }>(API_PATHS.admin.paperOutline(paperId));
         if (cancelled) return;
         const outline = response.data;
         setPaper(outline.paper);
@@ -535,7 +539,7 @@ const PaperDetailContent: React.FC = () => {
 
   const saveOutline = async (targetPaperID: number) => {
     const response = await request<{ code: number; data: AdminPaperOutline }>(
-      `/api/admin/papers/${targetPaperID}/outline`,
+      API_PATHS.admin.paperOutline(targetPaperID),
       {
         method: 'PUT',
         skipErrorHandler: true,
@@ -586,7 +590,7 @@ const PaperDetailContent: React.FC = () => {
       const values = await form.validateFields();
       setSaving(true);
       const paperResponse = await request<{ code: number; data: Paper }>(
-        isCreate ? '/api/admin/papers' : `/api/admin/papers/${paperId}`,
+        isCreate ? API_PATHS.admin.papers : API_PATHS.admin.paper(paperId),
         {
           method: isCreate ? 'POST' : 'PUT',
           skipErrorHandler: true,
@@ -1327,7 +1331,7 @@ const PaperDetailContent: React.FC = () => {
               const response = await request<{
                 code: number;
                 data: { items: AdminQuestion[]; total: number };
-              }>('/api/admin/questions', {
+              }>(API_PATHS.admin.questions, {
                 params: {
                   page: params.current,
                   page_size: params.pageSize,
