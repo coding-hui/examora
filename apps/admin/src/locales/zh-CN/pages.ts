@@ -349,6 +349,7 @@ export default {
     '创建和管理考试，设置考试时间、时长和参与考生，支持线上监考。',
   'pages.exams.listTitle': '考试列表',
   'pages.exams.create': '创建考试',
+  'pages.exams.more': '更多',
   'pages.exams.publish': '发布',
   'pages.exams.fetchError': '获取考试列表失败',
   'pages.exams.columns.id': 'ID',

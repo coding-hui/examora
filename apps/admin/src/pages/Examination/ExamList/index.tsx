@@ -1,4 +1,4 @@
-import { PlusOutlined, StopOutlined } from '@ant-design/icons';
+import { DownOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons';
 import {
   type ActionType,
   FooterToolbar,
@@ -7,11 +7,12 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { history, request, useIntl } from '@umijs/max';
-import { App as AntdApp, Button, Tag } from 'antd';
+import { App as AntdApp, Button, Dropdown, Space, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { useMemo, useRef, useState } from 'react';
 import type { BatchActionResult } from '@/utils/request';
 import { requestErrorMessage } from '@/utils/request';
+import './index.less';
 
 interface Exam {
   id: number;
@@ -282,18 +283,40 @@ const ExamListContent: React.FC = () => {
       render: (_: unknown, record) =>
         record.status === 'DRAFT'
           ? [
-              <Button
+              <div
                 key="publish"
-                type="link"
-                onClick={() =>
-                  history.push(`/examination/exams/${record.id}/publish`)
-                }
+                className="exam-actions-cell"
+                onClick={(e) => e.stopPropagation()}
               >
-                {intl.formatMessage({
-                  id: 'pages.exams.publish',
-                  defaultMessage: '发布',
-                })}
-              </Button>,
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: 'publish',
+                        label: intl.formatMessage({
+                          id: 'pages.exams.publish',
+                          defaultMessage: '发布',
+                        }),
+                        onClick: () =>
+                          history.push(
+                            `/examination/exams/${record.id}/publish`,
+                          ),
+                      },
+                    ],
+                  }}
+                  trigger={['click']}
+                >
+                  <a onClick={(e) => e.preventDefault()}>
+                    <Space size={4}>
+                      {intl.formatMessage({
+                        id: 'pages.exams.more',
+                        defaultMessage: '更多',
+                      })}
+                      <DownOutlined />
+                    </Space>
+                  </a>
+                </Dropdown>
+              </div>,
             ]
           : [],
     },

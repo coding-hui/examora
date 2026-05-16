@@ -372,6 +372,7 @@ export default {
     'Create and manage exams, set time range and duration, and manage exam participants.',
   'pages.exams.listTitle': 'Exam List',
   'pages.exams.create': 'Create Exam',
+  'pages.exams.more': 'More',
   'pages.exams.publish': 'Publish',
   'pages.exams.fetchError': 'Failed to fetch exam list',
   'pages.exams.columns.id': 'ID',
