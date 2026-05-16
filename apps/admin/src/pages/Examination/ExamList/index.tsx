@@ -19,10 +19,10 @@ import {
   Modal,
   Select,
   Space,
-  Tag,
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useMemo, useRef, useState } from 'react';
+import { StatusTag, type StatusTagTone } from '@/components';
 import type { BatchActionResult } from '@/utils/request';
 import { requestErrorMessage } from '@/utils/request';
 import {
@@ -52,12 +52,12 @@ const EXAM_STATUS_KEYS = [
   'ARCHIVED',
 ] as const;
 
-const statusColors: Record<string, string> = {
-  DRAFT: 'default',
-  PUBLISHED: 'green',
-  RUNNING: 'blue',
-  CLOSED: 'red',
-  ARCHIVED: 'gray',
+const statusTones: Record<string, StatusTagTone> = {
+  DRAFT: 'neutral',
+  PUBLISHED: 'info',
+  RUNNING: 'success',
+  CLOSED: 'warning',
+  ARCHIVED: 'neutral',
 };
 
 const ExamListContent: React.FC = () => {
@@ -311,9 +311,9 @@ const ExamListContent: React.FC = () => {
       width: 120,
       search: false,
       render: (_: unknown, record) => (
-        <Tag color={statusColors[record.status] || 'default'}>
+        <StatusTag tone={statusTones[record.status] || 'neutral'}>
           {statusLabelMap[record.status] || record.status}
-        </Tag>
+        </StatusTag>
       ),
     },
     {

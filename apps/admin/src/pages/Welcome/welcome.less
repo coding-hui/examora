@@ -166,9 +166,17 @@ html.examora-dark .dashboard-container {
   flex-shrink: 0;
 
   .ant-btn-primary {
+    color: var(--dashboard-bg);
     background: var(--dashboard-primary);
     border-color: var(--dashboard-primary);
     box-shadow: none;
+
+    &:hover,
+    &:focus {
+      color: var(--dashboard-bg);
+      background: var(--dashboard-text);
+      border-color: var(--dashboard-text);
+    }
   }
 
   .ant-btn:not(.ant-btn-primary) {

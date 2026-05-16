@@ -25,11 +25,11 @@ import {
   Input,
   Modal,
   Tabs,
-  Tag,
   Typography,
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useRef, useState } from 'react';
+import { StatusTag } from '@/components';
 import { fetchEnvelope } from '@/utils/apiEnvelope';
 import { requestErrorMessage } from '@/utils/request';
 import '../index.less';
@@ -72,6 +72,13 @@ const UserGroupDetailContent: React.FC = () => {
   const [assignmentKeyword, setAssignmentKeyword] = useState('');
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [selectedUserIDs, setSelectedUserIDs] = useState<number[]>([]);
+  const sourceLabel = (source?: string) =>
+    source === 'LOCAL' || !source
+      ? intl.formatMessage({
+          id: 'pages.userGroups.sourceLocal',
+          defaultMessage: '本地',
+        })
+      : source;
 
   const loadGroup = React.useCallback(async () => {
     try {
@@ -273,7 +280,7 @@ const UserGroupDetailContent: React.FC = () => {
       dataIndex: ['user', 'role'],
       width: 110,
       search: false,
-      render: (_, item) => <Tag>{item.user.role}</Tag>,
+      render: (_, item) => <StatusTag>{item.user.role}</StatusTag>,
     },
     {
       title: intl.formatMessage({
@@ -285,19 +292,19 @@ const UserGroupDetailContent: React.FC = () => {
       search: false,
       render: (_, item) =>
         item.direct ? (
-          <Tag color="green">
+          <StatusTag tone="success">
             {intl.formatMessage({
               id: 'pages.userGroups.detail.directMember',
               defaultMessage: '直接成员',
             })}
-          </Tag>
+          </StatusTag>
         ) : (
-          <Tag>
+          <StatusTag>
             {intl.formatMessage({
               id: 'pages.userGroups.detail.inheritedMember',
               defaultMessage: '继承成员',
             })}
-          </Tag>
+          </StatusTag>
         ),
     },
     {
@@ -378,7 +385,7 @@ const UserGroupDetailContent: React.FC = () => {
       dataIndex: 'role',
       width: 120,
       search: false,
-      render: (_, user) => <Tag>{user.role}</Tag>,
+      render: (_, user) => <StatusTag>{user.role}</StatusTag>,
     },
   ];
 
@@ -406,12 +413,12 @@ const UserGroupDetailContent: React.FC = () => {
       }),
       dataIndex: 'target_type',
       render: () => (
-        <Tag color="blue">
+        <StatusTag tone="info">
           {intl.formatMessage({
             id: 'pages.userGroups.name',
             defaultMessage: '用户组',
           })}
-        </Tag>
+        </StatusTag>
       ),
     },
     {
@@ -443,11 +450,11 @@ const UserGroupDetailContent: React.FC = () => {
       content={
         group ? (
           <div className="user-group-header-meta">
-            <Tag color={group.source === 'LOCAL' ? 'green' : 'blue'}>
-              {group.source}
-            </Tag>
+            <StatusTag tone={group.source === 'LOCAL' ? 'neutral' : 'info'}>
+              {sourceLabel(group.source)}
+            </StatusTag>
             {group.source !== 'LOCAL' && (
-              <Tag>
+              <StatusTag>
                 {intl.formatMessage(
                   {
                     id: 'pages.userGroups.detail.syncMode',
@@ -455,9 +462,9 @@ const UserGroupDetailContent: React.FC = () => {
                   },
                   { mode: group.sync_mode },
                 )}
-              </Tag>
+              </StatusTag>
             )}
-            <Tag>
+            <StatusTag>
               {intl.formatMessage(
                 {
                   id: 'pages.userGroups.detail.memberCount',
@@ -465,8 +472,8 @@ const UserGroupDetailContent: React.FC = () => {
                 },
                 { count: group.member_count || 0 },
               )}
-            </Tag>
-            <Tag>
+            </StatusTag>
+            <StatusTag>
               {intl.formatMessage(
                 {
                   id: 'pages.userGroups.detail.examCount',
@@ -474,7 +481,7 @@ const UserGroupDetailContent: React.FC = () => {
                 },
                 { count: assignments.length },
               )}
-            </Tag>
+            </StatusTag>
           </div>
         ) : null
       }

@@ -24,11 +24,11 @@ import {
   Space,
   Spin,
   Table,
-  Tag,
   Typography,
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
+import { StatusTag, statusToneFromAntdColor } from '@/components';
 import { fetchEnvelope } from '@/utils/apiEnvelope';
 import { requestErrorMessage } from '@/utils/request';
 import {
@@ -157,7 +157,11 @@ const SubmissionsContent: React.FC = () => {
       width: 140,
       search: false,
       render: (_, record) => (
-        <Tag color={resultStatusTone(record.status)}>{record.status}</Tag>
+        <StatusTag
+          tone={statusToneFromAntdColor(resultStatusTone(record.status))}
+        >
+          {record.status}
+        </StatusTag>
       ),
     },
     {
@@ -284,9 +288,13 @@ const SubmissionsContent: React.FC = () => {
                   {detail.user_id}
                 </Descriptions.Item>
                 <Descriptions.Item label="Status">
-                  <Tag color={resultStatusTone(detail.status)}>
+                  <StatusTag
+                    tone={statusToneFromAntdColor(
+                      resultStatusTone(detail.status),
+                    )}
+                  >
                     {detail.status}
-                  </Tag>
+                  </StatusTag>
                 </Descriptions.Item>
                 <Descriptions.Item label="Score">
                   {formatScore(detail.score, detail.max_score)}
@@ -304,7 +312,7 @@ const SubmissionsContent: React.FC = () => {
                     title: 'Status',
                     dataIndex: 'status',
                     width: 160,
-                    render: (status) => <Tag>{status}</Tag>,
+                    render: (status) => <StatusTag>{status}</StatusTag>,
                   },
                   {
                     title: 'Score',

@@ -6,7 +6,7 @@
  * 布局组件
  */
 import Footer from './Footer';
-import { SelectLang } from './RightContent';
+import { SelectLang, ThemeSwitcher } from './RightContent';
 import { AvatarDropdown, AvatarName } from './RightContent/AvatarDropdown';
 
 /**
@@ -15,6 +15,8 @@ import { AvatarDropdown, AvatarName } from './RightContent/AvatarDropdown';
 export { default as ArticleListContent } from './ArticleListContent';
 export { default as AvatarList } from './AvatarList';
 export { default as StandardFormRow } from './StandardFormRow';
+export type { StatusTagTone } from './StatusTag';
+export { default as StatusTag, statusToneFromAntdColor } from './StatusTag';
 export { default as TagSelect } from './TagSelect';
 
-export { AvatarDropdown, AvatarName, Footer, SelectLang };
+export { AvatarDropdown, AvatarName, Footer, SelectLang, ThemeSwitcher };

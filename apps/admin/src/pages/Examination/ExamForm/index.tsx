@@ -18,9 +18,9 @@ import {
   Select,
   Space,
   Spin,
-  Tag,
 } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
+import { StatusTag } from '@/components';
 import { requestErrorMessage } from '@/utils/request';
 import {
   buildExamPayload,
@@ -156,7 +156,9 @@ const ExamFormContent: React.FC = () => {
       })}
       extra={
         exam ? (
-          <Tag color={editable ? 'default' : 'green'}>{exam.status}</Tag>
+          <StatusTag tone={editable ? 'neutral' : 'success'}>
+            {exam.status}
+          </StatusTag>
         ) : null
       }
     >

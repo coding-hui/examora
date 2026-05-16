@@ -16,11 +16,11 @@ import {
   Drawer,
   Space,
   Spin,
-  Tag,
   Typography,
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
+import { StatusTag, statusToneFromAntdColor } from '@/components';
 import { fetchEnvelope } from '@/utils/apiEnvelope';
 import { requestErrorMessage } from '@/utils/request';
 import {
@@ -128,7 +128,11 @@ const JudgeTasksContent: React.FC = () => {
       width: 150,
       search: false,
       render: (_, record) => (
-        <Tag color={judgeTaskStatusTone(record.status)}>{record.status}</Tag>
+        <StatusTag
+          tone={statusToneFromAntdColor(judgeTaskStatusTone(record.status))}
+        >
+          {record.status}
+        </StatusTag>
       ),
     },
     {
@@ -230,9 +234,13 @@ const JudgeTasksContent: React.FC = () => {
                   {detail.language}
                 </Descriptions.Item>
                 <Descriptions.Item label="Status">
-                  <Tag color={judgeTaskStatusTone(detail.status)}>
+                  <StatusTag
+                    tone={statusToneFromAntdColor(
+                      judgeTaskStatusTone(detail.status),
+                    )}
+                  >
                     {detail.status}
-                  </Tag>
+                  </StatusTag>
                 </Descriptions.Item>
                 <Descriptions.Item label="Retry">
                   {detail.retry_count}/{detail.max_retry_count}

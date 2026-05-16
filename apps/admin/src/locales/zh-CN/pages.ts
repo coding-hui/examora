@@ -61,8 +61,7 @@ export default {
   'pages.login.brand.signal3.desc': '管理后台角色与受保护操作流程。',
   // Users page
   'pages.users.title': '用户列表',
-  'pages.users.description':
-    '创建和管理平台用户账号，支持设置管理员、教师、学生等角色，以及启用、停用、封禁等账号状态。',
+  'pages.users.description': '维护平台用户、角色与账号状态。',
   'pages.users.listTitle': '用户列表',
   'pages.users.create': '添加用户',
   'pages.users.fetchError': '获取用户列表失败',
@@ -128,9 +127,8 @@ export default {
   'pages.users.form.status.placeholder': '选择状态',
   // Questions page
   'pages.questions.title': '题目管理',
-  'pages.questions.description': '创建和管理考试题目、答案与编程用例。',
-  'pages.programming.description':
-    '集中维护编程题、代码模板与测试用例，用于在线评测。',
+  'pages.questions.description': '维护题目、答案与编程测试用例。',
+  'pages.programming.description': '维护编程题、代码模板与测试用例。',
   'pages.programming.listTitle': '编程题列表',
   'pages.programming.create': '新建编程题',
   'pages.questions.listTitle': '题目列表',
@@ -282,7 +280,7 @@ export default {
   'pages.questions.statusUpdateSuccess': '状态已更新为「{status}」',
   'pages.questions.statusUpdateError': '状态更新失败',
   // Papers page
-  'pages.papers.description': '创建和维护考试试卷，配置试题顺序与分值。',
+  'pages.papers.description': '维护试卷结构、题目顺序与分值。',
   'pages.papers.listTitle': '试卷列表',
   'pages.papers.create': '新建试卷',
   'pages.papers.fetchError': '获取试卷列表失败',
@@ -359,8 +357,7 @@ export default {
   'pages.papers.detail.form.statusRequired': '请选择状态',
   // Exam pages
   'pages.exams.title': '考试管理',
-  'pages.exams.description':
-    '创建和管理考试，设置考试时间、时长和参与用户，支持线上监考。',
+  'pages.exams.description': '管理考试安排、参与用户与发布状态。',
   'pages.exams.listTitle': '考试列表',
   'pages.exams.create': '创建考试',
   'pages.exams.more': '更多',
@@ -636,8 +633,7 @@ export default {
   'pages.candidates.groupDescription': '说明',
   'pages.candidates.memberPlaceholder': '选择要加入当前用户组的用户',
   // User groups
-  'pages.userGroups.description':
-    '维护可复用的用户范围，考试可按用户或用户组分配。',
+  'pages.userGroups.description': '维护可复用的考试分配范围。',
   'pages.userGroups.listTitle': '用户组列表',
   'pages.userGroups.total': '共 {total} 条',
   'pages.userGroups.keyword': '关键词',
@@ -691,7 +687,7 @@ export default {
   'pages.userGroups.detail.examSearchPlaceholder': '搜索考试 ID',
   'pages.userGroups.detail.usersLoadError': '加载用户失败',
   // Results
-  'pages.results.description': '按考试查看用户提交、总分和题目判分状态。',
+  'pages.results.description': '查看提交、成绩与题目判分状态。',
   'pages.results.examsLoadError': '加载考试列表失败',
   'pages.results.detailLoadError': '加载结果详情失败',
   'pages.results.fetchError': '加载提交记录失败',
@@ -703,8 +699,7 @@ export default {
   'pages.results.columns.score': '成绩',
   'pages.results.columns.submittedAt': '提交时间',
   // Judge tasks
-  'pages.judgeTasks.description':
-    '查看异步判题任务、重试次数、运行耗时和沙箱摘要。',
+  'pages.judgeTasks.description': '查看判题队列、重试次数与沙箱摘要。',
   'pages.judgeTasks.fetchError': '加载判题任务失败',
   'pages.judgeTasks.detailLoadError': '加载判题任务详情失败',
   'pages.judgeTasks.detailTitle': '判题任务详情',
@@ -722,4 +717,8 @@ export default {
   'pages.forbidden.relogin': '重新登录',
   'navbar.settings': '设置',
   'navbar.logout': '退出登录',
+  'navbar.theme': '主题',
+  'navbar.theme.light': '亮色',
+  'navbar.theme.dark': '暗色',
+  'navbar.theme.system': '跟随系统',
 };

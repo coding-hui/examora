@@ -13,9 +13,10 @@ import {
 } from '@ant-design/pro-components';
 import { API_PATHS } from '@examora/types';
 import { history, request, useIntl } from '@umijs/max';
-import { App as AntdApp, Button, Dropdown, Space, Tag, Tooltip } from 'antd';
+import { App as AntdApp, Button, Dropdown, Space, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import React, { useMemo, useRef, useState } from 'react';
+import { StatusTag } from '@/components';
 import {
   type BatchActionResult,
   proTableSortParams,
@@ -270,11 +271,9 @@ const PapersPageContent: React.FC = () => {
       valueType: 'select',
       valueEnum: statusValueEnum,
       render: (_: unknown, paper: Paper) => (
-        <Tag
-          className={`paper-status-tag paper-status-${paper.status.toLowerCase()}`}
-        >
+        <StatusTag tone={paper.status === 'PUBLISHED' ? 'success' : 'neutral'}>
           {statusLabelMap[paper.status] || paper.status}
-        </Tag>
+        </StatusTag>
       ),
     },
     {

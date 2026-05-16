@@ -1,9 +1,19 @@
 import type { ConfigProviderProps, ThemeConfig } from 'antd';
 import { theme } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import { loadThemePreference, subscribe } from './preference';
+import {
+  getEffectiveThemeMode,
+  loadThemePreference,
+  SYSTEM_DARK_QUERY,
+  subscribe,
+} from './preference';
 
 const DARK_CLASS = 'examora-dark';
+
+function getSystemPrefersDark(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia(SYSTEM_DARK_QUERY).matches;
+}
 
 // ---- Light mode token values ----
 
@@ -275,6 +285,8 @@ const darkComponentsOverrides: ThemeConfig['components'] = {
 
 const useShadcnTheme = (): ConfigProviderProps => {
   const [preference, setPreference] = useState(() => loadThemePreference());
+  const [systemPrefersDark, setSystemPrefersDark] =
+    useState(getSystemPrefersDark);
 
   useEffect(() => {
     const syncPreference = () => setPreference(loadThemePreference());
@@ -286,7 +298,22 @@ const useShadcnTheme = (): ConfigProviderProps => {
     };
   }, []);
 
-  const isDark = preference.navTheme === 'realDark';
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mediaQuery = window.matchMedia(SYSTEM_DARK_QUERY);
+    const syncSystemTheme = () => setSystemPrefersDark(mediaQuery.matches);
+    syncSystemTheme();
+    mediaQuery.addEventListener?.('change', syncSystemTheme);
+    return () => {
+      mediaQuery.removeEventListener?.('change', syncSystemTheme);
+    };
+  }, []);
+
+  const effectiveThemeMode = getEffectiveThemeMode(
+    preference.themeMode,
+    systemPrefersDark,
+  );
+  const isDark = effectiveThemeMode === 'dark';
 
   useEffect(() => {
     const root = document.documentElement;

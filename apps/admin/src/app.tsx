@@ -1,7 +1,4 @@
-import {
-  type Settings as LayoutSettings,
-  SettingDrawer,
-} from '@ant-design/pro-components';
+import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { API_PATHS } from '@examora/types';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link, useIntl } from '@umijs/max';
@@ -15,12 +12,13 @@ import {
   getAccessToken,
   setLocalProfile,
 } from '@/auth/token';
-import { AvatarDropdown, Footer, SelectLang } from '@/components';
 import {
-  loadThemePreference,
-  saveThemePreference,
-  toLayoutSettings,
-} from '@/theme/preference';
+  AvatarDropdown,
+  Footer,
+  SelectLang,
+  ThemeSwitcher,
+} from '@/components';
+import { loadThemePreference, toLayoutSettings } from '@/theme/preference';
 import useShadcnTheme from '@/theme/shadcnTheme';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './request';
@@ -160,12 +158,12 @@ export async function getInitialState(): Promise<{
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
-export const layout: RunTimeLayoutConfig = ({
-  initialState,
-  setInitialState,
-}) => {
+export const layout: RunTimeLayoutConfig = ({ initialState }) => {
   return {
-    actionsRender: () => [<SelectLang key="SelectLang" />],
+    actionsRender: () => [
+      <ThemeSwitcher key="ThemeSwitcher" />,
+      <SelectLang key="SelectLang" />,
+    ],
     menuItemRender: (item, dom) => {
       if (item.path) {
         return (
@@ -216,28 +214,6 @@ export const layout: RunTimeLayoutConfig = ({
     },
     bgLayoutImgList: [],
     menuHeaderRender: undefined,
-    childrenRender: (children) => (
-      <>
-        {children}
-        <SettingDrawer
-          enableDarkTheme
-          hideCopyButton
-          hideHintAlert
-          disableUrlParams
-          settings={initialState?.settings}
-          onSettingChange={(settings) => {
-            saveThemePreference({
-              ...loadThemePreference(),
-              ...settings,
-            });
-            setInitialState?.((state: any) => ({
-              ...state,
-              settings,
-            }));
-          }}
-        />
-      </>
-    ),
     // 无权限页面
     unAccessible: <ForbiddenPage />,
     ...initialState?.settings,

@@ -1,7 +1,7 @@
 import { ProCard, ProDescriptions } from '@ant-design/pro-components';
 import { useIntl, useModel } from '@umijs/max';
-import { Tag } from 'antd';
 import React from 'react';
+import { StatusTag } from '@/components';
 import useStyles from '../style';
 
 const BaseView: React.FC = () => {
@@ -59,7 +59,9 @@ const BaseView: React.FC = () => {
               render: (_: unknown, entity: Record<string, unknown>) => {
                 const roles = entity.roles as string[];
                 return roles?.length
-                  ? roles.map((role) => <Tag key={role}>{role}</Tag>)
+                  ? roles.map((role) => (
+                      <StatusTag key={role}>{role}</StatusTag>
+                    ))
                   : '-';
               },
             },
