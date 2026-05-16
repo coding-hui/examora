@@ -22,5 +22,5 @@ Examora uses Logto for authentication and keeps authorization inside the backend
 ## Backend Responsibility
 
 - Resolve a current business user from the Logto token
-- Enforce RBAC for `/api/admin/*` and ownership rules for `/api/client/*`
+- Enforce RBAC via `RequireAdmin`/`RequireClient` middleware on `/api/v1/*` routes
 - Never trust the frontend to decide roles

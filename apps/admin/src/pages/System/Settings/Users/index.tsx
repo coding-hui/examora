@@ -10,6 +10,7 @@ import {
   type ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
+import { API_PATHS } from '@examora/types';
 import { request, useIntl } from '@umijs/max';
 import {
   App as AntdApp,
@@ -50,6 +51,14 @@ interface UserFormValues {
 
 const ROLE_KEYS = ['ADMIN', 'TEACHER', 'STUDENT'] as const;
 const STATUS_KEYS = ['ACTIVE', 'INACTIVE', 'SUSPENDED'] as const;
+
+const normalizeRole = (role?: string) => {
+  const normalized = role?.toUpperCase();
+  if (normalized === 'CLIENT') return 'STUDENT';
+  return normalized || '';
+};
+
+const normalizeStatus = (status?: string) => status?.toUpperCase() || '';
 
 const UserListContent: React.FC = () => {
   const intl = useIntl();
@@ -137,8 +146,8 @@ const UserListContent: React.FC = () => {
       username: user.username,
       display_name: user.display_name,
       email: user.email,
-      role: user.role as UserFormValues['role'],
-      status: user.status as UserFormValues['status'],
+      role: normalizeRole(user.role) as UserFormValues['role'],
+      status: normalizeStatus(user.status) as UserFormValues['status'],
     });
     setDrawerOpen(true);
   };
@@ -148,7 +157,7 @@ const UserListContent: React.FC = () => {
       const values = await userForm.validateFields();
       setSaving(true);
       await request(
-        editing ? `/api/admin/users/${editing.id}` : '/api/admin/users',
+        editing ? API_PATHS.admin.user(editing.id) : API_PATHS.admin.users,
         {
           method: editing ? 'PUT' : 'POST',
           data: values,
@@ -212,7 +221,7 @@ const UserListContent: React.FC = () => {
       }),
       onOk: async () => {
         try {
-          await request(`/api/admin/users/${user.id}`, {
+          await request(API_PATHS.admin.user(user.id), {
             method: 'DELETE',
           });
           antdMessage.success(
@@ -303,11 +312,14 @@ const UserListContent: React.FC = () => {
       width: 90,
       search: false,
       valueEnum: roleValueEnum,
-      render: (_, user) => (
-        <Tag className="user-role-tag">
-          {roleLabelMap[user.role] || user.role}
-        </Tag>
-      ),
+      render: (_, user) => {
+        const roleKey = normalizeRole(user.role);
+        return (
+          <Tag className="user-role-tag">
+            {roleLabelMap[roleKey] || user.role}
+          </Tag>
+        );
+      },
     },
     {
       title: intl.formatMessage({
@@ -319,13 +331,16 @@ const UserListContent: React.FC = () => {
       width: 90,
       search: false,
       valueEnum: statusValueEnum,
-      render: (_, user) => (
-        <Tag
-          className={`user-status-tag user-status-${user.status.toLowerCase()}`}
-        >
-          {statusLabelMap[user.status] || user.status}
-        </Tag>
-      ),
+      render: (_, user) => {
+        const statusKey = normalizeStatus(user.status);
+        return (
+          <Tag
+            className={`user-status-tag user-status-${statusKey.toLowerCase()}`}
+          >
+            {statusLabelMap[statusKey] || user.status}
+          </Tag>
+        );
+      },
     },
     {
       title: intl.formatMessage({
@@ -482,7 +497,7 @@ const UserListContent: React.FC = () => {
             const response = await request<{
               code: number;
               data: { items: User[]; total: number };
-            }>('/api/admin/users', {
+            }>(API_PATHS.admin.users, {
               params: {
                 page: current,
                 page_size: pageSize,
@@ -566,7 +581,7 @@ const UserListContent: React.FC = () => {
             try {
               await userForm.validateFields();
               setSaving(true);
-              await request('/api/admin/users', {
+              await request(API_PATHS.admin.users, {
                 method: 'POST',
                 data: userForm.getFieldsValue(),
               });

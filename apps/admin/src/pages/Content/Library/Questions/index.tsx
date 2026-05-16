@@ -16,6 +16,7 @@ import {
 } from '@ant-design/pro-components';
 import type { AdminQuestion, QuestionType } from '@examora/types';
 import {
+  API_PATHS,
   DIFFICULTY_OPTIONS,
   QUESTION_STATUS_OPTIONS,
   QUESTION_TYPE_OPTIONS,
@@ -178,7 +179,7 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
       }),
       onOk: async () => {
         try {
-          await request(`/api/admin/questions/${question.id}`, {
+          await request(API_PATHS.admin.question(question.id), {
             method: 'DELETE',
             skipErrorHandler: true,
           });
@@ -260,7 +261,7 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
       }),
       onOk: async () => {
         try {
-          await request(`/api/admin/questions/${question.id}`, {
+          await request(API_PATHS.admin.question(question.id), {
             method: 'PATCH',
             data: { status: next },
             skipErrorHandler: true,
@@ -371,7 +372,7 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
           const response = await request<{
             code: number;
             data: BatchActionResult;
-          }>('/api/admin/questions/batch/status', {
+          }>(API_PATHS.admin.questionBatchStatus, {
             method: 'PATCH',
             data: { ids: selectedRows.map((item) => item.id), status },
             skipErrorHandler: true,
@@ -419,7 +420,7 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
           const response = await request<{
             code: number;
             data: BatchActionResult;
-          }>('/api/admin/questions/batch', {
+          }>(API_PATHS.admin.questionBatch, {
             method: 'DELETE',
             data: { ids: selectedRows.map((item) => item.id) },
             skipErrorHandler: true,
@@ -719,7 +720,7 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
             const response = await request<{
               code: number;
               data: { items: AdminQuestion[]; total: number };
-            }>('/api/admin/questions', {
+            }>(API_PATHS.admin.questions, {
               params: {
                 page: params.current,
                 page_size: params.pageSize,

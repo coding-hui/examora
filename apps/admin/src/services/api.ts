@@ -1,10 +1,11 @@
 // @ts-ignore
 /* eslint-disable */
+import { API_PATHS } from "@examora/types";
 import { request } from "@umijs/max";
 
-/** 获取当前的用户 GET /api/auth/me */
+/** 获取当前的用户 GET /api/v1/auth/me */
 export async function currentUser(options?: { [key: string]: any }) {
-  return request<API.CurrentUser>("/api/auth/me", {
+  return request<API.CurrentUser>(API_PATHS.auth.me, {
     method: "GET",
     ...(options || {}),
   });

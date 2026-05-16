@@ -10,13 +10,15 @@ Base path: `/api`. All timestamps use ISO 8601 UTC strings.
 
 - Frontends authenticate with Logto
 - API endpoints expect `Authorization: Bearer <token>`
-- `GET /api/auth/me` resolves the current Examora user from the Logto token
+- `GET /api/v1/auth/me` resolves the current Examora user from the Logto token
 
 ## Route Groups
 
-- `/api/auth/*`: identity-related introspection
-- `/api/admin/*`: admin-only management routes
-- `/api/client/*`: student exam-session routes
+All routes live under `/api/v1`. Permission is enforced by `RequireAdmin`/`RequireClient` middleware, not by URL structure.
+
+- `/api/v1/*` (authenticated): unified entry point
+- Admin resources: `/api/v1/questions`, `/api/v1/papers`, `/api/v1/exams`, etc. (RequireAdmin)
+- Candidate resources: `/api/v1/exams/available`, `/api/v1/exams/:id/sessions/start`, `/api/v1/submissions`, etc. (RequireClient)
 
 ## Key Guarantees
 

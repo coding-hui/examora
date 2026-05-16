@@ -1,19 +1,30 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { history } from '@umijs/max';
+import { history, useIntl } from '@umijs/max';
 import { Button, Card, Result } from 'antd';
 import React from 'react';
 
 const Index: React.FC = () => {
+  const intl = useIntl();
+
   return (
-    <PageContainer content="管理考生账号，导入和导出考生信息，查看考生参与考试情况。">
+    <PageContainer
+      content={intl.formatMessage({
+        id: 'pages.comingSoon.candidates.description',
+      })}
+    >
       <Card>
         <Result
           status="info"
-          title="即将上线"
-          subTitle="该功能正在开发中，敬请期待。"
+          title={intl.formatMessage({ id: 'pages.comingSoon.shortTitle' })}
+          subTitle={intl.formatMessage({
+            id: 'pages.comingSoon.shortDescription',
+          })}
           extra={
-            <Button type="primary" onClick={() => history.push('/')}>
-              返回首页
+            <Button
+              type="primary"
+              onClick={() => history.push('/overview/dashboard')}
+            >
+              {intl.formatMessage({ id: 'pages.comingSoon.backDashboard' })}
             </Button>
           }
         />

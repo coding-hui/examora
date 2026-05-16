@@ -32,7 +32,7 @@ func newLibraryAPIRouter(t *testing.T) (*gin.Engine, *library.Service) {
 
 	server := &Server{library: service}
 	router := gin.New()
-	admin := router.Group("/api/admin")
+	admin := router.Group("/api/v1")
 	server.registerLibraryAdminRoutes(admin)
 	return router, service
 }
@@ -74,7 +74,7 @@ func TestListQuestionsEndpointSupportsFiltersAndPaging(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/admin/questions?keyword=middleware&type=short_answer&difficulty=medium&status=published&page=1&page_size=10", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/questions?keyword=middleware&type=short_answer&difficulty=medium&status=published&page=1&page_size=10", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 
@@ -136,7 +136,7 @@ func TestListQuestionsEndpointSupportsUpdatedAtSorting(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/admin/questions?status=published&sort_field=updated_at&sort_order=desc&page=1&page_size=10", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/questions?status=published&sort_field=updated_at&sort_order=desc&page=1&page_size=10", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 
@@ -170,7 +170,7 @@ func TestListQuestionsEndpointNormalizesUnsafeSortAndPaging(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/admin/questions?sort_field=updated_at%3Bdrop%20table%20questions&sort_order=asc&page=0&page_size=100000", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/questions?sort_field=updated_at%3Bdrop%20table%20questions&sort_order=asc&page=0&page_size=100000", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 
@@ -211,7 +211,7 @@ func TestBatchPatchQuestionStatusEndpointReturnsPartialFailures(t *testing.T) {
 		"status": library.QuestionStatusPublished,
 	})
 	require.NoError(t, err)
-	req := httptest.NewRequest(http.MethodPatch, "/api/admin/questions/batch/status", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/questions/batch/status", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
@@ -266,7 +266,7 @@ func TestBatchDeleteQuestionsEndpointProtectsReferencedQuestions(t *testing.T) {
 
 	bodyBytes, err := json.Marshal(map[string]any{"ids": []uint64{referenced.ID, loose.ID}})
 	require.NoError(t, err)
-	req := httptest.NewRequest(http.MethodDelete, "/api/admin/questions/batch", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/questions/batch", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
@@ -288,7 +288,7 @@ func TestBatchDeleteQuestionsEndpointProtectsReferencedQuestions(t *testing.T) {
 func TestBatchDeleteQuestionsEndpointRejectsEmptyIDs(t *testing.T) {
 	router, _ := newLibraryAPIRouter(t)
 
-	req := httptest.NewRequest(http.MethodDelete, "/api/admin/questions/batch", bytes.NewReader([]byte(`{"ids":[]}`)))
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/questions/batch", bytes.NewReader([]byte(`{"ids":[]}`)))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
@@ -327,7 +327,7 @@ func TestListPapersEndpointSupportsFiltersAndSummary(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/admin/papers?keyword=backend&status=draft&page=1&page_size=10", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/papers?keyword=backend&status=draft&page=1&page_size=10", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 
@@ -367,7 +367,7 @@ func TestBatchDeletePapersEndpointReturnsPartialFailures(t *testing.T) {
 
 	bodyBytes, err := json.Marshal(map[string]any{"ids": []uint64{first.ID, second.ID, 99999}})
 	require.NoError(t, err)
-	req := httptest.NewRequest(http.MethodDelete, "/api/admin/papers/batch", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/papers/batch", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
@@ -406,7 +406,7 @@ func TestListPaperQuestionsEndpointReturnsQuestionSummary(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/admin/papers/1/questions", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/papers/1/questions", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 
@@ -453,7 +453,7 @@ func TestUpdatePaperQuestionEndpointUpdatesScoreAndSortOrder(t *testing.T) {
 
 	bodyBytes, err := json.Marshal(map[string]any{"score": 12.5, "sort_order": 1})
 	require.NoError(t, err)
-	req := httptest.NewRequest(http.MethodPatch, "/api/admin/papers/1/questions/1", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/papers/1/questions/1", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)

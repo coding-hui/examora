@@ -1,10 +1,19 @@
 import type {
+  AuthConfig,
+  AuthMeData,
+  CandidateExamList,
   CandidatePaper,
   CandidateQuestion,
+  CreateSubmissionPayload,
+  CreatedSubmission,
   ExamSession,
   ExamSessionStatus,
+  LoginPayload,
+  LoginResponse,
+  SaveAnswersPayload,
   SubmissionStatus,
 } from '@examora/types';
+import { API_PATHS } from '@examora/types';
 
 export interface ApiClientOptions {
   baseUrl: string;
@@ -55,10 +64,10 @@ export class ApiClient {
     return this.request<T>(path);
   }
 
-  async post<T>(path: string, body: unknown): Promise<T> {
+  async post<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>(path, {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(body),
     });
   }
 
@@ -84,24 +93,72 @@ export class ApiClient {
   }
 
   // Auth
-  async authMe(): Promise<{
-    user_id: string;
-    name?: string;
-    email?: string;
-    scopes?: string[];
-    audience?: string[];
-    client_id?: string;
-    organization_id?: string;
-  }> {
-    return this.get('/api/auth/me');
+  async authConfig(): Promise<AuthConfig> {
+    return this.get(API_PATHS.auth.config);
+  }
+
+  async authLogin(payload: LoginPayload): Promise<LoginResponse> {
+    const response = await this.post<LoginResponse>(API_PATHS.auth.login, payload);
+    this.setAccessToken(response.token);
+    return response;
+  }
+
+  async authLogout(): Promise<void> {
+    await this.post<void>(API_PATHS.auth.logout);
+    this.clearAccessToken();
+  }
+
+  async authMe(): Promise<AuthMeData> {
+    return this.get(API_PATHS.auth.me);
+  }
+
+  async listAvailableExams(): Promise<CandidateExamList> {
+    return this.get(API_PATHS.candidate.availableExams);
+  }
+
+  async startExamSession(
+    examID: number | string,
+    payload: { device_id?: string } = {},
+  ): Promise<ExamSession> {
+    return this.post(API_PATHS.candidate.startSession(examID), payload);
+  }
+
+  async getCandidatePaper(examID: number | string): Promise<CandidatePaper> {
+    return this.get(API_PATHS.candidate.paper(examID));
+  }
+
+  async saveAnswers(
+    examID: number | string,
+    payload: SaveAnswersPayload,
+  ): Promise<void> {
+    await this.post(API_PATHS.candidate.answers(examID), payload);
+  }
+
+  async submitExam(examID: number | string): Promise<void> {
+    await this.post(API_PATHS.candidate.submit(examID));
+  }
+
+  async createSubmission(
+    payload: CreateSubmissionPayload,
+  ): Promise<CreatedSubmission> {
+    return this.post(API_PATHS.candidate.submissions, payload);
   }
 }
 
 // Re-export types for convenience
 export type {
+  AuthConfig,
+  AuthMeData,
+  CandidateExamList,
   CandidatePaper,
   CandidateQuestion,
+  CreateSubmissionPayload,
+  CreatedSubmission,
   ExamSession,
   ExamSessionStatus,
+  LoginPayload,
+  LoginResponse,
+  SaveAnswersPayload,
   SubmissionStatus,
 };
+export { API_PATHS };

@@ -1,3 +1,4 @@
+import { useIntl } from '@umijs/max';
 import {
   curveMonotoneX,
   area as d3Area,
@@ -51,7 +52,7 @@ const toSeries = ({
   return [
     {
       key: 'trend',
-      label: '趋势',
+      label: 'Trend',
       color,
       data: data ?? [],
       showArea,
@@ -84,6 +85,7 @@ const TrendLineChart: React.FC<TrendLineChartProps> = ({
   showLegend = false,
   compact = false,
 }) => {
+  const intl = useIntl();
   const mergedSeries = toSeries({ data, series, color, showArea });
   const values = getChartValues(mergedSeries);
   const labels = getLabels(mergedSeries);
@@ -91,7 +93,7 @@ const TrendLineChart: React.FC<TrendLineChartProps> = ({
   if (!values.length || !labels.length) {
     return (
       <div className="trend-chart trend-chart-empty" style={{ height }}>
-        <span>暂无趋势数据</span>
+        <span>{intl.formatMessage({ id: 'pages.dashboard.chart.empty' })}</span>
       </div>
     );
   }

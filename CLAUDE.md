@@ -81,7 +81,7 @@ Examora is a monorepo with three logical layers:
 
 ## Judge Flow (planned, not yet implemented)
 
-1. `POST /api/client/programming/submissions` → inserts `submissions` + `judge_tasks` rows, enqueues to Redis Stream
+1. `POST /api/v1/submissions` → inserts `submissions` + `judge_tasks` rows, enqueues to Redis Stream
 2. `judge-worker` consumes from Redis Stream → reads submission + test cases from PostgreSQL → calls `sandbox-runner` → writes `judge_case_results` → updates `submissions.status`
 3. Candidate polls status until terminal state
 

@@ -1,4 +1,5 @@
 import { PageContainer } from '@ant-design/pro-components';
+import { API_PATHS } from '@examora/types';
 import { history, request, useIntl } from '@umijs/max';
 import {
   Alert,
@@ -39,7 +40,7 @@ const ExamPublishContent: React.FC = () => {
     if (!examId) return;
 
     setLoading(true);
-    request<{ code: number; data: Exam }>(`/api/admin/exams/${examId}`, {
+    request<{ code: number; data: Exam }>(API_PATHS.admin.exam(examId), {
       method: 'GET',
       skipErrorHandler: true,
     })
@@ -73,7 +74,7 @@ const ExamPublishContent: React.FC = () => {
     setSubmitting(true);
     try {
       const response = await request<{ code: number; message: string }>(
-        `/api/admin/exams/${examId}/publish`,
+        API_PATHS.admin.examPublish(examId),
         {
           method: 'POST',
           skipErrorHandler: true,

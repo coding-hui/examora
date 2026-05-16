@@ -18,6 +18,7 @@ const useStyles = createStyles(() => ({
     fontSize: 18,
     color: 'inherit',
     transition: 'background 0.2s',
+    borderRadius: 8,
     '&:hover': { background: 'rgba(0,0,0,0.04)' },
   },
 }));

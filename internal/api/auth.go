@@ -21,13 +21,13 @@ const (
 	tokenCookieName = "examora_token"
 )
 
-func (s *Server) registerAuthRoutes(router *gin.Engine, authMiddleware gin.HandlerFunc) {
-	router.GET("/api/auth/config", s.getAuthConfig)
-	router.POST("/api/auth/login", s.login)
-	router.GET("/api/auth/logto/login", s.logtoLogin)
-	router.GET("/api/auth/logto/callback", s.logtoCallback)
-	router.POST("/api/auth/logout", authMiddleware, s.logout)
-	router.GET("/api/auth/me", authMiddleware, s.me)
+func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	v1.GET("/auth/config", s.getAuthConfig)
+	v1.POST("/auth/login", s.login)
+	v1.GET("/auth/logto/login", s.logtoLogin)
+	v1.GET("/auth/logto/callback", s.logtoCallback)
+	v1.POST("/auth/logout", authMiddleware, s.logout)
+	v1.GET("/auth/me", authMiddleware, s.me)
 }
 
 func (s *Server) getAuthConfig(c *gin.Context) {
@@ -62,7 +62,7 @@ func (s *Server) logtoLogin(c *gin.Context) {
 
 	state := generateSecureState()
 	scheme := requestScheme(c)
-	callbackURL := fmt.Sprintf("%s://%s/api/auth/logto/callback", scheme, c.Request.Host)
+	callbackURL := fmt.Sprintf("%s://%s/api/v1/auth/logto/callback", scheme, c.Request.Host)
 
 	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie(stateCookieName, state, 300, "/", "", scheme == "https", true)
@@ -102,7 +102,7 @@ func (s *Server) logtoCallback(c *gin.Context) {
 	scheme := requestScheme(c)
 	c.SetCookie(stateCookieName, "", -1, "/", "", scheme == "https", true)
 
-	callbackURL := fmt.Sprintf("%s://%s/api/auth/logto/callback", scheme, c.Request.Host)
+	callbackURL := fmt.Sprintf("%s://%s/api/v1/auth/logto/callback", scheme, c.Request.Host)
 	tokenURL := fmt.Sprintf("%s/oidc/token", s.cfg.LogtoEndpoint)
 	resp, err := http.PostForm(tokenURL, url.Values{
 		"grant_type":   {"authorization_code"},

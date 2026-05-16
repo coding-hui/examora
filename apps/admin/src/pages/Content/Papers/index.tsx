@@ -11,6 +11,7 @@ import {
   type ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
+import { API_PATHS } from '@examora/types';
 import { history, request, useIntl } from '@umijs/max';
 import { App as AntdApp, Button, Dropdown, Space, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
@@ -91,7 +92,7 @@ const PapersPageContent: React.FC = () => {
       }),
       onOk: async () => {
         try {
-          await request(`/api/admin/papers/${paper.id}`, {
+          await request(API_PATHS.admin.paper(paper.id), {
             method: 'DELETE',
             skipErrorHandler: true,
           });
@@ -190,7 +191,7 @@ const PapersPageContent: React.FC = () => {
           const response = await request<{
             code: number;
             data: BatchActionResult;
-          }>('/api/admin/papers/batch', {
+          }>(API_PATHS.admin.paperBatch, {
             method: 'DELETE',
             data: { ids: selectedRows.map((item) => item.id) },
             skipErrorHandler: true,
@@ -454,7 +455,7 @@ const PapersPageContent: React.FC = () => {
             const response = await request<{
               code: number;
               data: { items: Paper[]; total: number };
-            }>('/api/admin/papers', {
+            }>(API_PATHS.admin.papers, {
               params: {
                 page: params.current,
                 page_size: params.pageSize,

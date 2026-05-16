@@ -8,7 +8,7 @@ export default function access(
 ) {
   const { currentUser, forbidden } = initialState ?? {};
 
-  // If the user is forbidden (403 from /api/auth/me), deny access
+  // If the user is forbidden (403 from /api/v1/auth/me), deny access
   if (forbidden) {
     return { canAdmin: false };
   }

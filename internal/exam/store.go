@@ -19,6 +19,7 @@ type Store interface {
 type ExamSessionStore interface {
 	CreateExamSession(ctx context.Context, session *ExamSession) error
 	GetExamSession(ctx context.Context, examSnapshotID, userID uint64) (*ExamSession, error)
+	ListExamSessionsByUser(ctx context.Context, userID uint64) ([]ExamSession, error)
 	UpdateExamSession(ctx context.Context, session *ExamSession) error
 }
 
@@ -32,6 +33,7 @@ type SnapshotStore interface {
 	CreateExamSnapshot(ctx context.Context, snap *ExamSnapshot) error
 	GetExamSnapshot(ctx context.Context, id uint64) (*ExamSnapshot, error)
 	GetExamSnapshotByExamID(ctx context.Context, examID uint64) (*ExamSnapshot, error)
+	ListExamSnapshots(ctx context.Context) ([]ExamSnapshot, error)
 	ListPaperSectionSnapshots(ctx context.Context, examSnapshotID uint64) ([]PaperSectionSnapshot, error)
 	CreatePaperSectionSnapshot(ctx context.Context, snap *PaperSectionSnapshot) error
 	ListQuestionSnapshots(ctx context.Context, examSnapshotID uint64) ([]QuestionSnapshot, error)

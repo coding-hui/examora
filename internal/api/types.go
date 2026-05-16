@@ -269,6 +269,7 @@ type saveAnswersRequest struct {
 }
 
 type createSubmissionRequest struct {
+	ExamID     uint64         `json:"exam_id"`
 	QuestionID uint64         `json:"question_id"`
 	Answer     map[string]any `json:"answer"`
 	Code       string         `json:"code"`
@@ -452,7 +453,7 @@ func (r saveExamRequest) command(createdBy uint64) exam.SaveExamCommand {
 }
 
 func (r createSubmissionRequest) command() exam.CreateSubmissionCommand {
-	return exam.CreateSubmissionCommand{QuestionID: r.QuestionID, Answer: r.Answer, Code: r.Code, Language: r.Language}
+	return exam.CreateSubmissionCommand{ExamID: r.ExamID, QuestionID: r.QuestionID, Answer: r.Answer, Code: r.Code, Language: r.Language}
 }
 
 func (r recordEventRequest) command(defaultType string) exam.RecordEventCommand {
