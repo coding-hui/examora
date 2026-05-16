@@ -24,6 +24,7 @@ export default {
   'menu.content.paperDetail': 'Paper Detail',
   'menu.examination.exams': 'Exams',
   'menu.examCreate': 'Create Exam',
+  'menu.examEdit': 'Edit Exam',
   'menu.examPublish': 'Publish',
   'menu.examination.candidates': 'Candidates',
   'menu.proctoring': 'Proctoring',

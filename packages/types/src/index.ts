@@ -86,6 +86,12 @@ export const API_PATHS = {
     examPublish: (examID: number | string) =>
       `/api/v1/exams/${examID}/publish`,
     examBatchClose: "/api/v1/exams/batch/close",
+    examResults: (examID: number | string) =>
+      `/api/v1/exams/${examID}/results`,
+    examResult: (resultID: number | string) =>
+      `/api/v1/exam-results/${resultID}`,
+    judgeTasks: "/api/v1/judge/tasks",
+    judgeTask: (taskID: number | string) => `/api/v1/judge/tasks/${taskID}`,
   },
 } as const;
 
@@ -359,6 +365,72 @@ export interface PublishExamPayload {
 }
 
 export type AdminExamPageResponse = PageResponse<AdminExam>;
+
+export type AdminExamResultStatus = "GRADED" | "JUDGING" | "MANUAL_REQUIRED";
+
+export interface AdminQuestionResult {
+  id: number;
+  section_snapshot_id: number;
+  question_snapshot_id: number;
+  question_id: number;
+  type: QuestionType;
+  sort_order: number;
+  question_sort_order: number;
+  answer?: Record<string, unknown>;
+  status: QuestionResultStatus;
+  score: number;
+  max_score: number;
+  result?: Record<string, unknown>;
+  submission_id?: number;
+  judged_at?: string;
+}
+
+export interface AdminExamResultSection {
+  section_snapshot_id: number;
+  title: string;
+  description?: string;
+  sort_order: number;
+  score: number;
+  max_score: number;
+  question_count: number;
+  questions?: AdminQuestionResult[];
+}
+
+export interface AdminExamResult {
+  id: number;
+  exam_id: number;
+  exam_snapshot_id: number;
+  exam_session_id: number;
+  user_id: number;
+  status: AdminExamResultStatus;
+  score: number;
+  max_score: number;
+  submitted_at: string;
+  graded_at?: string;
+  sections?: AdminExamResultSection[];
+  questions?: AdminQuestionResult[];
+}
+
+export type AdminExamResultPageResponse = PageResponse<AdminExamResult>;
+
+export interface AdminJudgeTask {
+  id: number;
+  submission_id: number;
+  question_id: number;
+  user_id: number;
+  language: string;
+  status: JudgeStatus;
+  retry_count: number;
+  max_retry_count: number;
+  error_message?: string;
+  result_summary?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  started_at?: string;
+  finished_at?: string;
+}
+
+export type AdminJudgeTaskPageResponse = PageResponse<AdminJudgeTask>;
 
 // =====================================================================
 // M1: Candidate-facing types (excludes answer and hidden test cases)

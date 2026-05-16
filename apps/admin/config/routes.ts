@@ -137,7 +137,13 @@ export default [
     path: '/examination/exams/create',
     name: 'examCreate',
     hideInMenu: true,
-    component: './ComingSoon',
+    redirect: '/examination/exams',
+  },
+  {
+    path: '/examination/exams/:id/edit',
+    name: 'examEdit',
+    hideInMenu: true,
+    component: './Examination/ExamForm',
     access: 'canAdmin',
   },
   {

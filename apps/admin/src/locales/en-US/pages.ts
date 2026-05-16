@@ -24,6 +24,8 @@ export default {
   'pages.welcome.alertMessage': 'Welcome to Examora exam management system.',
   'common.cancel': 'Cancel',
   'common.publish': 'Publish',
+  'common.save': 'Save',
+  'common.view': 'View',
   // Login page
   'pages.login.title': 'Sign In',
   'pages.login.subtitle':
@@ -565,6 +567,53 @@ export default {
   'pages.comingSoon.judgeTasks.title': 'Judge Tasks',
   'pages.comingSoon.judgeTasks.description':
     'Async judge tasks, retry status, and sandbox results will be tracked here.',
+  // Exam form
+  'pages.exams.createTitle': 'Create Exam',
+  'pages.exams.editTitle': 'Edit Exam',
+  'pages.exams.edit': 'Edit',
+  'pages.exams.createSuccess': 'Exam created',
+  'pages.exams.createError': 'Failed to create exam',
+  'pages.exams.form.description':
+    'Configure exam basics and bind a paper. Save it before publishing from the exam list.',
+  'pages.exams.form.title': 'Exam Name',
+  'pages.exams.form.titleRequired': 'Please enter an exam name',
+  'pages.exams.form.descriptionField': 'Description',
+  'pages.exams.form.paper': 'Paper',
+  'pages.exams.form.paperRequired': 'Please select a paper',
+  'pages.exams.form.paperPlaceholder': 'Select a paper',
+  'pages.exams.form.duration': 'Default Duration (minutes)',
+  'pages.exams.form.durationRequired': 'Please enter exam duration',
+  'pages.exams.form.durationUnit': 'min',
+  'pages.exams.form.loadError': 'Failed to load exam configuration',
+  'pages.exams.form.saveSuccess': 'Exam saved',
+  'pages.exams.form.saveError': 'Failed to save exam',
+  'pages.exams.form.readonlyHint':
+    'Published or closed exams cannot be edited here.',
+  // Results
+  'pages.results.description':
+    'Review candidate submissions, total scores, and per-question grading status by exam.',
+  'pages.results.examsLoadError': 'Failed to load exams',
+  'pages.results.detailLoadError': 'Failed to load result detail',
+  'pages.results.fetchError': 'Failed to load submission records',
+  'pages.results.examPlaceholder': 'Select an exam',
+  'pages.results.detailTitle': 'Submission Detail',
+  'pages.results.columns.user': 'User ID',
+  'pages.results.columns.status': 'Status',
+  'pages.results.columns.score': 'Score',
+  'pages.results.columns.submittedAt': 'Submitted At',
+  // Judge tasks
+  'pages.judgeTasks.description':
+    'Review async judge tasks, retries, runtime duration, and sandbox summaries.',
+  'pages.judgeTasks.fetchError': 'Failed to load judge tasks',
+  'pages.judgeTasks.detailLoadError': 'Failed to load judge task detail',
+  'pages.judgeTasks.detailTitle': 'Judge Task Detail',
+  'pages.judgeTasks.columns.submission': 'Submission ID',
+  'pages.judgeTasks.columns.question': 'Question ID',
+  'pages.judgeTasks.columns.language': 'Language',
+  'pages.judgeTasks.columns.status': 'Status',
+  'pages.judgeTasks.columns.retry': 'Retry',
+  'pages.judgeTasks.columns.summary': 'Summary',
+  'pages.judgeTasks.columns.createdAt': 'Created At',
   // Forbidden
   'pages.forbidden.title': 'Admin Access Denied',
   'pages.forbidden.subTitle':

@@ -6,13 +6,30 @@ import {
   type ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
+import type { AdminPaper, AdminPaperPageResponse } from '@examora/types';
 import { API_PATHS } from '@examora/types';
 import { history, request, useIntl } from '@umijs/max';
-import { App as AntdApp, Button, Dropdown, Space, Tag } from 'antd';
+import {
+  App as AntdApp,
+  Button,
+  Dropdown,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Select,
+  Space,
+  Tag,
+} from 'antd';
 import dayjs from 'dayjs';
 import React, { useMemo, useRef, useState } from 'react';
 import type { BatchActionResult } from '@/utils/request';
 import { requestErrorMessage } from '@/utils/request';
+import {
+  buildExamPayload,
+  type ExamFormValues,
+  paperOptionLabel,
+} from '../ExamForm/model';
 import './index.less';
 
 interface Exam {
@@ -46,8 +63,13 @@ const statusColors: Record<string, string> = {
 const ExamListContent: React.FC = () => {
   const intl = useIntl();
   const { message, modal } = AntdApp.useApp();
+  const [createForm] = Form.useForm<ExamFormValues>();
   const actionRef = useRef<ActionType>(null);
   const [selectedRows, setSelectedRows] = useState<Exam[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [papersLoading, setPapersLoading] = useState(false);
+  const [papers, setPapers] = useState<AdminPaper[]>([]);
 
   const statusLabelMap: Record<string, string> = useMemo(
     () => ({
@@ -89,6 +111,77 @@ const ExamListContent: React.FC = () => {
   const closableSelectedRows = selectedRows.filter((record) =>
     ['PUBLISHED', 'RUNNING'].includes(record.status),
   );
+
+  const paperOptions = useMemo(
+    () =>
+      papers.map((paper) => ({
+        label: paperOptionLabel(paper),
+        value: paper.id,
+      })),
+    [papers],
+  );
+
+  const loadPapers = async () => {
+    setPapersLoading(true);
+    try {
+      const response = await request<{
+        code: number;
+        data: AdminPaperPageResponse;
+      }>(API_PATHS.admin.papers, {
+        method: 'GET',
+        skipErrorHandler: true,
+        params: { page: 1, page_size: 100 },
+      });
+      setPapers(response.data?.items || []);
+    } catch (error) {
+      message.error(
+        requestErrorMessage(error) ||
+          intl.formatMessage({
+            id: 'pages.exams.form.loadError',
+            defaultMessage: '加载考试配置失败',
+          }),
+      );
+    } finally {
+      setPapersLoading(false);
+    }
+  };
+
+  const openCreateModal = () => {
+    createForm.resetFields();
+    createForm.setFieldsValue({ duration_minutes: 60 });
+    setCreateOpen(true);
+    loadPapers();
+  };
+
+  const createExam = async () => {
+    const values = await createForm.validateFields();
+    setCreating(true);
+    try {
+      await request(API_PATHS.admin.exams, {
+        method: 'POST',
+        skipErrorHandler: true,
+        data: buildExamPayload(values),
+      });
+      message.success(
+        intl.formatMessage({
+          id: 'pages.exams.createSuccess',
+          defaultMessage: '考试已创建',
+        }),
+      );
+      setCreateOpen(false);
+      actionRef.current?.reload();
+    } catch (error) {
+      message.error(
+        requestErrorMessage(error) ||
+          intl.formatMessage({
+            id: 'pages.exams.createError',
+            defaultMessage: '创建考试失败',
+          }),
+      );
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const showBatchResult = (result?: BatchActionResult) => {
     if (!result) {
@@ -303,6 +396,15 @@ const ExamListContent: React.FC = () => {
                             `/examination/exams/${record.id}/publish`,
                           ),
                       },
+                      {
+                        key: 'edit',
+                        label: intl.formatMessage({
+                          id: 'pages.exams.edit',
+                          defaultMessage: '编辑',
+                        }),
+                        onClick: () =>
+                          history.push(`/examination/exams/${record.id}/edit`),
+                      },
                     ],
                   }}
                   trigger={['click']}
@@ -398,7 +500,7 @@ const ExamListContent: React.FC = () => {
             key="create"
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => history.push('/examination/exams/create')}
+            onClick={openCreateModal}
           >
             {intl.formatMessage({
               id: 'pages.exams.create',
@@ -407,6 +509,123 @@ const ExamListContent: React.FC = () => {
           </Button>,
         ]}
       />
+      <Modal
+        width={640}
+        title={intl.formatMessage({
+          id: 'pages.exams.create',
+          defaultMessage: '创建考试',
+        })}
+        open={createOpen}
+        okText={intl.formatMessage({
+          id: 'pages.exams.create',
+          defaultMessage: '创建考试',
+        })}
+        cancelText={intl.formatMessage({
+          id: 'common.cancel',
+          defaultMessage: '取消',
+        })}
+        confirmLoading={creating}
+        destroyOnHidden
+        onOk={createExam}
+        onCancel={() => setCreateOpen(false)}
+      >
+        <Form<ExamFormValues> form={createForm} layout="vertical">
+          <Form.Item
+            name="title"
+            label={intl.formatMessage({
+              id: 'pages.exams.form.title',
+              defaultMessage: '考试名称',
+            })}
+            rules={[
+              {
+                required: true,
+                whitespace: true,
+                message: intl.formatMessage({
+                  id: 'pages.exams.form.titleRequired',
+                  defaultMessage: '请输入考试名称',
+                }),
+              },
+            ]}
+          >
+            <Input maxLength={120} />
+          </Form.Item>
+          <div className="exam-create-grid">
+            <Form.Item
+              name="paper_id"
+              label={intl.formatMessage({
+                id: 'pages.exams.form.paper',
+                defaultMessage: '关联试卷',
+              })}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'pages.exams.form.paperRequired',
+                    defaultMessage: '请选择试卷',
+                  }),
+                },
+              ]}
+            >
+              <Select
+                loading={papersLoading}
+                options={paperOptions}
+                optionFilterProp="label"
+                showSearch
+                placeholder={intl.formatMessage({
+                  id: 'pages.exams.form.paperPlaceholder',
+                  defaultMessage: '选择一份试卷',
+                })}
+              />
+            </Form.Item>
+            <Form.Item
+              label={intl.formatMessage({
+                id: 'pages.exams.form.duration',
+                defaultMessage: '默认时长(分钟)',
+              })}
+              required
+            >
+              <Space.Compact style={{ width: '100%' }}>
+                <Form.Item
+                  name="duration_minutes"
+                  noStyle
+                  rules={[
+                    {
+                      required: true,
+                      message: intl.formatMessage({
+                        id: 'pages.exams.form.durationRequired',
+                        defaultMessage: '请输入考试时长',
+                      }),
+                    },
+                  ]}
+                >
+                  <InputNumber min={1} max={1440} style={{ width: '100%' }} />
+                </Form.Item>
+                <Input
+                  aria-label={intl.formatMessage({
+                    id: 'pages.exams.form.durationUnit',
+                    defaultMessage: '分钟',
+                  })}
+                  disabled
+                  value={intl.formatMessage({
+                    id: 'pages.exams.form.durationUnit',
+                    defaultMessage: '分钟',
+                  })}
+                  style={{ width: 56 }}
+                />
+              </Space.Compact>
+            </Form.Item>
+          </div>
+          <Form.Item
+            name="description"
+            label={intl.formatMessage({
+              id: 'pages.exams.form.descriptionField',
+              defaultMessage: '考试说明',
+            })}
+          >
+            <Input.TextArea rows={3} maxLength={1000} showCount />
+          </Form.Item>
+        </Form>
+      </Modal>
       {selectedRows.length > 0 && (
         <FooterToolbar
           extra={intl.formatMessage(

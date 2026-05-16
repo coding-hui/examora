@@ -560,6 +560,7 @@ const UserListContent: React.FC = () => {
           id: 'pages.users.modal.createTitle',
           defaultMessage: '添加用户',
         })}
+        width={600}
         open={modalOpen}
         onCancel={() => {
           setSaving(false);
@@ -568,12 +569,6 @@ const UserListContent: React.FC = () => {
         footer={null}
         centered
       >
-        <p style={{ margin: '0 0 16px', color: '#888' }}>
-          {intl.formatMessage({
-            id: 'pages.users.modal.description',
-            defaultMessage: '提供以下至少一项字段才能继续',
-          })}
-        </p>
         <Form
           form={userForm}
           layout="vertical"
@@ -605,50 +600,56 @@ const UserListContent: React.FC = () => {
             }
           }}
         >
-          <Form.Item
-            label={intl.formatMessage({
-              id: 'pages.users.form.username.label',
-              defaultMessage: '用户名',
-            })}
-            name="username"
-            rules={[
-              {
-                required: true,
-                message: intl.formatMessage({
-                  id: 'pages.users.form.username.required',
-                  defaultMessage: '请输入用户名',
-                }),
-              },
-              {
-                min: 3,
-                message: intl.formatMessage({
-                  id: 'pages.users.form.username.minLength',
-                  defaultMessage: '用户名至少 3 个字符',
-                }),
-              },
-            ]}
-          >
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'pages.users.form.username.placeholder',
-                defaultMessage: '输入用户名',
-              })}
-            />
-          </Form.Item>
-          <Form.Item
-            label={intl.formatMessage({
-              id: 'pages.users.form.displayName.label',
-              defaultMessage: '显示名称',
-            })}
-            name="display_name"
-          >
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'pages.users.form.displayName.placeholder',
-                defaultMessage: '输入显示名称（可选）',
-              })}
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'pages.users.form.username.label',
+                  defaultMessage: '用户名',
+                })}
+                name="username"
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: 'pages.users.form.username.required',
+                      defaultMessage: '请输入用户名',
+                    }),
+                  },
+                  {
+                    min: 3,
+                    message: intl.formatMessage({
+                      id: 'pages.users.form.username.minLength',
+                      defaultMessage: '用户名至少 3 个字符',
+                    }),
+                  },
+                ]}
+              >
+                <Input
+                  placeholder={intl.formatMessage({
+                    id: 'pages.users.form.username.placeholder',
+                    defaultMessage: '输入用户名',
+                  })}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'pages.users.form.displayName.label',
+                  defaultMessage: '显示名称',
+                })}
+                name="display_name"
+              >
+                <Input
+                  placeholder={intl.formatMessage({
+                    id: 'pages.users.form.displayName.placeholder',
+                    defaultMessage: '输入显示名称（可选）',
+                  })}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item
             label={intl.formatMessage({
               id: 'pages.users.form.email.label',
@@ -672,8 +673,8 @@ const UserListContent: React.FC = () => {
               })}
             />
           </Form.Item>
-          <Row gutter={12}>
-            <Col span={10}>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 label={intl.formatMessage({
                   id: 'pages.users.form.role.label',
@@ -699,7 +700,7 @@ const UserListContent: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={14}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 label={intl.formatMessage({
                   id: 'pages.users.form.status.label',
@@ -757,7 +758,7 @@ const UserListContent: React.FC = () => {
                 defaultMessage: '创建用户',
               })
         }
-        size={480}
+        size={520}
         open={drawerOpen}
         onClose={() => {
           setSaving(false);
@@ -775,51 +776,57 @@ const UserListContent: React.FC = () => {
         }
       >
         <Form form={userForm} layout="vertical">
-          <Form.Item
-            label={intl.formatMessage({
-              id: 'pages.users.form.username.label',
-              defaultMessage: '用户名',
-            })}
-            name="username"
-            rules={[
-              {
-                required: true,
-                message: intl.formatMessage({
-                  id: 'pages.users.form.username.required',
-                  defaultMessage: '请输入用户名',
-                }),
-              },
-              {
-                min: 3,
-                message: intl.formatMessage({
-                  id: 'pages.users.form.username.minLength',
-                  defaultMessage: '用户名至少 3 个字符',
-                }),
-              },
-            ]}
-          >
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'pages.users.form.username.placeholder',
-                defaultMessage: '输入用户名',
-              })}
-              disabled={!!editing}
-            />
-          </Form.Item>
-          <Form.Item
-            label={intl.formatMessage({
-              id: 'pages.users.form.displayName.label',
-              defaultMessage: '显示名称',
-            })}
-            name="display_name"
-          >
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'pages.users.form.displayName.placeholder',
-                defaultMessage: '输入显示名称（可选）',
-              })}
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'pages.users.form.username.label',
+                  defaultMessage: '用户名',
+                })}
+                name="username"
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: 'pages.users.form.username.required',
+                      defaultMessage: '请输入用户名',
+                    }),
+                  },
+                  {
+                    min: 3,
+                    message: intl.formatMessage({
+                      id: 'pages.users.form.username.minLength',
+                      defaultMessage: '用户名至少 3 个字符',
+                    }),
+                  },
+                ]}
+              >
+                <Input
+                  placeholder={intl.formatMessage({
+                    id: 'pages.users.form.username.placeholder',
+                    defaultMessage: '输入用户名',
+                  })}
+                  disabled={!!editing}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'pages.users.form.displayName.label',
+                  defaultMessage: '显示名称',
+                })}
+                name="display_name"
+              >
+                <Input
+                  placeholder={intl.formatMessage({
+                    id: 'pages.users.form.displayName.placeholder',
+                    defaultMessage: '输入显示名称（可选）',
+                  })}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item
             label={intl.formatMessage({
               id: 'pages.users.form.email.label',
@@ -844,7 +851,7 @@ const UserListContent: React.FC = () => {
             />
           </Form.Item>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 label={intl.formatMessage({
                   id: 'pages.users.form.role.label',
@@ -870,7 +877,7 @@ const UserListContent: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 label={intl.formatMessage({
                   id: 'pages.users.form.status.label',

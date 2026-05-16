@@ -24,6 +24,7 @@ export default {
   'menu.content.paperDetail': '试卷详情',
   'menu.examination.exams': '考试',
   'menu.examCreate': '创建考试',
+  'menu.examEdit': '编辑考试',
   'menu.examPublish': '发布考试',
   'menu.examination.candidates': '考生',
   'menu.proctoring': '监考',
