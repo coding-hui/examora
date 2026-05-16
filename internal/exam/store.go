@@ -13,14 +13,18 @@ type Store interface {
 	AnswerDraftStore
 	SubmissionStore
 	ClientEventStore
+	UserGroupStore
+	ExamAssignmentStore
 	SubmissionReader
 }
 
 type ExamSessionStore interface {
 	CreateExamSession(ctx context.Context, session *ExamSession) error
 	GetExamSession(ctx context.Context, examSnapshotID, userID uint64) (*ExamSession, error)
+	ListExamSessionsBySnapshot(ctx context.Context, examSnapshotID uint64) ([]ExamSession, error)
 	ListExamSessionsByUser(ctx context.Context, userID uint64) ([]ExamSession, error)
 	UpdateExamSession(ctx context.Context, session *ExamSession) error
+	DeleteExamSession(ctx context.Context, id uint64) error
 }
 
 type AnswerDraftStore interface {
@@ -62,6 +66,29 @@ type SubmissionStore interface {
 
 type ClientEventStore interface {
 	CreateClientEvent(ctx context.Context, ev *ClientEvent) error
+	ListClientEvents(ctx context.Context, examID uint64, pageNum, pageSize int) ([]ClientEvent, int64, error)
+}
+
+type UserGroupStore interface {
+	CreateUserGroup(ctx context.Context, group *UserGroup) error
+	UpdateUserGroup(ctx context.Context, group *UserGroup) error
+	DeleteUserGroup(ctx context.Context, id uint64) error
+	GetUserGroup(ctx context.Context, id uint64) (*UserGroup, error)
+	ListUserGroups(ctx context.Context) ([]UserGroup, error)
+	ListDescendantUserGroupIDs(ctx context.Context, id uint64) ([]uint64, error)
+	AddUserGroupMembers(ctx context.Context, groupID uint64, userIDs []uint64) error
+	RemoveUserGroupMember(ctx context.Context, groupID, userID uint64) error
+	ListAllUserGroupMemberUserIDs(ctx context.Context) ([]uint64, error)
+	ListUserGroupMemberUserIDs(ctx context.Context, groupIDs []uint64) ([]uint64, error)
+	ListUserGroupMemberships(ctx context.Context, groupIDs []uint64) ([]UserGroupMembership, error)
+	ListUserGroupExamAssignments(ctx context.Context, groupID uint64) ([]ExamAssignment, error)
+}
+
+type ExamAssignmentStore interface {
+	CreateExamAssignment(ctx context.Context, assignment *ExamAssignment) error
+	GetExamAssignment(ctx context.Context, examID, assignmentID uint64) (*ExamAssignment, error)
+	ListExamAssignments(ctx context.Context, examID uint64) ([]ExamAssignment, error)
+	DeleteExamAssignment(ctx context.Context, id uint64) error
 }
 
 type JudgeSubmission struct {

@@ -24,6 +24,18 @@ func (s *Store) GetExamSession(ctx context.Context, examSnapshotID, userID uint6
 	return toExamSession(&row), nil
 }
 
+func (s *Store) ListExamSessionsBySnapshot(ctx context.Context, examSnapshotID uint64) ([]exam.ExamSession, error) {
+	var rows []database.ExamSessionModel
+	if err := s.db(ctx).Where("exam_snapshot_id = ?", examSnapshotID).Order("id ASC").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	sessions := make([]exam.ExamSession, 0, len(rows))
+	for _, row := range rows {
+		sessions = append(sessions, *toExamSession(&row))
+	}
+	return sessions, nil
+}
+
 func (s *Store) ListExamSessionsByUser(ctx context.Context, userID uint64) ([]exam.ExamSession, error) {
 	var rows []database.ExamSessionModel
 	if err := s.db(ctx).Where("user_id = ?", userID).Find(&rows).Error; err != nil {
@@ -46,20 +58,32 @@ func (s *Store) UpdateExamSession(ctx context.Context, session *exam.ExamSession
 			StartedAt:        row.StartedAt,
 			SubmittedAt:      row.SubmittedAt,
 			RemainingSeconds: row.RemainingSeconds,
+			IPAddress:        row.IPAddress,
+			DeviceID:         row.DeviceID,
 		}).Error
 }
 
+func (s *Store) DeleteExamSession(ctx context.Context, id uint64) error {
+	return s.db(ctx).Delete(&database.ExamSessionModel{}, id).Error
+}
+
 func toExamSessionModel(e *exam.ExamSession) *database.ExamSessionModel {
-	return &database.ExamSessionModel{
+	row := &database.ExamSessionModel{
+		ID:               e.ID,
 		ExamSnapshotID:   e.ExamSnapshotID,
 		UserID:           e.UserID,
 		Status:           e.Status,
 		StartedAt:        e.StartedAt,
 		SubmittedAt:      e.SubmittedAt,
 		RemainingSeconds: e.RemainingSeconds,
-		IPAddress:        e.IPAddress,
-		DeviceID:         e.DeviceID,
 	}
+	if e.IPAddress != nil {
+		row.IPAddress = e.IPAddress
+	}
+	if e.DeviceID != nil {
+		row.DeviceID = e.DeviceID
+	}
+	return row
 }
 
 func toExamSession(m *database.ExamSessionModel) *exam.ExamSession {

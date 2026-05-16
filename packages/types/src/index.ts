@@ -68,6 +68,19 @@ export const API_PATHS = {
   admin: {
     users: "/api/v1/users",
     user: (userID: number | string) => `/api/v1/users/${userID}`,
+    userGroupTree: "/api/v1/user-groups/tree",
+    userGroups: "/api/v1/user-groups",
+    userGroup: (groupID: number | string) => `/api/v1/user-groups/${groupID}`,
+    userGroupStudents: (groupID: number | string) =>
+      `/api/v1/user-groups/${groupID}/students`,
+    userGroupChildren: (groupID: number | string) =>
+      `/api/v1/user-groups/${groupID}/children`,
+    userGroupExamAssignments: (groupID: number | string) =>
+      `/api/v1/user-groups/${groupID}/exam-assignments`,
+    userGroupMembers: (groupID: number | string) =>
+      `/api/v1/user-groups/${groupID}/members`,
+    userGroupMember: (groupID: number | string, userID: number | string) =>
+      `/api/v1/user-groups/${groupID}/members/${userID}`,
     questions: "/api/v1/questions",
     question: (questionID: number | string) => `/api/v1/questions/${questionID}`,
     questionBatchStatus: "/api/v1/questions/batch/status",
@@ -86,6 +99,17 @@ export const API_PATHS = {
     examPublish: (examID: number | string) =>
       `/api/v1/exams/${examID}/publish`,
     examBatchClose: "/api/v1/exams/batch/close",
+    examSessions: (examID: number | string) =>
+      `/api/v1/exams/${examID}/sessions`,
+    examCandidates: (examID: number | string) =>
+      `/api/v1/exams/${examID}/candidates`,
+    examCandidate: (examID: number | string, userID: number | string) =>
+      `/api/v1/exams/${examID}/candidates/${userID}`,
+    examAssignments: (examID: number | string) =>
+      `/api/v1/exams/${examID}/assignments`,
+    examAssignment: (examID: number | string, assignmentID: number | string) =>
+      `/api/v1/exams/${examID}/assignments/${assignmentID}`,
+    examEvents: (examID: number | string) => `/api/v1/exams/${examID}/events`,
     examResults: (examID: number | string) =>
       `/api/v1/exams/${examID}/results`,
     examResult: (resultID: number | string) =>
@@ -349,6 +373,113 @@ export interface AdminExam {
   created_at: string;
   updated_at: string;
 }
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  display_name?: string;
+  email?: string;
+  role: string;
+  status: string;
+  source: string;
+  created_at: string;
+}
+
+export type AdminUserPageResponse = PageResponse<AdminUser>;
+
+export interface AdminUserGroup {
+  id: number;
+  parent_id?: number;
+  name: string;
+  description: string;
+  status: "ACTIVE" | "ARCHIVED";
+  source: "LOCAL" | "LOGTO" | "OIDC" | "SCIM";
+  external_provider?: string;
+  external_id?: string;
+  external_parent_id?: string;
+  sync_mode: "LOCAL" | "SYNCED" | "MAPPED";
+  last_synced_at?: string;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  member_count?: number;
+  child_count?: number;
+  children?: AdminUserGroup[];
+}
+
+export interface AdminUserGroupTreeResponse {
+  items: AdminUserGroup[];
+}
+
+export interface AdminUserGroupStudentsResponse {
+  ids: number[];
+}
+
+export interface AdminUserGroupMember {
+  user: AdminUser;
+  user_group_id: number;
+  direct: boolean;
+  source: "LOCAL" | "LOGTO" | "OIDC" | "SCIM";
+  created_at: string;
+}
+
+export type AdminUserGroupMemberPageResponse =
+  PageResponse<AdminUserGroupMember>;
+
+export interface AdminUserGroupListResponse {
+  items: AdminUserGroup[];
+}
+
+export interface AdminExamAssignment {
+  id: number;
+  exam_id: number;
+  exam_snapshot_id: number;
+  target_type: "USER" | "USER_GROUP";
+  target_id: number;
+  created_by: number;
+  created_at: string;
+}
+
+export interface AdminExamAssignmentListResponse {
+  items: AdminExamAssignment[];
+}
+
+export interface AdminExamSession {
+  id: number;
+  exam_snapshot_id: number;
+  user_id: number;
+  status: ExamSessionStatus;
+  started_at?: string;
+  submitted_at?: string;
+  remaining_seconds?: number;
+}
+
+export interface AdminExamSessionListResponse {
+  items: AdminExamSession[];
+}
+
+export interface BatchFailure {
+  id: number;
+  reason: string;
+}
+
+export interface BatchResult {
+  success_count: number;
+  failed_count: number;
+  failures: BatchFailure[];
+}
+
+export interface AdminClientEvent {
+  id: number;
+  exam_id: number;
+  user_id: number;
+  device_id?: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export type AdminClientEventPageResponse = PageResponse<AdminClientEvent>;
 
 export interface SaveExamPayload {
   title: string;

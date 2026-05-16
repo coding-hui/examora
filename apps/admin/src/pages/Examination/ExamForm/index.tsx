@@ -1,11 +1,15 @@
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-import type { AdminExam, AdminPaper, AdminPaperPageResponse } from '@examora/types';
+import type {
+  AdminExam,
+  AdminPaper,
+  AdminPaperPageResponse,
+} from '@examora/types';
 import { API_PATHS } from '@examora/types';
 import { history, request, useIntl } from '@umijs/max';
 import {
-  App as AntdApp,
   Alert,
+  App as AntdApp,
   Button,
   Card,
   Form,
@@ -54,19 +58,22 @@ const ExamFormContent: React.FC = () => {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    const papersRequest = request<{ code: number; data: AdminPaperPageResponse }>(
-        API_PATHS.admin.papers,
-        {
-          method: 'GET',
-          skipErrorHandler: true,
-          params: { page: 1, page_size: 100 },
-        },
-      );
+    const papersRequest = request<{
+      code: number;
+      data: AdminPaperPageResponse;
+    }>(API_PATHS.admin.papers, {
+      method: 'GET',
+      skipErrorHandler: true,
+      params: { page: 1, page_size: 100 },
+    });
     const examRequest = examId
-      ? request<{ code: number; data: AdminExam }>(API_PATHS.admin.exam(examId), {
-          method: 'GET',
-          skipErrorHandler: true,
-        })
+      ? request<{ code: number; data: AdminExam }>(
+          API_PATHS.admin.exam(examId),
+          {
+            method: 'GET',
+            skipErrorHandler: true,
+          },
+        )
       : Promise.resolve(null);
 
     Promise.all([papersRequest, examRequest])
@@ -178,7 +185,15 @@ const ExamFormContent: React.FC = () => {
                 id: 'pages.exams.form.title',
                 defaultMessage: '考试名称',
               })}
-              rules={[{ required: true, message: '请输入考试名称' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'pages.exams.form.titleRequired',
+                    defaultMessage: '请输入考试名称',
+                  }),
+                },
+              ]}
             >
               <Input maxLength={120} />
             </Form.Item>
@@ -197,7 +212,15 @@ const ExamFormContent: React.FC = () => {
                 id: 'pages.exams.form.paper',
                 defaultMessage: '关联试卷',
               })}
-              rules={[{ required: true, message: '请选择试卷' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'pages.exams.form.paperRequired',
+                    defaultMessage: '请选择试卷',
+                  }),
+                },
+              ]}
             >
               <Select
                 showSearch
@@ -215,7 +238,15 @@ const ExamFormContent: React.FC = () => {
                 id: 'pages.exams.form.duration',
                 defaultMessage: '默认时长(分钟)',
               })}
-              rules={[{ required: true, message: '请输入考试时长' }]}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'pages.exams.form.durationRequired',
+                    defaultMessage: '请输入考试时长',
+                  }),
+                },
+              ]}
             >
               <InputNumber min={1} max={1440} style={{ width: 240 }} />
             </Form.Item>

@@ -14,6 +14,10 @@ var (
 	ErrExamNotStarted              = errors.New("exam has not started yet")
 	ErrExamEnded                   = errors.New("exam has ended")
 	ErrInvalidExamWindow           = errors.New("invalid exam time window")
+	ErrUserGroupNotFound           = errors.New("user group not found")
+	ErrInvalidUserGroup            = errors.New("invalid user group")
+	ErrExamAssignmentNotFound      = errors.New("exam assignment not found")
+	ErrInvalidExamAssignment       = errors.New("invalid exam assignment")
 )
 
 func IsNotFound(err error) bool {
@@ -21,11 +25,14 @@ func IsNotFound(err error) bool {
 		errors.Is(err, ErrSubmissionNotFound) ||
 		errors.Is(err, ErrQuestionResultNotFound) ||
 		errors.Is(err, ErrSnapshotNotFound) ||
-		errors.Is(err, ErrSessionNotFound)
+		errors.Is(err, ErrSessionNotFound) ||
+		errors.Is(err, ErrUserGroupNotFound) ||
+		errors.Is(err, ErrExamAssignmentNotFound)
 }
 
 func IsConflict(err error) bool {
-	return errors.Is(err, ErrInvalidExamStatusTransition)
+	return errors.Is(err, ErrInvalidExamStatusTransition) ||
+		errors.Is(err, ErrInvalidExamAssignment)
 }
 
 func IsForbidden(err error) bool {
@@ -36,5 +43,6 @@ func IsForbidden(err error) bool {
 }
 
 func IsValidation(err error) bool {
-	return errors.Is(err, ErrInvalidExamWindow)
+	return errors.Is(err, ErrInvalidExamWindow) ||
+		errors.Is(err, ErrInvalidUserGroup)
 }

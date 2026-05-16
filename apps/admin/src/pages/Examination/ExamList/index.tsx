@@ -386,6 +386,15 @@ const ExamListContent: React.FC = () => {
                   menu={{
                     items: [
                       {
+                        key: 'detail',
+                        label: intl.formatMessage({
+                          id: 'common.view',
+                          defaultMessage: '查看',
+                        }),
+                        onClick: () =>
+                          history.push(`/examination/exams/${record.id}`),
+                      },
+                      {
                         key: 'publish',
                         label: intl.formatMessage({
                           id: 'pages.exams.publish',
@@ -421,7 +430,18 @@ const ExamListContent: React.FC = () => {
                 </Dropdown>
               </div>,
             ]
-          : [],
+          : [
+              <Button
+                key="detail"
+                type="link"
+                onClick={() => history.push(`/examination/exams/${record.id}`)}
+              >
+                {intl.formatMessage({
+                  id: 'common.view',
+                  defaultMessage: '查看',
+                })}
+              </Button>,
+            ],
     },
   ];
 
@@ -434,7 +454,7 @@ const ExamListContent: React.FC = () => {
       content={intl.formatMessage({
         id: 'pages.exams.description',
         defaultMessage:
-          '创建和管理考试，设置考试时间、时长和参与考生，支持线上监考。',
+          '创建和管理考试，设置考试时间、时长和参与用户，支持线上监考。',
       })}
     >
       <ProTable<Exam>

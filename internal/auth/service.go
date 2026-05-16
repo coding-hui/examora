@@ -239,8 +239,8 @@ func (u *Service) Casbin() *casbin.Enforcer {
 	return u.casbin
 }
 
-func (u *Service) ListUsers(ctx context.Context, page, pageSize int) ([]User, int64, error) {
-	return u.userRepo.List(ctx, page, pageSize)
+func (u *Service) ListUsers(ctx context.Context, page, pageSize int, filter UserListFilter) ([]User, int64, error) {
+	return u.userRepo.List(ctx, page, pageSize, filter)
 }
 
 func (u *Service) GetUser(ctx context.Context, id uint64) (*User, error) {

@@ -26,7 +26,8 @@ export default {
   'menu.examCreate': '创建考试',
   'menu.examEdit': '编辑考试',
   'menu.examPublish': '发布考试',
-  'menu.examination.candidates': '考生',
+  'menu.examination.examDetail': '考试详情',
+  'menu.examination.candidates': '用户组',
   'menu.proctoring': '监考',
   'menu.monitoring.events': '事件',
   'menu.results': '评测',
@@ -34,5 +35,8 @@ export default {
   'menu.assessment.judgeTasks': '判题',
   'menu.settings': '设置',
   'menu.system.users': '用户',
+  'menu.system.userGroups': '用户组',
+  'menu.system.userGroupDetail': '用户组详情',
   'menu.system.settings.users': '用户',
+  'menu.system.settings.userGroups': '用户组',
 };

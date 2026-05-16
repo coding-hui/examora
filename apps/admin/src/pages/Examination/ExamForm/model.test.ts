@@ -32,7 +32,9 @@ describe('exam form model', () => {
   });
 
   test('formats paper option labels with count and score', () => {
-    expect(paperOptionLabel(paper)).toBe('Backend Basics - 12 questions / 100 pts');
+    expect(paperOptionLabel(paper)).toBe(
+      'Backend Basics - 12 questions / 100 pts',
+    );
   });
 
   test('allows editing only draft exams', () => {

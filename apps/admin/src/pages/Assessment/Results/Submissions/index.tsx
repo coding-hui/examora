@@ -57,10 +57,13 @@ const SubmissionsContent: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
-    request<{ code: number; data: AdminExamPageResponse }>(API_PATHS.admin.exams, {
-      skipErrorHandler: true,
-      params: { page: 1, page_size: 100 },
-    })
+    request<{ code: number; data: AdminExamPageResponse }>(
+      API_PATHS.admin.exams,
+      {
+        skipErrorHandler: true,
+        params: { page: 1, page_size: 100 },
+      },
+    )
       .then((response) => {
         const items = response.data?.items || [];
         setExams(items);
@@ -249,14 +252,18 @@ const SubmissionsContent: React.FC = () => {
               })}
               onChange={(value) => setExamID(value)}
             />
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={fetchResults}
-            />
+            <Button icon={<ReloadOutlined />} onClick={fetchResults} />
           </Space>
         }
         locale={{
-          emptyText: examID ? <Empty /> : '请选择考试',
+          emptyText: examID ? (
+            <Empty />
+          ) : (
+            intl.formatMessage({
+              id: 'pages.results.selectExamEmpty',
+              defaultMessage: '请选择考试',
+            })
+          ),
         }}
       />
       <Drawer
@@ -273,7 +280,9 @@ const SubmissionsContent: React.FC = () => {
             <Space direction="vertical" size={16} style={{ width: '100%' }}>
               <Descriptions bordered size="small" column={2}>
                 <Descriptions.Item label="ID">{detail.id}</Descriptions.Item>
-                <Descriptions.Item label="User">{detail.user_id}</Descriptions.Item>
+                <Descriptions.Item label="User">
+                  {detail.user_id}
+                </Descriptions.Item>
                 <Descriptions.Item label="Status">
                   <Tag color={resultStatusTone(detail.status)}>
                     {detail.status}

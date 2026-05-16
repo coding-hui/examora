@@ -29,6 +29,18 @@ func parseUintParam(c *gin.Context, name string) (uint64, bool) {
 	return id, true
 }
 
+func optionalUintQuery(c *gin.Context, name string) (uint64, bool) {
+	value := c.Query(name)
+	if value == "" {
+		return 0, false
+	}
+	id, err := strconv.ParseUint(value, 10, 64)
+	if err != nil || id == 0 {
+		return 0, false
+	}
+	return id, true
+}
+
 func pageQuery(c *gin.Context) (int, int) {
 	pageNum, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))

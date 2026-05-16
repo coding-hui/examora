@@ -3,6 +3,7 @@ import {
   DownOutlined,
   EditOutlined,
   PlusOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import {
   type ActionType,
@@ -10,6 +11,10 @@ import {
   type ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
+import type {
+  AdminUserGroup,
+  AdminUserGroupTreeResponse,
+} from '@examora/types';
 import { API_PATHS } from '@examora/types';
 import { request, useIntl } from '@umijs/max';
 import {
@@ -39,6 +44,7 @@ interface User {
   role: string;
   status: string;
   created_at: string;
+  source?: string;
 }
 
 interface UserFormValues {
@@ -60,6 +66,21 @@ const normalizeRole = (role?: string) => {
 
 const normalizeStatus = (status?: string) => status?.toUpperCase() || '';
 
+const flattenGroups = (groups: AdminUserGroup[]): AdminUserGroup[] =>
+  groups.flatMap((group) => [group, ...flattenGroups(group.children || [])]);
+
+const groupPath = (groupID: number, groups: AdminUserGroup[]) => {
+  const flat = flattenGroups(groups);
+  const byID = new Map(flat.map((group) => [group.id, group]));
+  const parts: string[] = [];
+  let current = byID.get(groupID);
+  while (current) {
+    parts.unshift(current.name);
+    current = current.parent_id ? byID.get(current.parent_id) : undefined;
+  }
+  return parts.join(' / ');
+};
+
 const UserListContent: React.FC = () => {
   const intl = useIntl();
   const { message: antdMessage } = AntdApp.useApp();
@@ -70,6 +91,10 @@ const UserListContent: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
+  const [selectedUserIDs, setSelectedUserIDs] = useState<number[]>([]);
+  const [groups, setGroups] = useState<AdminUserGroup[]>([]);
+  const [groupID, setGroupID] = useState<number | undefined>();
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
 
   // i18n label maps
   const roleLabelMap: Record<string, string> = useMemo(
@@ -133,6 +158,32 @@ const UserListContent: React.FC = () => {
       ),
     [statusLabelMap],
   );
+
+  const groupOptions = useMemo(
+    () =>
+      flattenGroups(groups).map((group) => ({
+        value: group.id,
+        label: groupPath(group.id, groups),
+      })),
+    [groups],
+  );
+
+  const loadGroups = async () => {
+    try {
+      const response = await request<{
+        code: number;
+        data: AdminUserGroupTreeResponse;
+      }>(API_PATHS.admin.userGroupTree);
+      setGroups(response.data?.items || []);
+    } catch (_error) {
+      antdMessage.error(
+        intl.formatMessage({
+          id: 'pages.users.groupsLoadError',
+          defaultMessage: '加载用户组失败',
+        }),
+      );
+    }
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -243,6 +294,41 @@ const UserListContent: React.FC = () => {
     });
   };
 
+  const openJoinGroup = () => {
+    setGroupID(undefined);
+    setGroupModalOpen(true);
+    loadGroups();
+  };
+
+  const joinGroup = async () => {
+    if (!groupID || selectedUserIDs.length === 0) return;
+    setSaving(true);
+    try {
+      await request(API_PATHS.admin.userGroupMembers(groupID), {
+        method: 'POST',
+        data: { ids: selectedUserIDs },
+      });
+      antdMessage.success(
+        intl.formatMessage({
+          id: 'pages.users.joinGroupSuccess',
+          defaultMessage: '用户已加入用户组',
+        }),
+      );
+      setGroupModalOpen(false);
+      setSelectedUserIDs([]);
+      actionRef.current?.reload();
+    } catch (_error) {
+      antdMessage.error(
+        intl.formatMessage({
+          id: 'pages.users.joinGroupError',
+          defaultMessage: '加入用户组失败',
+        }),
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const columns: ProColumns<User>[] = [
     {
       title: intl.formatMessage({
@@ -310,7 +396,7 @@ const UserListContent: React.FC = () => {
       dataIndex: 'role',
       key: 'role',
       width: 90,
-      search: false,
+      search: true,
       valueEnum: roleValueEnum,
       render: (_, user) => {
         const roleKey = normalizeRole(user.role);
@@ -329,7 +415,7 @@ const UserListContent: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       width: 90,
-      search: false,
+      search: true,
       valueEnum: statusValueEnum,
       render: (_, user) => {
         const statusKey = normalizeStatus(user.status);
@@ -341,6 +427,27 @@ const UserListContent: React.FC = () => {
           </Tag>
         );
       },
+    },
+    {
+      title: intl.formatMessage({
+        id: 'pages.users.columns.source',
+        defaultMessage: '来源',
+      }),
+      dataIndex: 'source',
+      key: 'source',
+      width: 90,
+      valueEnum: {
+        LOCAL: {
+          text: intl.formatMessage({
+            id: 'pages.users.source.LOCAL',
+            defaultMessage: '本地',
+          }),
+        },
+        LOGTO: { text: 'Logto' },
+        OIDC: { text: 'OIDC' },
+        SCIM: { text: 'SCIM' },
+      },
+      render: (_, user) => <Tag>{user.source || 'LOCAL'}</Tag>,
     },
     {
       title: intl.formatMessage({
@@ -490,7 +597,35 @@ const UserListContent: React.FC = () => {
               ? params.keyword.trim()
               : params.keyword,
         })}
-        request={async ({ current, pageSize, keyword }) => {
+        rowSelection={{
+          selectedRowKeys: selectedUserIDs,
+          preserveSelectedRowKeys: true,
+          onChange: (keys) => setSelectedUserIDs(keys.map(Number)),
+        }}
+        tableAlertOptionRender={() => (
+          <Space size={12}>
+            <Button type="link" icon={<TeamOutlined />} onClick={openJoinGroup}>
+              {intl.formatMessage({
+                id: 'pages.users.joinGroup',
+                defaultMessage: '加入用户组',
+              })}
+            </Button>
+            <Button type="link" onClick={() => setSelectedUserIDs([])}>
+              {intl.formatMessage({
+                id: 'pages.users.clearSelection',
+                defaultMessage: '清空',
+              })}
+            </Button>
+          </Space>
+        )}
+        request={async ({
+          current,
+          pageSize,
+          keyword,
+          role,
+          status,
+          source,
+        }) => {
           try {
             const trimmedKeyword =
               typeof keyword === 'string' ? keyword.trim() : undefined;
@@ -502,6 +637,9 @@ const UserListContent: React.FC = () => {
                 page: current,
                 page_size: pageSize,
                 ...(trimmedKeyword ? { keyword: trimmedKeyword } : {}),
+                ...(role ? { role } : {}),
+                ...(status ? { status } : {}),
+                ...(source ? { source } : {}),
               },
             });
 
@@ -906,6 +1044,34 @@ const UserListContent: React.FC = () => {
           </Row>
         </Form>
       </Drawer>
+
+      <Modal
+        width={520}
+        centered
+        open={groupModalOpen}
+        title={intl.formatMessage({
+          id: 'pages.users.joinGroup',
+          defaultMessage: '加入用户组',
+        })}
+        onOk={joinGroup}
+        okButtonProps={{ disabled: !groupID || selectedUserIDs.length === 0 }}
+        confirmLoading={saving}
+        onCancel={() => setGroupModalOpen(false)}
+      >
+        <Select
+          showSearch
+          allowClear
+          style={{ width: '100%' }}
+          options={groupOptions}
+          value={groupID}
+          onChange={setGroupID}
+          optionFilterProp="label"
+          placeholder={intl.formatMessage({
+            id: 'pages.users.joinGroupPlaceholder',
+            defaultMessage: '选择要加入的用户组',
+          })}
+        />
+      </Modal>
     </PageContainer>
   );
 };

@@ -26,7 +26,8 @@ export default {
   'menu.examCreate': 'Create Exam',
   'menu.examEdit': 'Edit Exam',
   'menu.examPublish': 'Publish',
-  'menu.examination.candidates': 'Candidates',
+  'menu.examination.examDetail': 'Exam Detail',
+  'menu.examination.candidates': 'User Groups',
   'menu.proctoring': 'Proctoring',
   'menu.monitoring.events': 'Events',
   'menu.results': 'Results',
@@ -34,5 +35,8 @@ export default {
   'menu.assessment.judgeTasks': 'Judge Tasks',
   'menu.settings': 'Settings',
   'menu.system.users': 'Users',
+  'menu.system.userGroups': 'User Groups',
+  'menu.system.userGroupDetail': 'User Group Detail',
   'menu.system.settings.users': 'Users',
+  'menu.system.settings.userGroups': 'User Groups',
 };

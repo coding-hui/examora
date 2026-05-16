@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -143,14 +144,29 @@ func (r *UserStore) Delete(ctx context.Context, id uint64) error {
 	return transaction.DBFromContext(ctx, r.db).Delete(&database.UserModel{}, id).Error
 }
 
-func (r *UserStore) List(ctx context.Context, page, pageSize int) ([]auth.User, int64, error) {
+func (r *UserStore) List(ctx context.Context, page, pageSize int, filter auth.UserListFilter) ([]auth.User, int64, error) {
+	query := transaction.DBFromContext(ctx, r.db).Model(&database.UserModel{})
+	if keyword := strings.TrimSpace(filter.Keyword); keyword != "" {
+		like := "%" + keyword + "%"
+		query = query.Where("username LIKE ? OR email LIKE ? OR display_name LIKE ?", like, like, like)
+	}
+	if status := strings.TrimSpace(filter.Status); status != "" {
+		query = query.Where("status = ?", status)
+	}
+	if source := strings.TrimSpace(filter.Source); source != "" {
+		if source == "LOCAL" {
+			query = query.Where("auth_provider IS NULL OR auth_provider = '' OR auth_provider = ?", "LOCAL")
+		} else {
+			query = query.Where("auth_provider = ?", source)
+		}
+	}
 	var total int64
-	if err := transaction.DBFromContext(ctx, r.db).Model(&database.UserModel{}).Count(&total).Error; err != nil {
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 	var rows []database.UserModel
 	offset := (page - 1) * pageSize
-	if err := transaction.DBFromContext(ctx, r.db).Order("id desc").Offset(offset).Limit(pageSize).Find(&rows).Error; err != nil {
+	if err := query.Order("id desc").Offset(offset).Limit(pageSize).Find(&rows).Error; err != nil {
 		return nil, 0, err
 	}
 	users := make([]auth.User, 0, len(rows))
@@ -162,11 +178,13 @@ func (r *UserStore) List(ctx context.Context, page, pageSize int) ([]auth.User, 
 
 func toUser(m *database.UserModel) *auth.User {
 	return &auth.User{
-		ID:          m.ID,
-		Username:    m.Username,
-		Status:      m.Status,
-		DisplayName: m.DisplayName,
-		Email:       m.Email,
-		CreatedAt:   m.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		ID:              m.ID,
+		Username:        m.Username,
+		Status:          m.Status,
+		DisplayName:     m.DisplayName,
+		Email:           m.Email,
+		AuthProvider:    m.AuthProvider,
+		ExternalSubject: m.ExternalSubject,
+		CreatedAt:       m.CreatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }

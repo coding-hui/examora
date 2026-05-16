@@ -7,9 +7,7 @@ export interface ExamFormValues {
   duration_minutes: number;
 }
 
-export const buildExamPayload = (
-  values: ExamFormValues,
-): SaveExamPayload => ({
+export const buildExamPayload = (values: ExamFormValues): SaveExamPayload => ({
   title: values.title.trim(),
   description: (values.description || '').trim(),
   paper_id: values.paper_id,

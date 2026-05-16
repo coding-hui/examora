@@ -76,20 +76,16 @@ func (s *Service) GetExamSnapshot(ctx context.Context, id uint64) (*ExamSnapshot
 }
 
 func (s *Service) ListAvailableExams(ctx context.Context, userID uint64) ([]ExamSessionItem, error) {
-	snapshots, err := s.store.ListExamSnapshots(ctx)
-	if err != nil {
-		return nil, err
-	}
 	sessions, err := s.store.ListExamSessionsByUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	sessionMap := make(map[uint64]*ExamSession, len(sessions))
-	for i := range sessions {
-		sessionMap[sessions[i].ExamSnapshotID] = &sessions[i]
-	}
-	items := make([]ExamSessionItem, 0, len(snapshots))
-	for _, snap := range snapshots {
+	items := make([]ExamSessionItem, 0, len(sessions))
+	for _, session := range sessions {
+		snap, err := s.store.GetExamSnapshot(ctx, session.ExamSnapshotID)
+		if err != nil {
+			return nil, err
+		}
 		exam, err := s.store.GetExam(ctx, snap.ExamID)
 		if err != nil {
 			return nil, err
@@ -97,14 +93,10 @@ func (s *Service) ListAvailableExams(ctx context.Context, userID uint64) ([]Exam
 		if exam.Status == StatusClosed || exam.Status == StatusArchived {
 			continue
 		}
-		status := SessionStatusNotStarted
-		if sess, ok := sessionMap[snap.ID]; ok {
-			status = sess.Status
-		}
 		items = append(items, ExamSessionItem{
 			ID:     snap.ExamID,
 			Title:  exam.Title,
-			Status: status,
+			Status: session.Status,
 		})
 	}
 	return items, nil
@@ -154,6 +146,43 @@ func (s *Service) PublishExam(ctx context.Context, id uint64) error {
 		return errors.Join(ErrInvalidExamStatusTransition, err)
 	}
 	return s.store.UpdateExam(ctx, e)
+}
+
+func (s *Service) ListExamSessions(ctx context.Context, examID uint64) ([]ExamSession, error) {
+	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, examID)
+	if err != nil {
+		if errors.Is(err, ErrSnapshotNotFound) {
+			return []ExamSession{}, nil
+		}
+		return nil, err
+	}
+	return s.store.ListExamSessionsBySnapshot(ctx, snapshot.ID)
+}
+
+func (s *Service) AssignCandidates(ctx context.Context, examID uint64, userIDs []uint64) (BatchResult, error) {
+	return s.AssignExamTargets(ctx, examID, AssignExamTargetsCommand{UserIDs: userIDs})
+}
+
+func (s *Service) RemoveCandidate(ctx context.Context, examID, userID uint64) error {
+	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, examID)
+	if err != nil {
+		return err
+	}
+	session, err := s.store.GetExamSession(ctx, snapshot.ID, userID)
+	if err != nil {
+		return err
+	}
+	if session.Status != SessionStatusNotStarted {
+		return ErrInvalidExamStatusTransition
+	}
+	return s.store.DeleteExamSession(ctx, session.ID)
+}
+
+func (s *Service) ListClientEvents(ctx context.Context, examID uint64, pageNum, pageSize int) ([]ClientEvent, int64, error) {
+	if _, err := s.store.GetExam(ctx, examID); err != nil {
+		return nil, 0, err
+	}
+	return s.store.ListClientEvents(ctx, examID, pageNum, pageSize)
 }
 
 func (s *Service) CloseExam(ctx context.Context, id uint64) error {

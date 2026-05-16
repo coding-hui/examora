@@ -124,10 +124,10 @@ export default [
         access: 'canAdmin',
       },
       {
-        path: '/examination/candidates',
-        name: 'candidates',
-        icon: 'TeamOutlined',
-        component: './Examination/Candidates',
+        path: '/examination/exams/:id',
+        name: 'examDetail',
+        hideInMenu: true,
+        component: './Examination/ExamDetail',
         access: 'canAdmin',
       },
     ],
@@ -223,13 +223,31 @@ export default [
       {
         path: '/system/settings/users',
         name: 'users',
-        icon: 'SettingOutlined',
+        icon: 'UserOutlined',
         component: './System/Settings/Users',
+        access: 'canAdmin',
+      },
+      {
+        path: '/system/settings/user-groups',
+        name: 'userGroups',
+        icon: 'TeamOutlined',
+        component: './System/Settings/UserGroups',
+        access: 'canAdmin',
+      },
+      {
+        path: '/system/settings/user-groups/:id',
+        name: 'userGroupDetail',
+        hideInMenu: true,
+        component: './System/Settings/UserGroups/Detail',
         access: 'canAdmin',
       },
     ],
   },
   // Legacy redirects
+  {
+    path: '/examination/candidates',
+    redirect: '/system/settings/user-groups',
+  },
   {
     path: '/admin/exams',
     redirect: '/examination/exams',

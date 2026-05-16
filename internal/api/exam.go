@@ -15,8 +15,65 @@ func (s *Server) registerExamAdminRoutes(admin *gin.RouterGroup) {
 	admin.PUT("/exams/:id", s.updateExam)
 	admin.POST("/exams/:id/publish", s.publishExamWithSnapshot)
 	admin.POST("/exams/:id/close", s.closeExam)
+	admin.GET("/exams/:id/sessions", s.listExamSessions)
+	admin.POST("/exams/:id/candidates", s.assignExamCandidates)
+	admin.DELETE("/exams/:id/candidates/:user_id", s.removeExamCandidate)
+	admin.GET("/exams/:id/assignments", s.listExamAssignments)
+	admin.POST("/exams/:id/assignments", s.assignExamTargets)
+	admin.DELETE("/exams/:id/assignments/:assignment_id", s.removeExamAssignment)
+	admin.GET("/exams/:id/events", s.listExamEvents)
 	admin.GET("/exams/:id/results", s.listExamResults)
 	admin.GET("/exam-results/:id", s.getExamResult)
+}
+
+func (s *Server) listExamAssignments(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	items, err := s.exam.ListExamAssignments(c.Request.Context(), id)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, map[string]any{"items": examAssignmentsToResponses(items)})
+}
+
+func (s *Server) assignExamTargets(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	req, ok := bindJSON[assignExamTargetsRequest](c)
+	if !ok {
+		return
+	}
+	if len(normalizeBatchIDs(req.UserIDs)) == 0 && len(normalizeBatchIDs(req.UserGroupIDs)) == 0 {
+		response.BadRequest(c, "user_ids or user_group_ids are required")
+		return
+	}
+	result, err := s.exam.AssignExamTargets(c.Request.Context(), id, req.command(currentUserID(c)))
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, result)
+}
+
+func (s *Server) removeExamAssignment(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	assignmentID, ok := parseUintParam(c, "assignment_id")
+	if !ok {
+		return
+	}
+	if err := s.exam.RemoveExamAssignment(c.Request.Context(), id, assignmentID); err != nil {
+		writeError(c, err)
+		return
+	}
+	response.NoContent(c)
 }
 
 func (s *Server) listCandidateExams(c *gin.Context) {
@@ -125,6 +182,70 @@ func (s *Server) batchCloseExams(c *gin.Context) {
 	}
 	result := s.exam.BatchCloseExams(c.Request.Context(), req.IDs)
 	response.Success(c, result)
+}
+
+func (s *Server) listExamSessions(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	items, err := s.exam.ListExamSessions(c.Request.Context(), id)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, map[string]any{"items": sessionsToResponses(items)})
+}
+
+func (s *Server) assignExamCandidates(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	req, ok := bindJSON[batchIDsRequest](c)
+	if !ok {
+		return
+	}
+	if len(normalizeBatchIDs(req.IDs)) == 0 {
+		response.BadRequest(c, "ids are required")
+		return
+	}
+	result, err := s.exam.AssignCandidates(c.Request.Context(), id, req.IDs)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.Success(c, result)
+}
+
+func (s *Server) removeExamCandidate(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	userID, ok := parseUintParam(c, "user_id")
+	if !ok {
+		return
+	}
+	if err := s.exam.RemoveCandidate(c.Request.Context(), id, userID); err != nil {
+		writeError(c, err)
+		return
+	}
+	response.NoContent(c)
+}
+
+func (s *Server) listExamEvents(c *gin.Context) {
+	id, ok := parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	pageNum, pageSize := pageQuery(c)
+	items, total, err := s.exam.ListClientEvents(c.Request.Context(), id, pageNum, pageSize)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	response.PageSuccessWith(c, items, total, pageNum, pageSize, toClientEventResponse)
 }
 
 // M1: Candidate exam flow handlers

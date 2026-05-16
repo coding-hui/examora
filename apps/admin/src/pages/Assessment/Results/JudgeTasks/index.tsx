@@ -223,7 +223,9 @@ const JudgeTasksContent: React.FC = () => {
                 <Descriptions.Item label="Question">
                   {detail.question_id}
                 </Descriptions.Item>
-                <Descriptions.Item label="User">{detail.user_id}</Descriptions.Item>
+                <Descriptions.Item label="User">
+                  {detail.user_id}
+                </Descriptions.Item>
                 <Descriptions.Item label="Language">
                   {detail.language}
                 </Descriptions.Item>

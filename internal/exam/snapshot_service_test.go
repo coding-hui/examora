@@ -166,6 +166,13 @@ func publishableExam(t *testing.T, fx *examFixture) *exam.Exam {
 	return created
 }
 
+func assignCandidate(t *testing.T, fx *examFixture, examID, userID uint64) {
+	t.Helper()
+	result, err := fx.exams.AssignCandidates(context.Background(), examID, []uint64{userID})
+	require.NoError(t, err)
+	require.Equal(t, 1, result.SuccessCount)
+}
+
 func objectiveExam(t *testing.T, fx *examFixture) *exam.Exam {
 	t.Helper()
 	ctx := context.Background()
@@ -300,6 +307,7 @@ func TestCandidatePaperIsSafeAndUsesExamTitle(t *testing.T) {
 	_, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
 	require.NoError(t, err)
 
+	assignCandidate(t, fx, created.ID, 42)
 	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
 	require.NoError(t, err)
 
@@ -412,6 +420,7 @@ func TestPublishSnapshotFreezesPaperSections(t *testing.T) {
 	require.Equal(t, "第一大题 单选题", sections[0].Title)
 	require.Equal(t, 2.0, sections[0].TotalScore)
 
+	assignCandidate(t, fx, created.ID, 42)
 	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
 	require.NoError(t, err)
 	candidatePaper, err := fx.exams.GetCandidatePaper(ctx, created.ID, 42)
@@ -433,6 +442,7 @@ func TestSaveAnswersRequiresInProgressSessionAndKnownSnapshotQuestion(t *testing
 	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
 	require.NoError(t, err)
 
+	assignCandidate(t, fx, created.ID, 42)
 	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
 	require.NoError(t, err)
 	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
@@ -459,6 +469,7 @@ func TestSubmitExamIsIdempotent(t *testing.T) {
 	end := time.Now().Add(time.Hour)
 	_, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
 	require.NoError(t, err)
+	assignCandidate(t, fx, created.ID, 42)
 	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
 	require.NoError(t, err)
 
@@ -482,6 +493,7 @@ func TestSubmitExamGradesStrictObjectiveQuestions(t *testing.T) {
 	end := time.Now().Add(time.Hour)
 	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
 	require.NoError(t, err)
+	assignCandidate(t, fx, created.ID, 42)
 	session, err := fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
 	require.NoError(t, err)
 
@@ -520,6 +532,7 @@ func TestSubmitExamCreatesProgrammingJudgeTaskFromDraft(t *testing.T) {
 	end := time.Now().Add(time.Hour)
 	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
 	require.NoError(t, err)
+	assignCandidate(t, fx, created.ID, 42)
 	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
 	require.NoError(t, err)
 	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
@@ -553,6 +566,7 @@ func TestJudgeResultUpdatesProgrammingQuestionAndExamScore(t *testing.T) {
 	end := time.Now().Add(time.Hour)
 	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
 	require.NoError(t, err)
+	assignCandidate(t, fx, created.ID, 42)
 	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
 	require.NoError(t, err)
 	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
@@ -700,6 +714,134 @@ func TestAvailableExamItemUsesCandidateWireShape(t *testing.T) {
 	require.JSONEq(t, `{"id":1,"title":"Final exam","status":"NOT_STARTED"}`, string(payload))
 }
 
+func TestCandidateVisibilityRequiresAssignedSession(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	created := publishableExam(t, fx)
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	_, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+
+	items, err := fx.exams.ListAvailableExams(ctx, 42)
+	require.NoError(t, err)
+	require.Empty(t, items)
+	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.ErrorIs(t, err, exam.ErrNotEligible)
+
+	assigned, err := fx.exams.AssignCandidates(ctx, created.ID, []uint64{42})
+	require.NoError(t, err)
+	require.Equal(t, 1, assigned.SuccessCount)
+
+	items, err = fx.exams.ListAvailableExams(ctx, 42)
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+	require.Equal(t, exam.SessionStatusNotStarted, items[0].Status)
+
+	session, err := fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
+	require.NoError(t, err)
+	require.Equal(t, exam.SessionStatusInProgress, session.Status)
+	require.NotNil(t, session.StartedAt)
+}
+
+func TestListExamSessionsReturnsEmptyBeforeSnapshotExists(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	created := publishableExam(t, fx)
+
+	sessions, err := fx.exams.ListExamSessions(ctx, created.ID)
+	require.NoError(t, err)
+	require.Empty(t, sessions)
+}
+
+func TestRemoveCandidateAllowsOnlyNotStartedSession(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	created := publishableExam(t, fx)
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	_, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+	_, err = fx.exams.AssignCandidates(ctx, created.ID, []uint64{42, 43})
+	require.NoError(t, err)
+
+	require.NoError(t, fx.exams.RemoveCandidate(ctx, created.ID, 42))
+	items, err := fx.exams.ListAvailableExams(ctx, 42)
+	require.NoError(t, err)
+	require.Empty(t, items)
+
+	assignCandidate(t, fx, created.ID, 43)
+	_, err = fx.exams.StartExamSession(ctx, created.ID, 43, "127.0.0.1", "device-1")
+	require.NoError(t, err)
+	err = fx.exams.RemoveCandidate(ctx, created.ID, 43)
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+}
+
+func TestUserGroupTreeIncludesDescendantStudents(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	root, err := fx.exams.CreateUserGroup(ctx, exam.SaveUserGroupCommand{Name: "2026 Cohort"})
+	require.NoError(t, err)
+	child, err := fx.exams.CreateUserGroup(ctx, exam.SaveUserGroupCommand{Name: "Class A", ParentID: &root.ID})
+	require.NoError(t, err)
+	leaf, err := fx.exams.CreateUserGroup(ctx, exam.SaveUserGroupCommand{Name: "Project Team", ParentID: &child.ID})
+	require.NoError(t, err)
+
+	require.NoError(t, fx.exams.AddUserGroupMembers(ctx, child.ID, []uint64{101}))
+	require.NoError(t, fx.exams.AddUserGroupMembers(ctx, leaf.ID, []uint64{102, 103}))
+
+	rootStudents, err := fx.exams.ListUserGroupStudentIDs(ctx, root.ID, true)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []uint64{101, 102, 103}, rootStudents)
+
+	childStudents, err := fx.exams.ListUserGroupStudentIDs(ctx, child.ID, false)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []uint64{101}, childStudents)
+}
+
+func TestAssignUserGroupsExpandsDescendantStudents(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	created := publishableExam(t, fx)
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	_, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
+	require.NoError(t, err)
+
+	root, err := fx.exams.CreateUserGroup(ctx, exam.SaveUserGroupCommand{Name: "Exam Group"})
+	require.NoError(t, err)
+	child, err := fx.exams.CreateUserGroup(ctx, exam.SaveUserGroupCommand{Name: "Child Group", ParentID: &root.ID})
+	require.NoError(t, err)
+	require.NoError(t, fx.exams.AddUserGroupMembers(ctx, root.ID, []uint64{42}))
+	require.NoError(t, fx.exams.AddUserGroupMembers(ctx, child.ID, []uint64{43, 42}))
+
+	result, err := fx.exams.AssignExamTargets(ctx, created.ID, exam.AssignExamTargetsCommand{
+		UserIDs:      []uint64{44},
+		UserGroupIDs: []uint64{root.ID},
+	})
+	require.NoError(t, err)
+	require.Equal(t, 3, result.SuccessCount)
+	require.Equal(t, 0, result.FailedCount)
+
+	sessions, err := fx.exams.ListExamSessions(ctx, created.ID)
+	require.NoError(t, err)
+	require.Len(t, sessions, 3)
+	sessionUsers := make([]uint64, 0, len(sessions))
+	for _, session := range sessions {
+		sessionUsers = append(sessionUsers, session.UserID)
+	}
+	require.ElementsMatch(t, []uint64{42, 43, 44}, sessionUsers)
+
+	assignments, err := fx.exams.ListExamAssignments(ctx, created.ID)
+	require.NoError(t, err)
+	require.Len(t, assignments, 2)
+}
+
 func TestStartExamSessionRejectsArchivedExam(t *testing.T) {
 	fx := newExamFixture(t)
 	ctx := context.Background()
@@ -733,6 +875,7 @@ func TestClosedExamRejectsExistingSessionCandidateActions(t *testing.T) {
 	end := time.Now().Add(time.Hour)
 	snapshot, err := fx.exams.PublishExamWithSnapshot(ctx, created.ID, start, end, 60)
 	require.NoError(t, err)
+	assignCandidate(t, fx, created.ID, 42)
 	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
 	require.NoError(t, err)
 	snaps, err := fx.examStore.ListQuestionSnapshots(ctx, snapshot.ID)
@@ -773,6 +916,7 @@ func TestCreateSubmissionRequiresActiveExamSessionAndSnapshotQuestion(t *testing
 	})
 	require.ErrorIs(t, err, exam.ErrForbidden)
 
+	assignCandidate(t, fx, created.ID, 42)
 	_, err = fx.exams.StartExamSession(ctx, created.ID, 42, "127.0.0.1", "device-1")
 	require.NoError(t, err)
 	_, err = fx.exams.CreateSubmission(ctx, created.ID, 42, exam.CreateSubmissionCommand{
