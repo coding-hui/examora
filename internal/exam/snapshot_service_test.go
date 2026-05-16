@@ -782,6 +782,16 @@ func TestCreateSubmissionRequiresActiveExamSessionAndSnapshotQuestion(t *testing
 	})
 	require.ErrorIs(t, err, exam.ErrForbidden)
 
+	submission, err := fx.exams.CreateSubmission(ctx, created.ID, 42, exam.CreateSubmissionCommand{
+		QuestionID: snaps[1].QuestionID,
+		Code:       "package main\nfunc main() {}",
+		Language:   "GO",
+	})
+	require.NoError(t, err)
+	require.Equal(t, snaps[1].ID, submission.Submission.QuestionID)
+	require.Len(t, fx.judge.tasks, 1)
+	require.Equal(t, snaps[1].ID, fx.judge.tasks[0].QuestionID)
+
 	require.NoError(t, fx.exams.SubmitExam(ctx, created.ID, 42))
 	_, err = fx.exams.CreateSubmission(ctx, created.ID, 42, exam.CreateSubmissionCommand{
 		QuestionID: snaps[1].ID,

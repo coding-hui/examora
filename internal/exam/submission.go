@@ -59,18 +59,21 @@ func (s *Service) CreateSubmission(ctx context.Context, examID uint64, userID ui
 	if err != nil {
 		return nil, err
 	}
-	questionBelongsToExam := false
+	resolvedQuestionID := uint64(0)
 	for _, questionSnapshot := range questionSnapshots {
 		if questionSnapshot.ID == cmd.QuestionID {
-			questionBelongsToExam = true
+			resolvedQuestionID = questionSnapshot.ID
 			break
 		}
+		if questionSnapshot.QuestionID == cmd.QuestionID {
+			resolvedQuestionID = questionSnapshot.ID
+		}
 	}
-	if !questionBelongsToExam {
+	if resolvedQuestionID == 0 {
 		return nil, ErrForbidden
 	}
 	status := SubmissionStatusPending
-	sub := &Submission{ExamID: examID, UserID: userID, QuestionID: cmd.QuestionID, Answer: cmd.Answer, Code: cmd.Code, Language: cmd.Language, Status: status}
+	sub := &Submission{ExamID: examID, UserID: userID, QuestionID: resolvedQuestionID, Answer: cmd.Answer, Code: cmd.Code, Language: cmd.Language, Status: status}
 	if err := s.store.CreateSubmission(ctx, sub); err != nil {
 		return nil, err
 	}
