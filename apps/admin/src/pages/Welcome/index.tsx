@@ -296,7 +296,7 @@ const Welcome: React.FC = () => {
     {
       key: 'submissions',
       label: f('pages.dashboard.shortcuts.submissions'),
-      path: '/assessment/results/submissions',
+      path: '/examination/submissions',
       icon: <AuditOutlined />,
     },
   ];
@@ -344,10 +344,7 @@ const Welcome: React.FC = () => {
             >
               {f('pages.dashboard.actions.createExam')}
             </Button>
-            <Button
-              href="/monitoring/proctoring/events"
-              icon={<SafetyOutlined />}
-            >
+            <Button href="/examination/events" icon={<SafetyOutlined />}>
               {f('pages.dashboard.actions.viewMonitoring')}
             </Button>
           </Space>

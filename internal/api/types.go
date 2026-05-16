@@ -35,6 +35,36 @@ type batchIDsRequest struct {
 	IDs []uint64 `json:"ids"`
 }
 
+type saveUserGroupRequest struct {
+	ParentID    *uint64 `json:"parent_id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Status      string  `json:"status"`
+}
+
+func (r saveUserGroupRequest) command(createdBy uint64) exam.SaveUserGroupCommand {
+	return exam.SaveUserGroupCommand{
+		ParentID:    r.ParentID,
+		Name:        r.Name,
+		Description: r.Description,
+		Status:      r.Status,
+		CreatedBy:   createdBy,
+	}
+}
+
+type assignExamTargetsRequest struct {
+	UserIDs      []uint64 `json:"user_ids"`
+	UserGroupIDs []uint64 `json:"user_group_ids"`
+}
+
+func (r assignExamTargetsRequest) command(createdBy uint64) exam.AssignExamTargetsCommand {
+	return exam.AssignExamTargetsCommand{
+		UserIDs:      r.UserIDs,
+		UserGroupIDs: r.UserGroupIDs,
+		CreatedBy:    createdBy,
+	}
+}
+
 type batchQuestionStatusRequest struct {
 	IDs    []uint64 `json:"ids"`
 	Status string   `json:"status"`
@@ -213,6 +243,44 @@ type examSnapshotResponse struct {
 	EndTime         time.Time `json:"end_time"`
 	DurationMinutes int       `json:"duration_minutes"`
 	PublishedAt     time.Time `json:"published_at"`
+}
+
+type userGroupResponse struct {
+	ID               uint64              `json:"id"`
+	ParentID         *uint64             `json:"parent_id,omitempty"`
+	Name             string              `json:"name"`
+	Description      string              `json:"description"`
+	Status           string              `json:"status"`
+	Source           string              `json:"source"`
+	ExternalProvider *string             `json:"external_provider,omitempty"`
+	ExternalID       *string             `json:"external_id,omitempty"`
+	ExternalParentID *string             `json:"external_parent_id,omitempty"`
+	SyncMode         string              `json:"sync_mode"`
+	LastSyncedAt     *time.Time          `json:"last_synced_at,omitempty"`
+	CreatedBy        uint64              `json:"created_by"`
+	CreatedAt        time.Time           `json:"created_at"`
+	UpdatedAt        time.Time           `json:"updated_at"`
+	MemberCount      int                 `json:"member_count,omitempty"`
+	ChildCount       int                 `json:"child_count,omitempty"`
+	Children         []userGroupResponse `json:"children,omitempty"`
+}
+
+type userGroupMemberResponse struct {
+	User        userResponse `json:"user"`
+	UserGroupID uint64       `json:"user_group_id"`
+	Direct      bool         `json:"direct"`
+	Source      string       `json:"source"`
+	CreatedAt   time.Time    `json:"created_at"`
+}
+
+type examAssignmentResponse struct {
+	ID             uint64    `json:"id"`
+	ExamID         uint64    `json:"exam_id"`
+	ExamSnapshotID uint64    `json:"exam_snapshot_id"`
+	TargetType     string    `json:"target_type"`
+	TargetID       uint64    `json:"target_id"`
+	CreatedBy      uint64    `json:"created_by"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 type candidatePaperResponse struct {
@@ -678,6 +746,70 @@ func toExamSessionResponse(session exam.ExamSession) examSessionResponse {
 		SubmittedAt:      session.SubmittedAt,
 		RemainingSeconds: session.RemainingSeconds,
 	}
+}
+
+func sessionsToResponses(sessions []exam.ExamSession) []examSessionResponse {
+	items := make([]examSessionResponse, 0, len(sessions))
+	for _, session := range sessions {
+		items = append(items, toExamSessionResponse(session))
+	}
+	return items
+}
+
+func toUserGroupResponse(group exam.UserGroup) userGroupResponse {
+	return userGroupResponse{
+		ID:               group.ID,
+		ParentID:         group.ParentID,
+		Name:             group.Name,
+		Description:      group.Description,
+		Status:           group.Status,
+		Source:           group.Source,
+		ExternalProvider: group.ExternalProvider,
+		ExternalID:       group.ExternalID,
+		ExternalParentID: group.ExternalParentID,
+		SyncMode:         group.SyncMode,
+		LastSyncedAt:     group.LastSyncedAt,
+		CreatedBy:        group.CreatedBy,
+		CreatedAt:        group.CreatedAt,
+		UpdatedAt:        group.UpdatedAt,
+	}
+}
+
+func toUserGroupTreeResponse(node exam.UserGroupTreeNode) userGroupResponse {
+	item := toUserGroupResponse(node.UserGroup)
+	item.Children = make([]userGroupResponse, 0, len(node.Children))
+	for _, child := range node.Children {
+		item.Children = append(item.Children, toUserGroupTreeResponse(child))
+	}
+	return item
+}
+
+func userGroupTreeToResponses(tree []exam.UserGroupTreeNode) []userGroupResponse {
+	items := make([]userGroupResponse, 0, len(tree))
+	for _, node := range tree {
+		items = append(items, toUserGroupTreeResponse(node))
+	}
+	return items
+}
+
+func toExamAssignmentResponse(assignment exam.ExamAssignment) examAssignmentResponse {
+	return examAssignmentResponse{
+		ID:             assignment.ID,
+		ExamID:         assignment.ExamID,
+		ExamSnapshotID: assignment.ExamSnapshotID,
+		TargetType:     assignment.TargetType,
+		TargetID:       assignment.TargetID,
+		CreatedBy:      assignment.CreatedBy,
+		CreatedAt:      assignment.CreatedAt,
+	}
+}
+
+func examAssignmentsToResponses(assignments []exam.ExamAssignment) []examAssignmentResponse {
+	items := make([]examAssignmentResponse, 0, len(assignments))
+	for _, assignment := range assignments {
+		items = append(items, toExamAssignmentResponse(assignment))
+	}
+	return items
 }
 
 // endregion

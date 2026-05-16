@@ -12,13 +12,19 @@ type UserStore interface {
 	Create(ctx context.Context, user *User, passwordHash string) error
 	Update(ctx context.Context, id uint64, username, displayName, email, status string) error
 	Delete(ctx context.Context, id uint64) error
-	List(ctx context.Context, page, pageSize int) ([]User, int64, error)
+	List(ctx context.Context, page, pageSize int, filter UserListFilter) ([]User, int64, error)
 	UpdatePassword(ctx context.Context, id uint64, hash string) error
 	UpdateStatus(ctx context.Context, id uint64, status string) error
 	HasUsers(ctx context.Context) (bool, error)
 	LinkExternalSubject(ctx context.Context, userID uint64, sub string) error
 	EnsureDefaultAdmin(ctx context.Context, admin DefaultAdmin, defaultPWHash string) (uint64, error)
 	VerifyPassword(ctx context.Context, username, password string) (*User, bool, error)
+}
+
+type UserListFilter struct {
+	Keyword string
+	Status  string
+	Source  string
 }
 
 type Claims struct {

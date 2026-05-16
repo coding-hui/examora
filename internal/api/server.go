@@ -33,6 +33,7 @@ func (s *Server) RegisterRoutes(router *gin.Engine) {
 
 	admin := v1.Group("", authMW, middleware.RequireAdmin(s.auth))
 	s.registerUserAdminRoutes(admin)
+	s.registerUserGroupAdminRoutes(admin)
 	s.registerLibraryAdminRoutes(admin)
 	s.registerExamAdminRoutes(admin)
 	s.registerJudgeRoutes(admin)

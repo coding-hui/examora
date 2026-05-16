@@ -1,0 +1,104 @@
+.user-group-name-cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.user-group-name-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+
+.user-group-name-link {
+  height: auto;
+  padding: 0;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.user-group-actions-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 64px;
+  text-align: left;
+}
+
+.user-group-actions-cell a {
+  color: var(--examora-text);
+  transition: color 150ms ease;
+}
+
+.user-group-actions-cell a:hover {
+  color: #1677ff;
+}
+
+.user-group-expand-button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--examora-text-secondary, #6b7280);
+  border: 0;
+  box-shadow: none;
+}
+
+.user-group-expand-placeholder {
+  display: inline-block;
+  width: 24px;
+}
+
+.user-group-detail-tabs {
+  padding: 0 16px 16px;
+  background: var(--examora-bg-container, #fff);
+  border-radius: 8px;
+}
+
+.user-group-detail-tabs .ant-tabs-content-holder {
+  padding-top: 0;
+}
+
+.user-group-detail-table .ant-pro-table-list-toolbar {
+  padding-block: 4px 8px;
+}
+
+.user-group-toolbar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(420px, 100%);
+  max-width: 100%;
+}
+
+.user-group-toolbar-search .ant-input-affix-wrapper {
+  flex: 1;
+  min-width: 220px;
+}
+
+.user-group-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.user-group-basic {
+  position: relative;
+  padding-top: 4px;
+}
+
+.user-group-basic-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.user-group-basic-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding-top: 4px;
+  font-size: 13px;
+}

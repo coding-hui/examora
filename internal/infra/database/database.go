@@ -21,6 +21,8 @@ func Open(dsn string) (*gorm.DB, error) {
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&UserModel{},
+		&UserGroupModel{},
+		&UserGroupMemberModel{},
 		&QuestionModel{},
 		&TestCaseModel{},
 		&PaperModel{},
@@ -35,6 +37,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&PaperSectionSnapshotModel{},
 		&QuestionSnapshotModel{},
 		&ExamSessionModel{},
+		&ExamAssignmentModel{},
 		&ExamResultModel{},
 		&QuestionResultModel{},
 		&AnswerDraftModel{},

@@ -3,6 +3,7 @@ import {
   DownOutlined,
   EditOutlined,
   PlusOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import {
   type ActionType,
@@ -10,6 +11,10 @@ import {
   type ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
+import type {
+  AdminUserGroup,
+  AdminUserGroupTreeResponse,
+} from '@examora/types';
 import { API_PATHS } from '@examora/types';
 import { request, useIntl } from '@umijs/max';
 import {
@@ -39,6 +44,7 @@ interface User {
   role: string;
   status: string;
   created_at: string;
+  source?: string;
 }
 
 interface UserFormValues {
@@ -60,6 +66,21 @@ const normalizeRole = (role?: string) => {
 
 const normalizeStatus = (status?: string) => status?.toUpperCase() || '';
 
+const flattenGroups = (groups: AdminUserGroup[]): AdminUserGroup[] =>
+  groups.flatMap((group) => [group, ...flattenGroups(group.children || [])]);
+
+const groupPath = (groupID: number, groups: AdminUserGroup[]) => {
+  const flat = flattenGroups(groups);
+  const byID = new Map(flat.map((group) => [group.id, group]));
+  const parts: string[] = [];
+  let current = byID.get(groupID);
+  while (current) {
+    parts.unshift(current.name);
+    current = current.parent_id ? byID.get(current.parent_id) : undefined;
+  }
+  return parts.join(' / ');
+};
+
 const UserListContent: React.FC = () => {
   const intl = useIntl();
   const { message: antdMessage } = AntdApp.useApp();
@@ -70,6 +91,10 @@ const UserListContent: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
+  const [selectedUserIDs, setSelectedUserIDs] = useState<number[]>([]);
+  const [groups, setGroups] = useState<AdminUserGroup[]>([]);
+  const [groupID, setGroupID] = useState<number | undefined>();
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
 
   // i18n label maps
   const roleLabelMap: Record<string, string> = useMemo(
@@ -133,6 +158,32 @@ const UserListContent: React.FC = () => {
       ),
     [statusLabelMap],
   );
+
+  const groupOptions = useMemo(
+    () =>
+      flattenGroups(groups).map((group) => ({
+        value: group.id,
+        label: groupPath(group.id, groups),
+      })),
+    [groups],
+  );
+
+  const loadGroups = async () => {
+    try {
+      const response = await request<{
+        code: number;
+        data: AdminUserGroupTreeResponse;
+      }>(API_PATHS.admin.userGroupTree);
+      setGroups(response.data?.items || []);
+    } catch (_error) {
+      antdMessage.error(
+        intl.formatMessage({
+          id: 'pages.users.groupsLoadError',
+          defaultMessage: '加载用户组失败',
+        }),
+      );
+    }
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -243,6 +294,41 @@ const UserListContent: React.FC = () => {
     });
   };
 
+  const openJoinGroup = () => {
+    setGroupID(undefined);
+    setGroupModalOpen(true);
+    loadGroups();
+  };
+
+  const joinGroup = async () => {
+    if (!groupID || selectedUserIDs.length === 0) return;
+    setSaving(true);
+    try {
+      await request(API_PATHS.admin.userGroupMembers(groupID), {
+        method: 'POST',
+        data: { ids: selectedUserIDs },
+      });
+      antdMessage.success(
+        intl.formatMessage({
+          id: 'pages.users.joinGroupSuccess',
+          defaultMessage: '用户已加入用户组',
+        }),
+      );
+      setGroupModalOpen(false);
+      setSelectedUserIDs([]);
+      actionRef.current?.reload();
+    } catch (_error) {
+      antdMessage.error(
+        intl.formatMessage({
+          id: 'pages.users.joinGroupError',
+          defaultMessage: '加入用户组失败',
+        }),
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const columns: ProColumns<User>[] = [
     {
       title: intl.formatMessage({
@@ -310,7 +396,7 @@ const UserListContent: React.FC = () => {
       dataIndex: 'role',
       key: 'role',
       width: 90,
-      search: false,
+      search: true,
       valueEnum: roleValueEnum,
       render: (_, user) => {
         const roleKey = normalizeRole(user.role);
@@ -329,7 +415,7 @@ const UserListContent: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       width: 90,
-      search: false,
+      search: true,
       valueEnum: statusValueEnum,
       render: (_, user) => {
         const statusKey = normalizeStatus(user.status);
@@ -341,6 +427,27 @@ const UserListContent: React.FC = () => {
           </Tag>
         );
       },
+    },
+    {
+      title: intl.formatMessage({
+        id: 'pages.users.columns.source',
+        defaultMessage: '来源',
+      }),
+      dataIndex: 'source',
+      key: 'source',
+      width: 90,
+      valueEnum: {
+        LOCAL: {
+          text: intl.formatMessage({
+            id: 'pages.users.source.LOCAL',
+            defaultMessage: '本地',
+          }),
+        },
+        LOGTO: { text: 'Logto' },
+        OIDC: { text: 'OIDC' },
+        SCIM: { text: 'SCIM' },
+      },
+      render: (_, user) => <Tag>{user.source || 'LOCAL'}</Tag>,
     },
     {
       title: intl.formatMessage({
@@ -490,7 +597,35 @@ const UserListContent: React.FC = () => {
               ? params.keyword.trim()
               : params.keyword,
         })}
-        request={async ({ current, pageSize, keyword }) => {
+        rowSelection={{
+          selectedRowKeys: selectedUserIDs,
+          preserveSelectedRowKeys: true,
+          onChange: (keys) => setSelectedUserIDs(keys.map(Number)),
+        }}
+        tableAlertOptionRender={() => (
+          <Space size={12}>
+            <Button type="link" icon={<TeamOutlined />} onClick={openJoinGroup}>
+              {intl.formatMessage({
+                id: 'pages.users.joinGroup',
+                defaultMessage: '加入用户组',
+              })}
+            </Button>
+            <Button type="link" onClick={() => setSelectedUserIDs([])}>
+              {intl.formatMessage({
+                id: 'pages.users.clearSelection',
+                defaultMessage: '清空',
+              })}
+            </Button>
+          </Space>
+        )}
+        request={async ({
+          current,
+          pageSize,
+          keyword,
+          role,
+          status,
+          source,
+        }) => {
           try {
             const trimmedKeyword =
               typeof keyword === 'string' ? keyword.trim() : undefined;
@@ -502,6 +637,9 @@ const UserListContent: React.FC = () => {
                 page: current,
                 page_size: pageSize,
                 ...(trimmedKeyword ? { keyword: trimmedKeyword } : {}),
+                ...(role ? { role } : {}),
+                ...(status ? { status } : {}),
+                ...(source ? { source } : {}),
               },
             });
 
@@ -560,6 +698,7 @@ const UserListContent: React.FC = () => {
           id: 'pages.users.modal.createTitle',
           defaultMessage: '添加用户',
         })}
+        width={600}
         open={modalOpen}
         onCancel={() => {
           setSaving(false);
@@ -568,12 +707,6 @@ const UserListContent: React.FC = () => {
         footer={null}
         centered
       >
-        <p style={{ margin: '0 0 16px', color: '#888' }}>
-          {intl.formatMessage({
-            id: 'pages.users.modal.description',
-            defaultMessage: '提供以下至少一项字段才能继续',
-          })}
-        </p>
         <Form
           form={userForm}
           layout="vertical"
@@ -605,50 +738,56 @@ const UserListContent: React.FC = () => {
             }
           }}
         >
-          <Form.Item
-            label={intl.formatMessage({
-              id: 'pages.users.form.username.label',
-              defaultMessage: '用户名',
-            })}
-            name="username"
-            rules={[
-              {
-                required: true,
-                message: intl.formatMessage({
-                  id: 'pages.users.form.username.required',
-                  defaultMessage: '请输入用户名',
-                }),
-              },
-              {
-                min: 3,
-                message: intl.formatMessage({
-                  id: 'pages.users.form.username.minLength',
-                  defaultMessage: '用户名至少 3 个字符',
-                }),
-              },
-            ]}
-          >
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'pages.users.form.username.placeholder',
-                defaultMessage: '输入用户名',
-              })}
-            />
-          </Form.Item>
-          <Form.Item
-            label={intl.formatMessage({
-              id: 'pages.users.form.displayName.label',
-              defaultMessage: '显示名称',
-            })}
-            name="display_name"
-          >
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'pages.users.form.displayName.placeholder',
-                defaultMessage: '输入显示名称（可选）',
-              })}
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'pages.users.form.username.label',
+                  defaultMessage: '用户名',
+                })}
+                name="username"
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: 'pages.users.form.username.required',
+                      defaultMessage: '请输入用户名',
+                    }),
+                  },
+                  {
+                    min: 3,
+                    message: intl.formatMessage({
+                      id: 'pages.users.form.username.minLength',
+                      defaultMessage: '用户名至少 3 个字符',
+                    }),
+                  },
+                ]}
+              >
+                <Input
+                  placeholder={intl.formatMessage({
+                    id: 'pages.users.form.username.placeholder',
+                    defaultMessage: '输入用户名',
+                  })}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'pages.users.form.displayName.label',
+                  defaultMessage: '显示名称',
+                })}
+                name="display_name"
+              >
+                <Input
+                  placeholder={intl.formatMessage({
+                    id: 'pages.users.form.displayName.placeholder',
+                    defaultMessage: '输入显示名称（可选）',
+                  })}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item
             label={intl.formatMessage({
               id: 'pages.users.form.email.label',
@@ -672,8 +811,8 @@ const UserListContent: React.FC = () => {
               })}
             />
           </Form.Item>
-          <Row gutter={12}>
-            <Col span={10}>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 label={intl.formatMessage({
                   id: 'pages.users.form.role.label',
@@ -699,7 +838,7 @@ const UserListContent: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={14}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 label={intl.formatMessage({
                   id: 'pages.users.form.status.label',
@@ -757,7 +896,7 @@ const UserListContent: React.FC = () => {
                 defaultMessage: '创建用户',
               })
         }
-        size={480}
+        size={520}
         open={drawerOpen}
         onClose={() => {
           setSaving(false);
@@ -775,51 +914,57 @@ const UserListContent: React.FC = () => {
         }
       >
         <Form form={userForm} layout="vertical">
-          <Form.Item
-            label={intl.formatMessage({
-              id: 'pages.users.form.username.label',
-              defaultMessage: '用户名',
-            })}
-            name="username"
-            rules={[
-              {
-                required: true,
-                message: intl.formatMessage({
-                  id: 'pages.users.form.username.required',
-                  defaultMessage: '请输入用户名',
-                }),
-              },
-              {
-                min: 3,
-                message: intl.formatMessage({
-                  id: 'pages.users.form.username.minLength',
-                  defaultMessage: '用户名至少 3 个字符',
-                }),
-              },
-            ]}
-          >
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'pages.users.form.username.placeholder',
-                defaultMessage: '输入用户名',
-              })}
-              disabled={!!editing}
-            />
-          </Form.Item>
-          <Form.Item
-            label={intl.formatMessage({
-              id: 'pages.users.form.displayName.label',
-              defaultMessage: '显示名称',
-            })}
-            name="display_name"
-          >
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'pages.users.form.displayName.placeholder',
-                defaultMessage: '输入显示名称（可选）',
-              })}
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'pages.users.form.username.label',
+                  defaultMessage: '用户名',
+                })}
+                name="username"
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: 'pages.users.form.username.required',
+                      defaultMessage: '请输入用户名',
+                    }),
+                  },
+                  {
+                    min: 3,
+                    message: intl.formatMessage({
+                      id: 'pages.users.form.username.minLength',
+                      defaultMessage: '用户名至少 3 个字符',
+                    }),
+                  },
+                ]}
+              >
+                <Input
+                  placeholder={intl.formatMessage({
+                    id: 'pages.users.form.username.placeholder',
+                    defaultMessage: '输入用户名',
+                  })}
+                  disabled={!!editing}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'pages.users.form.displayName.label',
+                  defaultMessage: '显示名称',
+                })}
+                name="display_name"
+              >
+                <Input
+                  placeholder={intl.formatMessage({
+                    id: 'pages.users.form.displayName.placeholder',
+                    defaultMessage: '输入显示名称（可选）',
+                  })}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item
             label={intl.formatMessage({
               id: 'pages.users.form.email.label',
@@ -844,7 +989,7 @@ const UserListContent: React.FC = () => {
             />
           </Form.Item>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 label={intl.formatMessage({
                   id: 'pages.users.form.role.label',
@@ -870,7 +1015,7 @@ const UserListContent: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 label={intl.formatMessage({
                   id: 'pages.users.form.status.label',
@@ -899,6 +1044,34 @@ const UserListContent: React.FC = () => {
           </Row>
         </Form>
       </Drawer>
+
+      <Modal
+        width={520}
+        centered
+        open={groupModalOpen}
+        title={intl.formatMessage({
+          id: 'pages.users.joinGroup',
+          defaultMessage: '加入用户组',
+        })}
+        onOk={joinGroup}
+        okButtonProps={{ disabled: !groupID || selectedUserIDs.length === 0 }}
+        confirmLoading={saving}
+        onCancel={() => setGroupModalOpen(false)}
+      >
+        <Select
+          showSearch
+          allowClear
+          style={{ width: '100%' }}
+          options={groupOptions}
+          value={groupID}
+          onChange={setGroupID}
+          optionFilterProp="label"
+          placeholder={intl.formatMessage({
+            id: 'pages.users.joinGroupPlaceholder',
+            defaultMessage: '选择要加入的用户组',
+          })}
+        />
+      </Modal>
     </PageContainer>
   );
 };

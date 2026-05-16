@@ -29,24 +29,18 @@ export default [
       },
     ],
   },
-  // Overview section
+  // Dashboard
   {
     path: '/overview',
-    name: 'overview',
+    hideInMenu: true,
+    redirect: '/overview/dashboard',
+  },
+  {
+    path: '/overview/dashboard',
+    name: 'dashboard',
+    icon: 'DashboardOutlined',
+    component: './Welcome',
     access: 'canAdmin',
-    routes: [
-      {
-        path: '/overview',
-        redirect: '/overview/dashboard',
-      },
-      {
-        path: '/overview/dashboard',
-        name: 'dashboard',
-        icon: 'DashboardOutlined',
-        component: './Welcome',
-        access: 'canAdmin',
-      },
-    ],
   },
   // Content section
   {
@@ -124,10 +118,31 @@ export default [
         access: 'canAdmin',
       },
       {
-        path: '/examination/candidates',
-        name: 'candidates',
-        icon: 'TeamOutlined',
-        component: './Examination/Candidates',
+        path: '/examination/exams/:id',
+        name: 'examDetail',
+        hideInMenu: true,
+        component: './Examination/ExamDetail',
+        access: 'canAdmin',
+      },
+      {
+        path: '/examination/submissions',
+        name: 'submissions',
+        icon: 'TrophyOutlined',
+        component: './Assessment/Results/Submissions',
+        access: 'canAdmin',
+      },
+      {
+        path: '/examination/judge-tasks',
+        name: 'judgeTasks',
+        icon: 'ThunderboltOutlined',
+        component: './Assessment/Results/JudgeTasks',
+        access: 'canAdmin',
+      },
+      {
+        path: '/examination/events',
+        name: 'events',
+        icon: 'SafetyOutlined',
+        component: './Monitoring/Proctoring/Events',
         access: 'canAdmin',
       },
     ],
@@ -137,7 +152,13 @@ export default [
     path: '/examination/exams/create',
     name: 'examCreate',
     hideInMenu: true,
-    component: './ComingSoon',
+    redirect: '/examination/exams',
+  },
+  {
+    path: '/examination/exams/:id/edit',
+    name: 'examEdit',
+    hideInMenu: true,
+    component: './Examination/ExamForm',
     access: 'canAdmin',
   },
   {
@@ -147,58 +168,42 @@ export default [
     component: './Examination/ExamPublish',
     access: 'canAdmin',
   },
-  // Monitoring section
+  // Legacy monitoring redirects
   {
     path: '/monitoring',
-    name: 'monitoring',
-    access: 'canAdmin',
-    routes: [
-      {
-        path: '/monitoring',
-        redirect: '/monitoring/proctoring/events',
-      },
-      {
-        path: '/monitoring/proctoring',
-        redirect: '/monitoring/proctoring/events',
-      },
-      {
-        path: '/monitoring/proctoring/events',
-        name: 'events',
-        icon: 'SafetyOutlined',
-        component: './Monitoring/Proctoring/Events',
-        access: 'canAdmin',
-      },
-    ],
+    hideInMenu: true,
+    redirect: '/examination/events',
   },
-  // Assessment section
+  {
+    path: '/monitoring/proctoring',
+    hideInMenu: true,
+    redirect: '/examination/events',
+  },
+  {
+    path: '/monitoring/proctoring/events',
+    hideInMenu: true,
+    redirect: '/examination/events',
+  },
+  // Legacy assessment redirects
   {
     path: '/assessment',
-    name: 'assessment',
-    access: 'canAdmin',
-    routes: [
-      {
-        path: '/assessment',
-        redirect: '/assessment/results/submissions',
-      },
-      {
-        path: '/assessment/results',
-        redirect: '/assessment/results/submissions',
-      },
-      {
-        path: '/assessment/results/submissions',
-        name: 'submissions',
-        icon: 'TrophyOutlined',
-        component: './Assessment/Results/Submissions',
-        access: 'canAdmin',
-      },
-      {
-        path: '/assessment/results/judge-tasks',
-        name: 'judgeTasks',
-        icon: 'ThunderboltOutlined',
-        component: './Assessment/Results/JudgeTasks',
-        access: 'canAdmin',
-      },
-    ],
+    hideInMenu: true,
+    redirect: '/examination/submissions',
+  },
+  {
+    path: '/assessment/results',
+    hideInMenu: true,
+    redirect: '/examination/submissions',
+  },
+  {
+    path: '/assessment/results/submissions',
+    hideInMenu: true,
+    redirect: '/examination/submissions',
+  },
+  {
+    path: '/assessment/results/judge-tasks',
+    hideInMenu: true,
+    redirect: '/examination/judge-tasks',
   },
   // System section
   {
@@ -217,13 +222,31 @@ export default [
       {
         path: '/system/settings/users',
         name: 'users',
-        icon: 'SettingOutlined',
+        icon: 'UserOutlined',
         component: './System/Settings/Users',
+        access: 'canAdmin',
+      },
+      {
+        path: '/system/settings/user-groups',
+        name: 'userGroups',
+        icon: 'TeamOutlined',
+        component: './System/Settings/UserGroups',
+        access: 'canAdmin',
+      },
+      {
+        path: '/system/settings/user-groups/:id',
+        name: 'userGroupDetail',
+        hideInMenu: true,
+        component: './System/Settings/UserGroups/Detail',
         access: 'canAdmin',
       },
     ],
   },
   // Legacy redirects
+  {
+    path: '/examination/candidates',
+    redirect: '/system/settings/user-groups',
+  },
   {
     path: '/admin/exams',
     redirect: '/examination/exams',

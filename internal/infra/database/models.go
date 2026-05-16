@@ -21,6 +21,38 @@ type UserModel struct {
 
 func (UserModel) TableName() string { return "users" }
 
+type UserGroupModel struct {
+	ID               uint64  `gorm:"primaryKey;autoIncrement"`
+	ParentID         *uint64 `gorm:"index"`
+	Name             string  `gorm:"size:128;not null"`
+	Description      string
+	Status           string  `gorm:"size:32;not null;default:ACTIVE"`
+	Source           string  `gorm:"size:32;not null;default:LOCAL"`
+	ExternalProvider *string `gorm:"size:64;uniqueIndex:idx_user_groups_external"`
+	ExternalID       *string `gorm:"size:128;uniqueIndex:idx_user_groups_external"`
+	ExternalParentID *string `gorm:"size:128"`
+	SyncMode         string  `gorm:"size:32;not null;default:LOCAL"`
+	LastSyncedAt     *time.Time
+	CreatedBy        uint64 `gorm:"default:0"`
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+func (UserGroupModel) TableName() string { return "user_groups" }
+
+type UserGroupMemberModel struct {
+	ID               uint64 `gorm:"primaryKey;autoIncrement"`
+	UserGroupID      uint64 `gorm:"index;uniqueIndex:idx_user_group_members_group_user;not null"`
+	UserID           uint64 `gorm:"index;uniqueIndex:idx_user_group_members_group_user;not null"`
+	Source           string `gorm:"size:32;not null;default:LOCAL"`
+	ExternalProvider *string
+	ExternalGroupID  *string
+	ExternalUserID   *string
+	CreatedAt        time.Time
+}
+
+func (UserGroupMemberModel) TableName() string { return "user_group_members" }
+
 type QuestionModel struct {
 	ID            uint64 `gorm:"primaryKey;autoIncrement"`
 	Type          string
@@ -223,6 +255,18 @@ type ExamSessionModel struct {
 }
 
 func (ExamSessionModel) TableName() string { return "exam_sessions" }
+
+type ExamAssignmentModel struct {
+	ID             uint64    `gorm:"primaryKey;autoIncrement"`
+	ExamID         uint64    `gorm:"index;uniqueIndex:idx_exam_assignments_exam_target;not null"`
+	ExamSnapshotID uint64    `gorm:"index;not null"`
+	TargetType     string    `gorm:"size:32;uniqueIndex:idx_exam_assignments_exam_target;not null"`
+	TargetID       uint64    `gorm:"uniqueIndex:idx_exam_assignments_exam_target;not null"`
+	CreatedBy      uint64    `gorm:"default:0"`
+	CreatedAt      time.Time `gorm:"not null"`
+}
+
+func (ExamAssignmentModel) TableName() string { return "exam_assignments" }
 
 type ExamResultModel struct {
 	ID             uint64 `gorm:"primaryKey;autoIncrement"`

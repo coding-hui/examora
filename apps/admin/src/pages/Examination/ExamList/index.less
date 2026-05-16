@@ -5,3 +5,16 @@
   min-width: 64px;
   text-align: left;
 }
+
+.exam-create-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .exam-create-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

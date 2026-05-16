@@ -3,6 +3,7 @@ package exam
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 	"time"
 
@@ -336,13 +337,28 @@ func (s *Service) StartExamSession(ctx context.Context, examID, userID uint64, i
 		if existing.Status == SessionStatusSubmitted {
 			return nil, ErrInvalidExamStatusTransition
 		}
+		if now.Before(snapshot.StartTime) {
+			return nil, ErrExamNotStarted
+		}
 		existing.Status = SessionStatusInProgress
+		if existing.StartedAt == nil {
+			existing.StartedAt = timePtr(now)
+		}
+		existing.IPAddress = &ipAddress
+		existing.DeviceID = &deviceID
 		remaining := calculateRemaining(existing, snapshot)
 		existing.RemainingSeconds = &remaining
 		if err := s.store.UpdateExamSession(ctx, existing); err != nil {
 			return nil, err
 		}
 		return existing, nil
+	}
+
+	if errors.Is(err, ErrSessionNotFound) {
+		return nil, ErrNotEligible
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	// For new sessions, must be within start window

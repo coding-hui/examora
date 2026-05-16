@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
@@ -37,6 +38,7 @@ type userResponse struct {
 	Email       *string `json:"email,omitempty"`
 	Role        string  `json:"role"`
 	Status      string  `json:"status"`
+	Source      string  `json:"source"`
 	CreatedAt   string  `json:"created_at"`
 }
 
@@ -51,14 +53,49 @@ func (s *Server) registerUserAdminRoutes(admin *gin.RouterGroup) {
 
 func (s *Server) listUsers(c *gin.Context) {
 	pageNum, pageSize := pageQuery(c)
-	items, total, err := s.auth.ListUsers(c.Request.Context(), pageNum, pageSize)
+	filter := auth.UserListFilter{
+		Keyword: strings.TrimSpace(c.Query("keyword")),
+		Status:  strings.TrimSpace(c.Query("status")),
+		Source:  strings.TrimSpace(c.Query("source")),
+	}
+	roleFilter := strings.TrimSpace(c.Query("role"))
+	excludeGroupID, hasExcludeGroup := optionalUintQuery(c, "exclude_user_group_id")
+	queryPage, querySize := pageNum, pageSize
+	if roleFilter != "" || hasExcludeGroup {
+		queryPage = 1
+		querySize = 10000
+	}
+	items, total, err := s.auth.ListUsers(c.Request.Context(), queryPage, querySize, filter)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
+	excluded := map[uint64]struct{}{}
+	if hasExcludeGroup {
+		ids, err := s.exam.ListUserGroupStudentIDs(c.Request.Context(), excludeGroupID, true)
+		if err != nil {
+			writeError(c, err)
+			return
+		}
+		for _, id := range ids {
+			excluded[id] = struct{}{}
+		}
+	}
 	users := make([]userResponse, 0, len(items))
 	for _, u := range items {
-		users = append(users, toUserResponse(s.auth.Casbin(), u))
+		if _, ok := excluded[u.ID]; ok {
+			continue
+		}
+		item := toUserResponse(s.auth.Casbin(), u)
+		if roleFilter != "" && !strings.EqualFold(item.Role, roleFilter) {
+			continue
+		}
+		users = append(users, item)
+	}
+	if roleFilter != "" || hasExcludeGroup {
+		total = int64(len(users))
+		start, end := pageSlice(pageNum, pageSize, len(users))
+		users = users[start:end]
 	}
 	response.PageSuccess(c, users, total, pageNum, pageSize)
 }
@@ -192,6 +229,14 @@ func toUserResponse(casbinEnforcer *casbin.Enforcer, u auth.User) userResponse {
 		Email:       u.Email,
 		Role:        role,
 		Status:      u.Status,
+		Source:      userSource(u.AuthProvider),
 		CreatedAt:   u.CreatedAt,
 	}
+}
+
+func userSource(provider *string) string {
+	if provider == nil || strings.TrimSpace(*provider) == "" {
+		return "LOCAL"
+	}
+	return *provider
 }
