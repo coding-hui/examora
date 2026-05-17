@@ -376,6 +376,12 @@ func TestPublishPaperRequiresQuestionsAndPositiveScore(t *testing.T) {
 	service, store := newLibraryService(t)
 	ctx := context.Background()
 
+	_, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Direct published paper",
+		Status: library.PaperStatusPublished,
+	})
+	require.ErrorIs(t, err, library.ErrInvalidPaper)
+
 	empty, err := service.CreatePaper(ctx, library.SavePaperCommand{
 		Title:  "Empty paper",
 		Status: library.PaperStatusDraft,
@@ -415,6 +421,43 @@ func TestPublishPaperRequiresQuestionsAndPositiveScore(t *testing.T) {
 		Status: library.PaperStatusPublished,
 	})
 	require.ErrorIs(t, err, library.ErrInvalidPaper)
+}
+
+func TestPublishPaperAfterSavingReadyOutline(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Ready paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = service.SavePaperOutline(ctx, paper.ID, library.SavePaperOutlineCommand{
+		Sections: []library.SavePaperSectionCommand{
+			{
+				Title: "第一大题",
+				Questions: []library.SavePaperSectionQuestionCommand{
+					{QuestionID: question.ID, Score: 10, SortOrder: 1},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	published, err := service.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.NoError(t, err)
+	require.Equal(t, library.PaperStatusPublished, published.Status)
 }
 
 func TestPublishPaperRequiresPublishedQuestions(t *testing.T) {

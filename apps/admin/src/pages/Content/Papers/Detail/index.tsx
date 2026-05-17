@@ -595,6 +595,7 @@ const PaperDetailContent: React.FC = () => {
   const save = async () => {
     try {
       const values = await form.validateFields();
+      const targetStatus = values.status as Paper['status'];
       if (values.status === 'PUBLISHED' && !previewSummary.canPublish) {
         modal.warning({
           title: intl.formatMessage({
@@ -617,16 +618,40 @@ const PaperDetailContent: React.FC = () => {
         return;
       }
       setSaving(true);
+      const saveMetadata = (targetPaperID: number | undefined, data: typeof values) =>
+        request<{ code: number; data: Paper }>(
+          targetPaperID
+            ? API_PATHS.admin.paper(targetPaperID)
+            : API_PATHS.admin.papers,
+          {
+            method: targetPaperID ? 'PUT' : 'POST',
+            skipErrorHandler: true,
+            data,
+          },
+        );
+      const shouldDeferPublish =
+        targetStatus === 'PUBLISHED' &&
+        (isCreate || paper?.status !== 'PUBLISHED');
       const paperResponse = await request<{ code: number; data: Paper }>(
         isCreate ? API_PATHS.admin.papers : API_PATHS.admin.paper(paperId),
         {
           method: isCreate ? 'POST' : 'PUT',
           skipErrorHandler: true,
-          data: values,
+          data: shouldDeferPublish
+            ? { ...values, status: 'DRAFT' }
+            : values,
         },
       );
       const outline = await saveOutline(paperResponse.data.id);
-      setPaper(outline.paper);
+      if (shouldDeferPublish) {
+        await saveMetadata(paperResponse.data.id, {
+          ...values,
+          status: 'PUBLISHED',
+        });
+        setPaper({ ...outline.paper, status: 'PUBLISHED' });
+      } else {
+        setPaper(outline.paper);
+      }
       message.success(
         intl.formatMessage({
           id: 'pages.papers.detail.saveSuccess',
