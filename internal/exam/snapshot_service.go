@@ -39,6 +39,9 @@ func (s *Service) PublishExamWithSnapshot(ctx context.Context, examID uint64, st
 	if err != nil {
 		return nil, err
 	}
+	if outline.Paper.Status != library.PaperStatusPublished {
+		return nil, ErrInvalidExamStatusTransition
+	}
 	if outline.QuestionCount == 0 {
 		return nil, ErrInvalidExamStatusTransition
 	}

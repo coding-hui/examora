@@ -372,6 +372,84 @@ func TestSavePaperValidatesTitleAndStatus(t *testing.T) {
 	require.ErrorIs(t, err, library.ErrInvalidPaper)
 }
 
+func TestPublishPaperRequiresQuestionsAndPositiveScore(t *testing.T) {
+	service, store := newLibraryService(t)
+	ctx := context.Background()
+
+	empty, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Empty paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = service.UpdatePaper(ctx, empty.ID, library.SavePaperCommand{
+		Title:  empty.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.ErrorIs(t, err, library.ErrInvalidPaper)
+
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	zeroScore, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Zero score paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	sectionID, err := store.EnsureDefaultPaperSection(ctx, zeroScore.ID)
+	require.NoError(t, err)
+	require.NoError(t, store.AddPaperQuestion(ctx, &library.PaperQuestion{
+		PaperID:    zeroScore.ID,
+		SectionID:  sectionID,
+		QuestionID: question.ID,
+		Score:      0,
+		SortOrder:  1,
+	}))
+
+	_, err = service.UpdatePaper(ctx, zeroScore.ID, library.SavePaperCommand{
+		Title:  zeroScore.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.ErrorIs(t, err, library.ErrInvalidPaper)
+}
+
+func TestPublishPaperRequiresPublishedQuestions(t *testing.T) {
+	service, store := newLibraryService(t)
+	ctx := context.Background()
+
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Draft question paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: question.ID,
+		Score:      10,
+		SortOrder:  1,
+	})
+	require.NoError(t, err)
+	question.Status = library.QuestionStatusDraft
+	require.NoError(t, store.UpdateQuestion(ctx, question))
+
+	_, err = service.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.ErrorIs(t, err, library.ErrInvalidPaper)
+}
+
 func TestListPaperQuestionsIncludesQuestionSummaryFields(t *testing.T) {
 	service, _ := newLibraryService(t)
 	ctx := context.Background()

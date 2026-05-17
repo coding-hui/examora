@@ -91,7 +91,7 @@ git commit -m "Normalize admin module roadmap"
 - Modify: `internal/exam/snapshot_service_test.go`
 - Modify: `packages/types/src/index.ts` only if error response metadata is added
 
-- [ ] Add tests for invalid paper publish.
+- [x] Add tests for invalid paper publish.
 
 Cases:
 
@@ -115,7 +115,7 @@ Expected initial result before implementation:
 At least one new publish-safety test fails because backend validation is missing.
 ```
 
-- [ ] Implement paper publish validation.
+- [x] Implement paper publish validation.
 
 Rules:
 
@@ -127,7 +127,7 @@ Every included question must be PUBLISHED.
 Every included paper question score must be > 0.
 ```
 
-- [ ] Add tests for invalid exam publish.
+- [x] Add tests for invalid exam publish.
 
 Cases:
 
@@ -145,7 +145,7 @@ go test ./internal/exam -run Publish -v
 go test ./internal/api -run Exam -v
 ```
 
-- [ ] Implement exam publish validation.
+- [x] Implement exam publish validation.
 
 Rules:
 
@@ -156,7 +156,7 @@ Paper outline must contain at least one question.
 Snapshot creation must fail before status update if validation fails.
 ```
 
-- [ ] Verify Batch 1.
+- [x] Verify Batch 1.
 
 Run:
 
