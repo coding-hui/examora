@@ -46,10 +46,10 @@ import {
   Row,
   Select,
   Space,
-  Tag,
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
+import { StatusTag } from '@/components';
 import { requestErrorMessage } from '@/utils/request';
 import { SectionTitle } from './components/SectionTitle';
 import { SortableItemWrapper } from './components/SortableItemWrapper';
@@ -271,12 +271,6 @@ interface QuestionEnvelope {
 }
 
 const HiddenFormValue: React.FC = () => null;
-
-const DIFFICULTY_TAGS: Record<string, string> = {
-  EASY: 'qdiff-easy',
-  MEDIUM: 'qdiff-medium',
-  HARD: 'qdiff-hard',
-};
 
 /* ============================================================
    Sub-components
@@ -1433,15 +1427,19 @@ const QuestionsDetailContent: React.FC = () => {
     question && !isNew ? (
       <Space wrap size={[8, 8]} className="qdetail-meta-row">
         <code className="qdetail-id-code">#{question.id}</code>
-        <Tag className="question-type-tag">{typeLabelMap[question.type]}</Tag>
+        <StatusTag>{typeLabelMap[question.type]}</StatusTag>
         {question.difficulty && (
-          <span
-            className={`question-diff-tag ${
-              DIFFICULTY_TAGS[question.difficulty] || ''
-            }`}
+          <StatusTag
+            tone={
+              question.difficulty === 'HARD'
+                ? 'danger'
+                : question.difficulty === 'MEDIUM'
+                  ? 'warning'
+                  : 'success'
+            }
           >
             {difficultyLabelMap[question.difficulty] || question.difficulty}
-          </span>
+          </StatusTag>
         )}
         <Badge
           status={question.status === 'PUBLISHED' ? 'success' : 'default'}

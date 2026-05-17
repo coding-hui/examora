@@ -42,13 +42,13 @@ import {
   Spin,
   Table,
   Tabs,
-  Tag,
   Tree,
   Typography,
 } from 'antd';
 import type { DataNode } from 'antd/es/tree';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
+import { StatusTag, statusToneFromAntdColor } from '@/components';
 import {
   formatScore,
   resultStatusTone,
@@ -431,7 +431,11 @@ const ExamDetailContent: React.FC = () => {
       }),
       dataIndex: 'status',
       render: (_, record) => (
-        <Tag color={sessionStatusTone(record.status)}>{record.status}</Tag>
+        <StatusTag
+          tone={statusToneFromAntdColor(sessionStatusTone(record.status))}
+        >
+          {record.status}
+        </StatusTag>
       ),
     },
     {
@@ -507,7 +511,11 @@ const ExamDetailContent: React.FC = () => {
       }),
       dataIndex: 'status',
       render: (_, record) => (
-        <Tag color={resultStatusTone(record.status)}>{record.status}</Tag>
+        <StatusTag
+          tone={statusToneFromAntdColor(resultStatusTone(record.status))}
+        >
+          {record.status}
+        </StatusTag>
       ),
     },
     {
@@ -623,7 +631,13 @@ const ExamDetailContent: React.FC = () => {
                       defaultMessage: '状态',
                     })}
                   >
-                    <Tag color={examStatusTone(exam.status)}>{exam.status}</Tag>
+                    <StatusTag
+                      tone={statusToneFromAntdColor(
+                        examStatusTone(exam.status),
+                      )}
+                    >
+                      {exam.status}
+                    </StatusTag>
                   </Descriptions.Item>
                   <Descriptions.Item
                     label={intl.formatMessage({
@@ -863,9 +877,13 @@ const ExamDetailContent: React.FC = () => {
                     defaultMessage: '状态',
                   })}
                 >
-                  <Tag color={resultStatusTone(resultDetail.status)}>
+                  <StatusTag
+                    tone={statusToneFromAntdColor(
+                      resultStatusTone(resultDetail.status),
+                    )}
+                  >
                     {resultDetail.status}
-                  </Tag>
+                  </StatusTag>
                 </Descriptions.Item>
                 <Descriptions.Item
                   label={intl.formatMessage({
@@ -887,7 +905,7 @@ const ExamDetailContent: React.FC = () => {
                   {
                     title: 'Status',
                     dataIndex: 'status',
-                    render: (status) => <Tag>{status}</Tag>,
+                    render: (status) => <StatusTag>{status}</StatusTag>,
                   },
                   {
                     title: 'Score',

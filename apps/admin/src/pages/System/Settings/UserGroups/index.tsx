@@ -16,10 +16,10 @@ import {
   Input,
   Modal,
   Space,
-  Tag,
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useRef, useState } from 'react';
+import { StatusTag, type StatusTagTone } from '@/components';
 import { fetchEnvelope } from '@/utils/apiEnvelope';
 import { requestErrorMessage } from '@/utils/request';
 import './index.less';
@@ -29,11 +29,9 @@ interface GroupFormValues {
   description?: string;
 }
 
-const sourceColor = (source?: string) => {
-  if (!source || source === 'LOCAL') return 'default';
-  if (source === 'LOGTO') return 'blue';
-  if (source === 'SCIM') return 'purple';
-  return 'cyan';
+const sourceTone = (source?: string): StatusTagTone => {
+  if (!source || source === 'LOCAL') return 'neutral';
+  return 'info';
 };
 
 const UserGroupsContent: React.FC = () => {
@@ -43,6 +41,14 @@ const UserGroupsContent: React.FC = () => {
   const [form] = Form.useForm<GroupFormValues>();
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const sourceLabel = (source?: string) =>
+    source === 'LOCAL' || !source
+      ? intl.formatMessage({
+          id: 'pages.userGroups.sourceLocal',
+          defaultMessage: '本地',
+        })
+      : source;
 
   const openCreate = () => {
     form.resetFields();
@@ -198,7 +204,9 @@ const UserGroupsContent: React.FC = () => {
       width: 110,
       search: false,
       render: (_, group) => (
-        <Tag color={sourceColor(group.source)}>{group.source}</Tag>
+        <StatusTag tone={sourceTone(group.source)}>
+          {sourceLabel(group.source)}
+        </StatusTag>
       ),
     },
     {

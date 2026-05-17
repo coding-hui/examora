@@ -28,11 +28,11 @@ import {
   Row,
   Space,
   Statistic,
-  Tag,
   Timeline,
   Typography,
 } from 'antd';
 import React from 'react';
+import { StatusTag } from '@/components';
 import TrendLineChart from './TrendLineChart';
 import './welcome.less';
 
@@ -42,6 +42,11 @@ const Welcome: React.FC = () => {
   const intl = useIntl();
   const f = (id: string, values?: Record<string, string | number>) =>
     intl.formatMessage({ id }, values);
+  const metricTone = (tone: string) => {
+    if (tone === 'amber') return 'warning';
+    if (tone === 'green') return 'success';
+    return 'info';
+  };
   const weekDays = [
     f('pages.dashboard.week.mon'),
     f('pages.dashboard.week.tue'),
@@ -313,9 +318,9 @@ const Welcome: React.FC = () => {
               <Space size={8} wrap className="hero-kicker">
                 <span className="hero-status-dot" />
                 <span>{f('pages.dashboard.hero.kicker')}</span>
-                <Tag className="hero-product-tag" variant="filled">
+                <StatusTag className="hero-product-tag">
                   Examora Admin
-                </Tag>
+                </StatusTag>
               </Space>
             </div>
             <Text className="hero-subtitle">
@@ -359,7 +364,9 @@ const Welcome: React.FC = () => {
               >
                 <div className="metric-card-header">
                   <span className="metric-icon">{stat.icon}</span>
-                  <Tag variant="filled">{stat.trend}</Tag>
+                  <StatusTag tone={metricTone(stat.tone)}>
+                    {stat.trend}
+                  </StatusTag>
                 </div>
                 <Statistic
                   title={stat.label}
@@ -477,18 +484,18 @@ const Welcome: React.FC = () => {
                       </div>
                     </div>
                     <Space size={8} wrap>
-                      <Tag
-                        color={exam.key === 'physics' ? '#22c55e' : '#262626'}
+                      <StatusTag
+                        tone={exam.key === 'physics' ? 'success' : 'info'}
                       >
                         {exam.status}
-                      </Tag>
-                      <Tag
-                        color={
-                          exam.riskLevel === 'watch' ? '#f97316' : '#262626'
+                      </StatusTag>
+                      <StatusTag
+                        tone={
+                          exam.riskLevel === 'watch' ? 'warning' : 'success'
                         }
                       >
                         {exam.risk}
-                      </Tag>
+                      </StatusTag>
                     </Space>
                   </div>
                   <Progress
@@ -512,9 +519,9 @@ const Welcome: React.FC = () => {
                 </Space>
               }
               extra={
-                <Tag color="#f97316" variant="filled">
+                <StatusTag tone="warning">
                   {f('pages.dashboard.risk.watchCount')}
-                </Tag>
+                </StatusTag>
               }
             >
               <div className="risk-summary">

@@ -29,11 +29,11 @@ import {
   Row,
   Select,
   Space,
-  Tag,
   Tooltip,
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useMemo, useRef, useState } from 'react';
+import { StatusTag } from '@/components';
 import './index.less';
 
 interface User {
@@ -143,6 +143,14 @@ const UserListContent: React.FC = () => {
     () => STATUS_KEYS.map((v) => ({ label: statusLabelMap[v], value: v })),
     [statusLabelMap],
   );
+
+  const sourceLabel = (source?: string) =>
+    source === 'LOCAL' || !source
+      ? intl.formatMessage({
+          id: 'pages.users.source.LOCAL',
+          defaultMessage: '本地',
+        })
+      : source;
 
   // valueEnums for ProTable
   const roleValueEnum = useMemo(
@@ -400,11 +408,7 @@ const UserListContent: React.FC = () => {
       valueEnum: roleValueEnum,
       render: (_, user) => {
         const roleKey = normalizeRole(user.role);
-        return (
-          <Tag className="user-role-tag">
-            {roleLabelMap[roleKey] || user.role}
-          </Tag>
-        );
+        return <StatusTag>{roleLabelMap[roleKey] || user.role}</StatusTag>;
       },
     },
     {
@@ -420,11 +424,17 @@ const UserListContent: React.FC = () => {
       render: (_, user) => {
         const statusKey = normalizeStatus(user.status);
         return (
-          <Tag
-            className={`user-status-tag user-status-${statusKey.toLowerCase()}`}
+          <StatusTag
+            tone={
+              statusKey === 'ACTIVE'
+                ? 'success'
+                : statusKey === 'SUSPENDED'
+                  ? 'danger'
+                  : 'neutral'
+            }
           >
             {statusLabelMap[statusKey] || user.status}
-          </Tag>
+          </StatusTag>
         );
       },
     },
@@ -447,7 +457,13 @@ const UserListContent: React.FC = () => {
         OIDC: { text: 'OIDC' },
         SCIM: { text: 'SCIM' },
       },
-      render: (_, user) => <Tag>{user.source || 'LOCAL'}</Tag>,
+      render: (_, user) => (
+        <StatusTag
+          tone={user.source && user.source !== 'LOCAL' ? 'info' : 'neutral'}
+        >
+          {sourceLabel(user.source)}
+        </StatusTag>
+      ),
     },
     {
       title: intl.formatMessage({

@@ -70,7 +70,7 @@ export default {
   // Users page
   'pages.users.title': 'User List',
   'pages.users.description':
-    'Create and manage platform user accounts, supporting admin, teacher, and student roles, as well as active, inactive, and suspended statuses.',
+    'Maintain platform users, roles, and account state.',
   'pages.users.listTitle': 'User List',
   'pages.users.create': 'Add User',
   'pages.users.fetchError': 'Failed to fetch user list',
@@ -139,9 +139,9 @@ export default {
   // Questions page
   'pages.questions.title': 'Question Management',
   'pages.questions.description':
-    'Create and manage exam questions, answers, and programming test cases.',
+    'Maintain questions, answers, and programming test cases.',
   'pages.programming.description':
-    'Manage programming questions, starter code, and test cases for online judging.',
+    'Maintain programming questions, starter code, and test cases.',
   'pages.programming.listTitle': 'Programming Question List',
   'pages.programming.create': 'Create Programming Question',
   'pages.questions.listTitle': 'Question List',
@@ -306,7 +306,7 @@ export default {
   'pages.questions.statusUpdateError': 'Failed to update status',
   // Papers page
   'pages.papers.description':
-    'Create and maintain exam papers, configure question order and score.',
+    'Maintain paper structure, question order, and scores.',
   'pages.papers.listTitle': 'Paper List',
   'pages.papers.create': 'New Paper',
   'pages.papers.fetchError': 'Failed to fetch paper list',
@@ -386,7 +386,7 @@ export default {
   // Exam pages
   'pages.exams.title': 'Exam Management',
   'pages.exams.description':
-    'Create and manage exams, set time range and duration, and manage exam participants.',
+    'Manage exam schedules, assignees, and publication state.',
   'pages.exams.listTitle': 'Exam List',
   'pages.exams.create': 'Create Exam',
   'pages.exams.more': 'More',
@@ -671,7 +671,7 @@ export default {
     'Select users to add to the current group',
   // User groups
   'pages.userGroups.description':
-    'Maintain reusable user scopes. Exams can be assigned by user or user group.',
+    'Maintain reusable scopes for exam assignment.',
   'pages.userGroups.listTitle': 'User Group List',
   'pages.userGroups.total': 'Total {total} records',
   'pages.userGroups.keyword': 'Keyword',
@@ -726,7 +726,7 @@ export default {
   'pages.userGroups.detail.usersLoadError': 'Failed to load users',
   // Results
   'pages.results.description':
-    'Review candidate submissions, total scores, and per-question grading status by exam.',
+    'View submissions, scores, and question grading state.',
   'pages.results.examsLoadError': 'Failed to load exams',
   'pages.results.detailLoadError': 'Failed to load result detail',
   'pages.results.fetchError': 'Failed to load submission records',
@@ -739,7 +739,7 @@ export default {
   'pages.results.columns.submittedAt': 'Submitted At',
   // Judge tasks
   'pages.judgeTasks.description':
-    'Review async judge tasks, retries, runtime duration, and sandbox summaries.',
+    'View judge queue, retry counts, and sandbox summaries.',
   'pages.judgeTasks.fetchError': 'Failed to load judge tasks',
   'pages.judgeTasks.detailLoadError': 'Failed to load judge task detail',
   'pages.judgeTasks.detailTitle': 'Judge Task Detail',
@@ -757,4 +757,8 @@ export default {
   'pages.forbidden.relogin': 'Sign In Again',
   'navbar.settings': 'Settings',
   'navbar.logout': 'Logout',
+  'navbar.theme': 'Theme',
+  'navbar.theme.light': 'Light',
+  'navbar.theme.dark': 'Dark',
+  'navbar.theme.system': 'System',
 };

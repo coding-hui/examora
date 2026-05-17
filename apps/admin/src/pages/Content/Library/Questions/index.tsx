@@ -29,23 +29,17 @@ import {
   Modal,
   Space,
   Switch,
-  Tag,
   Tooltip,
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useMemo, useRef, useState } from 'react';
+import { StatusTag } from '@/components';
 import {
   type BatchActionResult,
   proTableSortParams,
   requestErrorMessage,
 } from '@/utils/request';
 import './index.less';
-
-const DIFFICULTY_CLASS: Record<string, string> = {
-  EASY: 'question-diff-tag-easy',
-  MEDIUM: 'question-diff-tag-medium',
-  HARD: 'question-diff-tag-hard',
-};
 
 const questionTypeIcon = (type: QuestionType) => {
   if (type === 'PROGRAMMING') return <CodeOutlined />;
@@ -504,9 +498,7 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
       valueType: 'select',
       valueEnum: typeValueEnum,
       render: (_: unknown, question: AdminQuestion) => (
-        <Tag className="question-type-tag">
-          {typeLabelMap[question.type] || question.type}
-        </Tag>
+        <StatusTag>{typeLabelMap[question.type] || question.type}</StatusTag>
       ),
     },
     {
@@ -521,13 +513,17 @@ export const QuestionsPageContent: React.FC<QuestionsPageContentProps> = ({
       valueEnum: difficultyValueEnum,
       render: (_: unknown, question: AdminQuestion) =>
         question.difficulty ? (
-          <Tag
-            className={`question-diff-tag ${
-              DIFFICULTY_CLASS[question.difficulty] || ''
-            }`}
+          <StatusTag
+            tone={
+              question.difficulty === 'HARD'
+                ? 'danger'
+                : question.difficulty === 'MEDIUM'
+                  ? 'warning'
+                  : 'success'
+            }
           >
             {difficultyLabelMap[question.difficulty] || question.difficulty}
-          </Tag>
+          </StatusTag>
         ) : (
           <span className="question-muted">{notSetLabel}</span>
         ),

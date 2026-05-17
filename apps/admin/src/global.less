@@ -152,6 +152,214 @@ body,
   box-shadow: none;
 }
 
+html.examora-dark {
+  .ant-btn {
+    box-shadow: none;
+  }
+
+  .ant-btn:focus-visible {
+    outline: 2px solid rgba(244, 244, 245, 0.28);
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  .ant-btn-default:not(.ant-btn-primary) {
+    color: #e4e4e7;
+    background: #18181b;
+    border-color: #3f3f46;
+    box-shadow: none;
+
+    &:hover,
+    &:focus {
+      color: #fafafa;
+      background: #27272a;
+      border-color: #52525b;
+    }
+
+    &:active {
+      color: #fafafa;
+      background: #303030;
+      border-color: #525252;
+    }
+  }
+
+  .ant-btn-primary {
+    color: #18181b;
+    background: #f4f4f5;
+    border-color: #f4f4f5;
+    box-shadow: none;
+
+    &:hover,
+    &:focus {
+      color: #18181b;
+      background: #e4e4e7;
+      border-color: #e4e4e7;
+    }
+
+    &:active {
+      color: #18181b;
+      background: #d4d4d8;
+      border-color: #d4d4d8;
+    }
+  }
+
+  .ant-pro-query-filter-collapse-button {
+    color: #a1a1aa;
+    transition: color 150ms ease;
+
+    &:hover,
+    &:focus {
+      color: #d4d4d8;
+    }
+
+    .anticon {
+      color: currentColor;
+    }
+  }
+
+  .ant-btn-link:not(.ant-btn-dangerous),
+  .ant-table a:not(.ant-btn),
+  .ant-pro-table a:not(.ant-btn) {
+    color: #d4d4d8;
+
+    &:hover,
+    &:focus {
+      color: #fafafa;
+    }
+  }
+
+  .ant-pro-page-container-detail,
+  .ant-typography-secondary {
+    color: #a1a1aa;
+  }
+}
+
+.examora-status-tag.ant-tag {
+  height: 22px;
+  margin: 0;
+  padding: 0 9px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  border-radius: 6px;
+}
+
+.examora-status-tag-neutral.ant-tag {
+  color: #3f3f46;
+  background: #f4f4f5;
+  border-color: #e4e4e7;
+}
+
+.examora-status-tag-info.ant-tag {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.examora-status-tag-success.ant-tag {
+  color: #15803d;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.examora-status-tag-warning.ant-tag {
+  color: #a16207;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.examora-status-tag-danger.ant-tag {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+html.examora-dark {
+  .examora-status-tag-neutral.ant-tag {
+    color: #d4d4d8;
+    background: rgba(63, 63, 70, 0.3);
+    border-color: #3f3f46;
+  }
+
+  .examora-status-tag-info.ant-tag {
+    color: #93c5fd;
+    background: rgba(30, 64, 175, 0.24);
+    border-color: rgba(59, 130, 246, 0.28);
+  }
+
+  .examora-status-tag-success.ant-tag {
+    color: #86efac;
+    background: rgba(20, 83, 45, 0.28);
+    border-color: rgba(34, 197, 94, 0.26);
+  }
+
+  .examora-status-tag-warning.ant-tag {
+    color: #fde68a;
+    background: rgba(113, 63, 18, 0.28);
+    border-color: rgba(234, 179, 8, 0.24);
+  }
+
+  .examora-status-tag-danger.ant-tag {
+    color: #fca5a5;
+    background: rgba(127, 29, 29, 0.3);
+    border-color: rgba(248, 113, 113, 0.26);
+  }
+}
+
+html.examora-dark .account-settings-main {
+  background: #18181b;
+  border-color: #27272a;
+}
+
+html.examora-dark .account-settings-menu,
+html.examora-dark .account-settings-content {
+  background: #18181b;
+}
+
+html.examora-dark .account-settings-menu {
+  border-right-color: #27272a;
+}
+
+html.examora-dark .account-settings-menu .ant-menu {
+  background: transparent;
+}
+
+html.examora-dark .account-settings-menu .ant-menu-item {
+  color: #a1a1aa;
+}
+
+html.examora-dark .account-settings-menu .ant-menu-item:hover {
+  color: #e4e4e7;
+  background: rgba(63, 63, 70, 0.28);
+}
+
+html.examora-dark .account-settings-menu .ant-menu-item-selected {
+  color: #e4e4e7 !important;
+  background: rgba(63, 63, 70, 0.42) !important;
+  box-shadow: inset 2px 0 0 #52525b;
+}
+
+html.examora-dark .account-settings-menu .ant-menu-item:focus-visible {
+  outline: 1px solid #52525b;
+  outline-offset: 1px;
+}
+
+html.examora-dark .account-settings-main .ant-list-split .ant-list-item {
+  border-block-end-color: #27272a;
+}
+
+html.examora-dark .account-settings-main .ant-list-item-meta-description {
+  color: #a1a1aa !important;
+}
+
+html.examora-dark .account-settings-main .ant-list-item-action a {
+  color: #a1a1aa;
+}
+
+html.examora-dark .account-settings-main .ant-list-item-action a:hover {
+  color: #e4e4e7;
+}
+
 .ant-pro-global-header-logo img {
   height: 32px;
 }

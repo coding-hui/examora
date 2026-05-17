@@ -11,10 +11,10 @@ import {
   Form,
   InputNumber,
   Space,
-  Tag,
 } from 'antd';
 import type dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
+import { StatusTag } from '@/components';
 import { requestErrorMessage } from '@/utils/request';
 
 interface Exam {
@@ -143,7 +143,7 @@ const ExamPublishContent: React.FC = () => {
                     id: 'pages.exams.columns.status',
                     defaultMessage: '状态',
                   }),
-                  children: <Tag color="default">{exam.status}</Tag>,
+                  children: <StatusTag>{exam.status}</StatusTag>,
                 },
                 {
                   key: 'paper',

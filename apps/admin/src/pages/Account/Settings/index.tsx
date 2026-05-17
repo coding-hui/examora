@@ -100,14 +100,14 @@ const Settings: React.FC = () => {
   return (
     <GridContent>
       <div
-        className={styles.main}
+        className={`${styles.main} account-settings-main`}
         ref={(ref) => {
           if (ref) {
             dom.current = ref;
           }
         }}
       >
-        <div className={styles.leftMenu}>
+        <div className={`${styles.leftMenu} account-settings-menu`}>
           <Menu
             mode={initConfig.mode}
             selectedKeys={[initConfig.selectKey]}
@@ -120,8 +120,10 @@ const Settings: React.FC = () => {
             items={getMenu()}
           />
         </div>
-        <div className={styles.right}>
-          <div className={styles.title}>{menuMap[initConfig.selectKey]}</div>
+        <div className={`${styles.right} account-settings-content`}>
+          <div className={`${styles.title} account-settings-title`}>
+            {menuMap[initConfig.selectKey]}
+          </div>
           <SettingsContent selectKey={initConfig.selectKey} />
         </div>
       </div>
