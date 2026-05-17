@@ -34,6 +34,18 @@ type Exam struct {
 	UpdatedAt       time.Time  `json:"updated_at"`
 }
 
+type ExamDetail struct {
+	Exam
+	ExamSnapshotID        *uint64
+	PublishedAt           *time.Time
+	SnapshotQuestionCount int
+	SnapshotTotalScore    float64
+	CandidateCount        int64
+	SubmittedCount        int64
+	ResultCount           int64
+	AuditEventCount       int64
+}
+
 func (e *Exam) Publish() error {
 	if e.Status != StatusDraft {
 		return ErrInvalidExamStatusTransition
@@ -69,6 +81,52 @@ func (s *Service) ListExamSessionsByUser(ctx context.Context, userID uint64) ([]
 
 func (s *Service) GetExam(ctx context.Context, id uint64) (*Exam, error) {
 	return s.store.GetExam(ctx, id)
+}
+
+func (s *Service) GetExamDetail(ctx context.Context, id uint64) (*ExamDetail, error) {
+	e, err := s.store.GetExam(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	detail := &ExamDetail{Exam: *e}
+	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, id)
+	if err != nil {
+		if errors.Is(err, ErrSnapshotNotFound) {
+			return detail, nil
+		}
+		return nil, err
+	}
+	detail.ExamSnapshotID = &snapshot.ID
+	detail.PublishedAt = &snapshot.PublishedAt
+	sections, err := s.store.ListPaperSectionSnapshots(ctx, snapshot.ID)
+	if err != nil {
+		return nil, err
+	}
+	for _, section := range sections {
+		detail.SnapshotQuestionCount += section.QuestionCount
+		detail.SnapshotTotalScore += section.TotalScore
+	}
+	_, candidateCount, err := s.store.ListExamSessionsBySnapshotPage(ctx, snapshot.ID, 1, 1)
+	if err != nil {
+		return nil, err
+	}
+	detail.CandidateCount = candidateCount
+	submittedCount, err := s.store.CountSubmittedExamSessionsBySnapshot(ctx, snapshot.ID)
+	if err != nil {
+		return nil, err
+	}
+	detail.SubmittedCount = submittedCount
+	_, resultCount, err := s.store.ListExamResults(ctx, id, 1, 1)
+	if err != nil {
+		return nil, err
+	}
+	detail.ResultCount = resultCount
+	_, eventCount, err := s.store.ListClientEvents(ctx, id, 1, 1)
+	if err != nil {
+		return nil, err
+	}
+	detail.AuditEventCount = eventCount
+	return detail, nil
 }
 
 func (s *Service) GetExamSnapshot(ctx context.Context, id uint64) (*ExamSnapshot, error) {
@@ -157,6 +215,17 @@ func (s *Service) ListExamSessions(ctx context.Context, examID uint64) ([]ExamSe
 		return nil, err
 	}
 	return s.store.ListExamSessionsBySnapshot(ctx, snapshot.ID)
+}
+
+func (s *Service) ListExamSessionsPage(ctx context.Context, examID uint64, pageNum, pageSize int) ([]ExamSession, int64, error) {
+	snapshot, err := s.store.GetExamSnapshotByExamID(ctx, examID)
+	if err != nil {
+		if errors.Is(err, ErrSnapshotNotFound) {
+			return []ExamSession{}, 0, nil
+		}
+		return nil, 0, err
+	}
+	return s.store.ListExamSessionsBySnapshotPage(ctx, snapshot.ID, pageNum, pageSize)
 }
 
 func (s *Service) AssignCandidates(ctx context.Context, examID uint64, userIDs []uint64) (BatchResult, error) {

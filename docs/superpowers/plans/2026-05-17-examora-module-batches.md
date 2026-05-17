@@ -226,7 +226,7 @@ pnpm --dir apps/admin build
 - Modify: `internal/api/exam.go`
 - Modify: `packages/types/src/index.ts`
 
-- [ ] Add snapshot metadata to admin exam detail responses.
+- [x] Add snapshot metadata to admin exam detail responses.
 
 Fields:
 
@@ -237,7 +237,7 @@ snapshot_question_count
 snapshot_total_score
 ```
 
-- [ ] Add tests for exam detail metadata.
+- [x] Add tests for exam detail metadata.
 
 Run:
 
@@ -245,7 +245,7 @@ Run:
 go test ./internal/api -run Exam -v
 ```
 
-- [ ] Update admin exam detail overview.
+- [x] Update admin exam detail overview.
 
 Display:
 
@@ -260,7 +260,7 @@ Result count
 Audit event count
 ```
 
-- [ ] Replace fixed 100-row loads with paginated requests for sessions, results, and events.
+- [x] Replace fixed 100-row loads with paginated requests for sessions, results, and events.
 
 Expected behavior:
 
@@ -269,7 +269,7 @@ Each tab requests page and page_size from the table pagination state.
 Reload preserves selected exam and active tab.
 ```
 
-- [ ] Verify Batch 3.
+- [x] Verify Batch 3.
 
 Run:
 

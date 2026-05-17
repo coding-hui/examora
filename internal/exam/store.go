@@ -22,6 +22,8 @@ type ExamSessionStore interface {
 	CreateExamSession(ctx context.Context, session *ExamSession) error
 	GetExamSession(ctx context.Context, examSnapshotID, userID uint64) (*ExamSession, error)
 	ListExamSessionsBySnapshot(ctx context.Context, examSnapshotID uint64) ([]ExamSession, error)
+	ListExamSessionsBySnapshotPage(ctx context.Context, examSnapshotID uint64, pageNum, pageSize int) ([]ExamSession, int64, error)
+	CountSubmittedExamSessionsBySnapshot(ctx context.Context, examSnapshotID uint64) (int64, error)
 	ListExamSessionsByUser(ctx context.Context, userID uint64) ([]ExamSession, error)
 	UpdateExamSession(ctx context.Context, session *ExamSession) error
 	DeleteExamSession(ctx context.Context, id uint64) error

@@ -235,6 +235,18 @@ type examResponse struct {
 	UpdatedAt       time.Time  `json:"updated_at"`
 }
 
+type examDetailResponse struct {
+	examResponse
+	ExamSnapshotID        *uint64    `json:"exam_snapshot_id"`
+	PublishedAt           *time.Time `json:"published_at"`
+	SnapshotQuestionCount int        `json:"snapshot_question_count"`
+	SnapshotTotalScore    float64    `json:"snapshot_total_score"`
+	CandidateCount        int64      `json:"candidate_count"`
+	SubmittedCount        int64      `json:"submitted_count"`
+	ResultCount           int64      `json:"result_count"`
+	AuditEventCount       int64      `json:"audit_event_count"`
+}
+
 type examSnapshotResponse struct {
 	ID              uint64    `json:"id"`
 	ExamID          uint64    `json:"exam_id"`
@@ -619,6 +631,20 @@ func toPaperOutlineResponse(outline *library.PaperOutline) paperOutlineResponse 
 
 func toExamResponse(e exam.Exam) examResponse {
 	return examResponse{ID: e.ID, Title: e.Title, Description: e.Description, PaperID: e.PaperID, Status: e.Status, StartTime: e.StartTime, EndTime: e.EndTime, DurationMinutes: e.DurationMinutes, CreatedBy: e.CreatedBy, CreatedAt: e.CreatedAt, UpdatedAt: e.UpdatedAt}
+}
+
+func toExamDetailResponse(e exam.ExamDetail) examDetailResponse {
+	return examDetailResponse{
+		examResponse:          toExamResponse(e.Exam),
+		ExamSnapshotID:        e.ExamSnapshotID,
+		PublishedAt:           e.PublishedAt,
+		SnapshotQuestionCount: e.SnapshotQuestionCount,
+		SnapshotTotalScore:    e.SnapshotTotalScore,
+		CandidateCount:        e.CandidateCount,
+		SubmittedCount:        e.SubmittedCount,
+		ResultCount:           e.ResultCount,
+		AuditEventCount:       e.AuditEventCount,
+	}
 }
 
 func toSubmissionResponse(s exam.Submission) submissionResponse {

@@ -36,6 +36,32 @@ func (s *Store) ListExamSessionsBySnapshot(ctx context.Context, examSnapshotID u
 	return sessions, nil
 }
 
+func (s *Store) ListExamSessionsBySnapshotPage(ctx context.Context, examSnapshotID uint64, pageNum, pageSize int) ([]exam.ExamSession, int64, error) {
+	db := s.db(ctx).Model(&database.ExamSessionModel{}).Where("exam_snapshot_id = ?", examSnapshotID)
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var rows []database.ExamSessionModel
+	if err := db.Order("id ASC").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+	sessions := make([]exam.ExamSession, 0, len(rows))
+	for _, row := range rows {
+		sessions = append(sessions, *toExamSession(&row))
+	}
+	return sessions, total, nil
+}
+
+func (s *Store) CountSubmittedExamSessionsBySnapshot(ctx context.Context, examSnapshotID uint64) (int64, error) {
+	var total int64
+	err := s.db(ctx).
+		Model(&database.ExamSessionModel{}).
+		Where("exam_snapshot_id = ? AND status = ?", examSnapshotID, exam.SessionStatusSubmitted).
+		Count(&total).Error
+	return total, err
+}
+
 func (s *Store) ListExamSessionsByUser(ctx context.Context, userID uint64) ([]exam.ExamSession, error) {
 	var rows []database.ExamSessionModel
 	if err := s.db(ctx).Where("user_id = ?", userID).Find(&rows).Error; err != nil {
