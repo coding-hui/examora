@@ -16,6 +16,7 @@ type QuestionStore interface {
 	DeleteQuestion(ctx context.Context, id uint64) error
 	QuestionExists(ctx context.Context, id uint64) (bool, error)
 	CountPaperQuestions(ctx context.Context, questionID uint64) (int64, error)
+	CountPublishedPaperQuestions(ctx context.Context, questionID uint64) (int64, error)
 	AddTestCase(ctx context.Context, tc *TestCase) error
 	ListTestCases(ctx context.Context, questionID uint64, includeHidden bool) ([]TestCase, error)
 	DeleteTestCasesByQuestionID(ctx context.Context, questionID uint64) error

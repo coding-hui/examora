@@ -177,7 +177,7 @@ pnpm --dir apps/admin lint
 - Modify: `internal/library/paper.go`
 - Modify: `packages/types/src/index.ts`
 
-- [ ] Add backend dependency tests.
+- [x] Add backend dependency tests.
 
 Cases:
 
@@ -187,7 +187,7 @@ Published question used by a published paper cannot be unpublished.
 Programming question cannot publish without at least one sample test case and one hidden test case.
 ```
 
-- [ ] Implement dependency-safe question status actions.
+- [x] Implement dependency-safe question status actions.
 
 Expected behavior:
 
@@ -196,7 +196,7 @@ Admin receives clear error messages when status changes are blocked.
 Batch status actions report per-item success and failure.
 ```
 
-- [ ] Improve paper preview and readiness display.
+- [x] Improve paper preview and readiness display.
 
 Expected behavior:
 
@@ -205,7 +205,7 @@ Paper detail shows section order, question count, total score, unpublished count
 Save bar stays compact and does not resize the layout unexpectedly.
 ```
 
-- [ ] Verify Batch 2.
+- [x] Verify Batch 2.
 
 Run:
 

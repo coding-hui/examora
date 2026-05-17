@@ -194,6 +194,14 @@ func (s *Service) PatchQuestionStatus(ctx context.Context, id uint64, status str
 		if err := ValidateQuestionForPublish(q, tcs); err != nil {
 			return nil, err
 		}
+	} else if q.Status == QuestionStatusPublished {
+		count, err := s.store.CountPublishedPaperQuestions(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if count > 0 {
+			return nil, ErrQuestionReferenced
+		}
 	}
 	q.Status = status
 	if err := s.store.UpdateQuestion(ctx, q); err != nil {
@@ -319,7 +327,7 @@ func normalizeAndValidateQuestionCommand(cmd *SaveQuestionCommand) error {
 		return err
 	}
 	if cmd.Type == QuestionTypeProgramming {
-		if err := validateProgrammingFields(cmd.Language, cmd.TestCases); err != nil {
+		if err := validateProgrammingFields(cmd.Language, cmd.TestCases, cmd.Status == QuestionStatusPublished); err != nil {
 			return err
 		}
 	} else if len(cmd.TestCases) > 0 {
@@ -345,7 +353,7 @@ func ValidateQuestionForPublish(q *Question, tcs []TestCase) error {
 		return err
 	}
 	if q.Type == QuestionTypeProgramming {
-		return validateProgrammingFields(q.Language, tcs)
+		return validateProgrammingFields(q.Language, tcs, true)
 	}
 	return nil
 }
@@ -473,15 +481,19 @@ func validateChoiceOptions(content map[string]any) (map[string]struct{}, error) 
 	return keys, nil
 }
 
-func validateProgrammingFields(language *string, testCases []TestCase) error {
+func validateProgrammingFields(language *string, testCases []TestCase, requirePublishReady bool) error {
 	if language == nil || strings.TrimSpace(*language) == "" {
 		return fmt.Errorf("%w: programming language is required", ErrInvalidQuestion)
 	}
 	if len(testCases) == 0 {
 		return fmt.Errorf("%w: programming question requires at least one test case", ErrInvalidQuestion)
 	}
+	hasSample := false
+	hasHidden := false
 	for i := range testCases {
 		normalizeTestCase(&testCases[i], i)
+		hasSample = hasSample || testCases[i].IsSample
+		hasHidden = hasHidden || testCases[i].IsHidden
 		if testCases[i].TimeLimitMS < 1 {
 			return fmt.Errorf("%w: test case time limit must be positive", ErrInvalidQuestion)
 		}
@@ -491,6 +503,12 @@ func validateProgrammingFields(language *string, testCases []TestCase) error {
 		if strings.TrimSpace(testCases[i].ExpectedOutput) == "" {
 			return fmt.Errorf("%w: test case expected output is required", ErrInvalidQuestion)
 		}
+	}
+	if requirePublishReady && !hasSample {
+		return fmt.Errorf("%w: programming question requires at least one sample test case", ErrInvalidQuestion)
+	}
+	if requirePublishReady && !hasHidden {
+		return fmt.Errorf("%w: programming question requires at least one hidden test case", ErrInvalidQuestion)
 	}
 	return nil
 }

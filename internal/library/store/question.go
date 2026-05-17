@@ -143,6 +143,16 @@ func (s *Store) CountPaperQuestions(ctx context.Context, questionID uint64) (int
 	return count, err
 }
 
+func (s *Store) CountPublishedPaperQuestions(ctx context.Context, questionID uint64) (int64, error) {
+	var count int64
+	err := s.db(ctx).
+		Table("paper_questions AS pq").
+		Joins("JOIN papers AS p ON p.id = pq.paper_id").
+		Where("pq.question_id = ? AND p.status = ?", questionID, library.PaperStatusPublished).
+		Count(&count).Error
+	return count, err
+}
+
 func (s *Store) DeleteTestCasesByQuestionID(ctx context.Context, questionID uint64) error {
 	return s.db(ctx).Where("question_id = ?", questionID).Delete(&database.TestCaseModel{}).Error
 }
