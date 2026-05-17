@@ -232,6 +232,64 @@ func TestBatchPatchQuestionStatusEndpointReturnsPartialFailures(t *testing.T) {
 	require.Equal(t, library.QuestionStatusPublished, published.Status)
 }
 
+func TestBatchPatchQuestionStatusEndpointReportsReferencedPublishedPaperFailure(t *testing.T) {
+	router, service := newLibraryAPIRouter(t)
+	ctx := t.Context()
+
+	referenced, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Referenced",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	loose, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Loose",
+		Content: map[string]any{"text": "Go has maps."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Published paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: referenced.ID,
+		Score:      10,
+	})
+	require.NoError(t, err)
+	_, err = service.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.NoError(t, err)
+
+	bodyBytes, err := json.Marshal(map[string]any{
+		"ids":    []uint64{referenced.ID, loose.ID},
+		"status": library.QuestionStatusDraft,
+	})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/questions/batch/status", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusOK, resp.Code)
+	var body struct {
+		Data library.BatchResult `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
+	require.Equal(t, 1, body.Data.SuccessCount)
+	require.Equal(t, 1, body.Data.FailedCount)
+	require.Len(t, body.Data.Failures, 1)
+	require.Equal(t, referenced.ID, body.Data.Failures[0].ID)
+	require.Contains(t, body.Data.Failures[0].Reason, library.ErrQuestionReferenced.Error())
+}
+
 func TestBatchDeleteQuestionsEndpointProtectsReferencedQuestions(t *testing.T) {
 	router, service := newLibraryAPIRouter(t)
 	ctx := t.Context()

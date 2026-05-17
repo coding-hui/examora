@@ -138,15 +138,18 @@ func TestProgrammingQuestionReplacesTestCases(t *testing.T) {
 		TimeLimitMS: 1500,
 		TestCases: []library.TestCase{
 			{Input: "5 8", ExpectedOutput: "13", IsSample: true},
+			{Input: "10 20", ExpectedOutput: "30", IsHidden: true},
 		},
 	})
 	require.NoError(t, err)
 
 	cases, err = service.ListTestCases(ctx, question.ID, true)
 	require.NoError(t, err)
-	require.Len(t, cases, 1)
+	require.Len(t, cases, 2)
 	require.Equal(t, "5 8", cases[0].Input)
 	require.Equal(t, "13", cases[0].ExpectedOutput)
+	require.Equal(t, "10 20", cases[1].Input)
+	require.Equal(t, "30", cases[1].ExpectedOutput)
 }
 
 func TestCreateQuestionValidatesStructuredQuestionPayloads(t *testing.T) {
@@ -267,12 +270,175 @@ func TestPatchQuestionStatusPublishedValidatesExistingQuestionCompleteness(t *te
 	_, err = service.AddTestCase(ctx, question.ID, library.SaveTestCaseCommand{
 		Input:          "",
 		ExpectedOutput: "hello",
+		IsSample:       true,
+	})
+	require.NoError(t, err)
+	_, err = service.AddTestCase(ctx, question.ID, library.SaveTestCaseCommand{
+		Input:          "hidden",
+		ExpectedOutput: "secret",
+		IsHidden:       true,
 	})
 	require.NoError(t, err)
 
 	published, err := service.PatchQuestionStatus(ctx, question.ID, library.QuestionStatusPublished)
 	require.NoError(t, err)
 	require.Equal(t, library.QuestionStatusPublished, published.Status)
+}
+
+func TestPublishProgrammingQuestionRequiresSampleAndHiddenTestCases(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name      string
+		testCase  library.SaveTestCaseCommand
+		wantError string
+	}{
+		{
+			name: "sample only",
+			testCase: library.SaveTestCaseCommand{
+				Input:          "",
+				ExpectedOutput: "hello",
+				IsSample:       true,
+			},
+			wantError: "hidden",
+		},
+		{
+			name: "hidden only",
+			testCase: library.SaveTestCaseCommand{
+				Input:          "hidden",
+				ExpectedOutput: "secret",
+				IsHidden:       true,
+			},
+			wantError: "sample",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+				Type:     library.QuestionTypeProgramming,
+				Title:    "Print hello",
+				Content:  map[string]any{"text": "Print hello."},
+				Language: stringPtr("GO"),
+				Status:   library.QuestionStatusDraft,
+				TestCases: []library.TestCase{
+					{
+						Input:          tt.testCase.Input,
+						ExpectedOutput: tt.testCase.ExpectedOutput,
+						IsSample:       tt.testCase.IsSample,
+						IsHidden:       tt.testCase.IsHidden,
+					},
+				},
+			})
+			require.NoError(t, err)
+
+			_, err = service.PatchQuestionStatus(ctx, question.ID, library.QuestionStatusPublished)
+			require.ErrorIs(t, err, library.ErrInvalidQuestion)
+			require.Contains(t, err.Error(), tt.wantError)
+		})
+	}
+}
+
+func TestPatchQuestionStatusDraftRejectsPublishedPaperReference(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Published paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: question.ID,
+		Score:      10,
+		SortOrder:  1,
+	})
+	require.NoError(t, err)
+	_, err = service.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.NoError(t, err)
+
+	_, err = service.PatchQuestionStatus(ctx, question.ID, library.QuestionStatusDraft)
+	require.ErrorIs(t, err, library.ErrQuestionReferenced)
+}
+
+func TestUpdateQuestionDraftRejectsPublishedPaperReference(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Published paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: question.ID,
+		Score:      10,
+		SortOrder:  1,
+	})
+	require.NoError(t, err)
+	_, err = service.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.NoError(t, err)
+
+	_, err = service.UpdateQuestion(ctx, question.ID, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is still compiled",
+		Content: map[string]any{"text": "Go is still compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusDraft,
+	})
+	require.ErrorIs(t, err, library.ErrQuestionReferenced)
+}
+
+func TestPatchQuestionStatusDraftAllowsDraftPaperReference(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Draft paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: question.ID,
+		Score:      10,
+		SortOrder:  1,
+	})
+	require.NoError(t, err)
+
+	updated, err := service.PatchQuestionStatus(ctx, question.ID, library.QuestionStatusDraft)
+	require.NoError(t, err)
+	require.Equal(t, library.QuestionStatusDraft, updated.Status)
 }
 
 func TestAddPaperQuestionValidatesPublishedQuestionScoreAndDuplicates(t *testing.T) {
