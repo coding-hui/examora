@@ -427,6 +427,24 @@ html.examora-dark .pdetail-sticky-footer {
   color: var(--examora-text-secondary, #525252);
 }
 
+.pdetail-save-status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.pdetail-save-summary {
+  overflow: hidden;
+  color: var(--examora-text-secondary, #525252);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .paper-question-title {
   display: flex;
   min-width: 0;
@@ -545,6 +563,15 @@ html.examora-dark .pdetail-sticky-footer {
   .pdetail-sticky-footer {
     align-items: stretch;
     padding: 12px;
+  }
+
+  .pdetail-save-status {
+    width: 100%;
+  }
+
+  .pdetail-save-summary {
+    width: 100%;
+    white-space: normal;
   }
 
   .pdetail-sticky-footer .ant-space {

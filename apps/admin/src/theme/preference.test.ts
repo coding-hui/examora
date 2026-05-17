@@ -1,9 +1,11 @@
 import {
   getEffectiveThemeMode,
+  getSystemPrefersDark,
   loadThemePreference,
   normalizeThemePreference,
   saveThemePreference,
   subscribe,
+  toLayoutSettings,
 } from './preference';
 
 describe('theme preference', () => {
@@ -44,6 +46,27 @@ describe('theme preference', () => {
     expect(getEffectiveThemeMode('system', false)).toBe('light');
     expect(getEffectiveThemeMode('system', true)).toBe('dark');
     expect(getEffectiveThemeMode('dark', false)).toBe('dark');
+  });
+
+  it('maps system layout setting to realDark when system prefers dark', () => {
+    expect(
+      toLayoutSettings(
+        {
+          themeMode: 'system',
+          colorPrimary: '#262626',
+        },
+        true,
+      ).navTheme,
+    ).toBe('realDark');
+  });
+
+  it('reads system dark preference from matchMedia', () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: jest.fn().mockReturnValue({ matches: true }),
+    });
+
+    expect(getSystemPrefersDark()).toBe(true);
   });
 
   it('loads persisted theme mode', () => {

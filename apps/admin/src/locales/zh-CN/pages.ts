@@ -317,8 +317,16 @@ export default {
   'pages.papers.detail.saveSuccess': '试卷已保存',
   'pages.papers.detail.saveError': '保存试卷失败',
   'pages.papers.detail.loadError': '加载试卷失败',
+  'pages.papers.detail.publishBlockedTitle': '试卷暂不能发布',
+  'pages.papers.detail.publishBlockedContent':
+    '试卷没有题目时不能发布。请至少添加 1 道已发布题目，并确认总分大于 0、没有 0 分题目。当前题目 {questions} 道，未发布题 {unpublished} 道，0 分题 {zeroScore} 道。',
   'pages.papers.detail.basicInfo': '基本信息',
   'pages.papers.detail.summary': '试卷汇总',
+  'pages.papers.detail.publishReadyShort': '可发布',
+  'pages.papers.detail.publishNoQuestionsShort': '无题目',
+  'pages.papers.detail.publishNotReadyShort': '待完善',
+  'pages.papers.detail.publishInlineSummary':
+    '{questions} 题 / {score} 分 · 未发布 {unpublished} · 0 分 {zeroScore}',
   'pages.papers.detail.paperStructure': '试卷内容',
   'pages.papers.detail.defaultSectionTitle': '第一大题',
   'pages.papers.detail.sectionTitleTemplate': '第 {index} 大题',
@@ -510,40 +518,17 @@ export default {
   'pages.dashboard.shortcuts.questions': '题库管理',
   'pages.dashboard.shortcuts.programming': '编程题库',
   'pages.dashboard.shortcuts.submissions': '提交记录',
-  // Coming soon
-  'pages.comingSoon.title': '模块建设中',
-  'pages.comingSoon.description':
-    '该管理模块已预留导航入口，业务页面会在后续迭代接入。',
-  'pages.comingSoon.shortTitle': '即将上线',
-  'pages.comingSoon.shortDescription': '该功能正在开发中，敬请期待。',
-  'pages.comingSoon.backDashboard': '返回工作台',
-  'pages.comingSoon.viewExams': '查看考试管理',
-  'pages.comingSoon.note':
-    '当前入口用于固定后台信息架构，避免后续业务页面上线时反复调整主菜单。',
-  'pages.comingSoon.questions.title': '题库管理',
-  'pages.comingSoon.questions.description':
-    '题目列表、题型配置、答案与解析维护即将接入。',
-  'pages.comingSoon.programming.title': '编程题与测试用例',
-  'pages.comingSoon.programming.description':
-    '编程题模板、样例用例、隐藏用例和运行限制将在这里管理。',
-  'pages.comingSoon.papers.title': '试卷管理',
-  'pages.comingSoon.papers.description':
-    '组卷、题目排序、分值配置和试卷状态流转即将接入。',
-  'pages.comingSoon.examCreate.title': '创建考试',
-  'pages.comingSoon.examCreate.description':
-    '考试基本信息、试卷绑定和发布前配置将在这里接入。',
-  'pages.comingSoon.candidates.title': '考生管理',
-  'pages.comingSoon.candidates.description':
-    '考生账号、考试授权、分组和导入导出能力即将接入。',
-  'pages.comingSoon.events.title': '监考审计',
-  'pages.comingSoon.events.description':
-    '桌面端事件、设备绑定、异常行为记录将在这里查看。',
-  'pages.comingSoon.submissions.title': '提交记录',
-  'pages.comingSoon.submissions.description':
-    '候选人答卷、编程提交和判分状态将在这里汇总。',
-  'pages.comingSoon.judgeTasks.title': '判题任务',
-  'pages.comingSoon.judgeTasks.description':
-    '异步判题任务、重试状态和沙箱结果将在这里跟踪。',
+  // Events
+  'pages.events.description': '按考试查看桌面端上报的审计事件和设备信息。',
+  'pages.events.examsLoadError': '加载考试列表失败',
+  'pages.events.fetchError': '加载审计事件失败',
+  'pages.events.columns.user': '用户ID',
+  'pages.events.columns.device': '设备',
+  'pages.events.columns.type': '事件类型',
+  'pages.events.columns.createdAt': '时间',
+  'pages.events.examPlaceholder': '选择考试',
+  'pages.events.emptyExam': '请选择考试查看审计事件',
+  'pages.events.detailTitle': '事件详情',
   // Exam form
   'pages.exams.createTitle': '创建考试',
   'pages.exams.editTitle': '编辑考试',
