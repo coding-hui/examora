@@ -774,14 +774,6 @@ func toExamSessionResponse(session exam.ExamSession) examSessionResponse {
 	}
 }
 
-func sessionsToResponses(sessions []exam.ExamSession) []examSessionResponse {
-	items := make([]examSessionResponse, 0, len(sessions))
-	for _, session := range sessions {
-		items = append(items, toExamSessionResponse(session))
-	}
-	return items
-}
-
 func toUserGroupResponse(group exam.UserGroup) userGroupResponse {
 	return userGroupResponse{
 		ID:               group.ID,
