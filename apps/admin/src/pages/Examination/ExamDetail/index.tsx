@@ -6,6 +6,7 @@ import {
 } from '@ant-design/icons';
 import {
   PageContainer,
+  type ActionType,
   type ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
@@ -39,6 +40,7 @@ import {
   Segmented,
   Select,
   Space,
+  Statistic,
   Spin,
   Table,
   Tabs,
@@ -56,8 +58,11 @@ import {
 import { fetchEnvelope } from '@/utils/apiEnvelope';
 import { requestErrorMessage } from '@/utils/request';
 import {
+  buildPagedQuery,
   canRemoveCandidate,
+  examOperationStats,
   examStatusTone,
+  normalizeExamDetailTab,
   sessionStatusTone,
 } from './model';
 
@@ -79,14 +84,16 @@ const ExamDetailContent: React.FC = () => {
   const [exam, setExam] = useState<AdminExam | null>(null);
   const [examLoading, setExamLoading] = useState(false);
   const [sessions, setSessions] = useState<AdminExamSession[]>([]);
-  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [assignedCandidateUserIDs, setAssignedCandidateUserIDs] = useState<
+    Set<number>
+  >(new Set());
   const [assignments, setAssignments] = useState<AdminExamAssignment[]>([]);
-  const [results, setResults] = useState<AdminExamResult[]>([]);
-  const [resultsTotal, setResultsTotal] = useState(0);
-  const [resultsLoading, setResultsLoading] = useState(false);
-  const [events, setEvents] = useState<AdminClientEvent[]>([]);
-  const [eventsTotal, setEventsTotal] = useState(0);
-  const [eventsLoading, setEventsLoading] = useState(false);
+  const sessionsActionRef = React.useRef<ActionType | undefined>(undefined);
+  const resultsActionRef = React.useRef<ActionType | undefined>(undefined);
+  const eventsActionRef = React.useRef<ActionType | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState(() =>
+    normalizeExamDetailTab(new URLSearchParams(history.location.search).get('tab')),
+  );
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [userGroups, setUserGroups] = useState<AdminUserGroup[]>([]);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -117,71 +124,6 @@ const ExamDetailContent: React.FC = () => {
       );
     } finally {
       setExamLoading(false);
-    }
-  }, [examID, intl, message]);
-
-  const loadSessions = React.useCallback(async () => {
-    if (!examID) return;
-    setSessionsLoading(true);
-    try {
-      const data = await fetchEnvelope<AdminExamSessionListResponse>(
-        API_PATHS.admin.examSessions(examID),
-      );
-      setSessions(data.items || []);
-    } catch (error) {
-      message.error(
-        requestErrorMessage(error) ||
-          intl.formatMessage({
-            id: 'pages.examDetail.sessionsLoadError',
-            defaultMessage: '加载用户列表失败',
-          }),
-      );
-    } finally {
-      setSessionsLoading(false);
-    }
-  }, [examID, intl, message]);
-
-  const loadResults = React.useCallback(async () => {
-    if (!examID) return;
-    setResultsLoading(true);
-    try {
-      const data = await fetchEnvelope<AdminExamResultPageResponse>(
-        `${API_PATHS.admin.examResults(examID)}?page=1&page_size=100`,
-      );
-      setResults(data.items || []);
-      setResultsTotal(data.total || 0);
-    } catch (error) {
-      message.error(
-        requestErrorMessage(error) ||
-          intl.formatMessage({
-            id: 'pages.examDetail.resultsLoadError',
-            defaultMessage: '加载答卷失败',
-          }),
-      );
-    } finally {
-      setResultsLoading(false);
-    }
-  }, [examID, intl, message]);
-
-  const loadEvents = React.useCallback(async () => {
-    if (!examID) return;
-    setEventsLoading(true);
-    try {
-      const data = await fetchEnvelope<AdminClientEventPageResponse>(
-        `${API_PATHS.admin.examEvents(examID)}?page=1&page_size=100`,
-      );
-      setEvents(data.items || []);
-      setEventsTotal(data.total || 0);
-    } catch (error) {
-      message.error(
-        requestErrorMessage(error) ||
-          intl.formatMessage({
-            id: 'pages.examDetail.eventsLoadError',
-            defaultMessage: '加载审计事件失败',
-          }),
-      );
-    } finally {
-      setEventsLoading(false);
     }
   }, [examID, intl, message]);
 
@@ -231,13 +173,50 @@ const ExamDetailContent: React.FC = () => {
     }
   }, [examID]);
 
+  const loadAssignedCandidateUserIDs = React.useCallback(async () => {
+    if (!examID) return;
+    const pageSize = 100;
+    const collectUserIDs = (
+      current: Set<number>,
+      page: AdminExamSessionListResponse,
+    ) => {
+      page.items?.forEach((session) => {
+        current.add(session.user_id);
+      });
+    };
+
+    try {
+      const firstPage = await fetchEnvelope<AdminExamSessionListResponse>(
+        `${API_PATHS.admin.examSessions(examID)}?${buildPagedQuery(1, pageSize)}`,
+      );
+      const nextUserIDs = new Set<number>();
+      collectUserIDs(nextUserIDs, firstPage);
+
+      const total = firstPage.total || 0;
+      const pageCount = Math.ceil(total / pageSize);
+      for (let page = 2; page <= pageCount; page += 1) {
+        const data = await fetchEnvelope<AdminExamSessionListResponse>(
+          `${API_PATHS.admin.examSessions(examID)}?${buildPagedQuery(page, pageSize)}`,
+        );
+        collectUserIDs(nextUserIDs, data);
+      }
+      setAssignedCandidateUserIDs(nextUserIDs);
+    } catch (_error) {
+      setAssignedCandidateUserIDs(new Set());
+    }
+  }, [examID]);
+
   const refreshAll = React.useCallback(() => {
     loadExam();
-    loadSessions();
     loadAssignments();
-    loadResults();
-    loadEvents();
-  }, [loadAssignments, loadExam, loadEvents, loadResults, loadSessions]);
+    if (activeTab === 'candidates') {
+      sessionsActionRef.current?.reload();
+    } else if (activeTab === 'results') {
+      resultsActionRef.current?.reload();
+    } else if (activeTab === 'events') {
+      eventsActionRef.current?.reload();
+    }
+  }, [activeTab, loadAssignments, loadExam]);
 
   useEffect(() => {
     refreshAll();
@@ -252,8 +231,14 @@ const ExamDetailContent: React.FC = () => {
   }, [users]);
 
   const assignedUserIDs = useMemo(
-    () => new Set(sessions.map((session) => session.user_id)),
-    [sessions],
+    () => {
+      const ids = new Set(assignedCandidateUserIDs);
+      sessions.forEach((session) => {
+        ids.add(session.user_id);
+      });
+      return ids;
+    },
+    [assignedCandidateUserIDs, sessions],
   );
 
   const assignmentSourceByUserID = useMemo(() => {
@@ -291,7 +276,12 @@ const ExamDetailContent: React.FC = () => {
     setGroupCoverageCount(0);
     setAssignMode('users');
     setAssignOpen(true);
-    await Promise.all([loadUsers(), loadUserGroups()]);
+    await Promise.all([
+      loadUsers(),
+      loadUserGroups(),
+      loadAssignments(),
+      loadAssignedCandidateUserIDs(),
+    ]);
   };
 
   const assignCandidates = async () => {
@@ -325,8 +315,10 @@ const ExamDetailContent: React.FC = () => {
         }),
       );
       setAssignOpen(false);
-      loadSessions();
+      loadExam();
+      sessionsActionRef.current?.reload();
       loadAssignments();
+      loadAssignedCandidateUserIDs();
     } catch (error) {
       message.error(
         requestErrorMessage(error) ||
@@ -379,7 +371,9 @@ const ExamDetailContent: React.FC = () => {
             method: 'DELETE',
           },
         );
-        loadSessions();
+        loadExam();
+        sessionsActionRef.current?.reload();
+        loadAssignedCandidateUserIDs();
       },
     });
   };
@@ -403,6 +397,98 @@ const ExamDetailContent: React.FC = () => {
       );
     } finally {
       setResultDetailLoading(false);
+    }
+  };
+
+  const handleTabChange = (key: string) => {
+    const nextTab = normalizeExamDetailTab(key);
+    setActiveTab(nextTab);
+    const query = new URLSearchParams(history.location.search);
+    if (nextTab === 'overview') {
+      query.delete('tab');
+    } else {
+      query.set('tab', nextTab);
+    }
+    history.replace({
+      pathname: history.location.pathname,
+      search: query.toString() ? `?${query.toString()}` : '',
+    });
+  };
+
+  const requestSessions = async ({
+    current,
+    pageSize,
+  }: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    if (!examID) return { data: [], total: 0, success: false };
+    try {
+      const data = await fetchEnvelope<AdminExamSessionListResponse>(
+        `${API_PATHS.admin.examSessions(examID)}?${buildPagedQuery(current, pageSize)}`,
+      );
+      const items = data.items || [];
+      setSessions(items);
+      return { data: items, total: data.total || 0, success: true };
+    } catch (error) {
+      message.error(
+        requestErrorMessage(error) ||
+          intl.formatMessage({
+            id: 'pages.examDetail.sessionsLoadError',
+            defaultMessage: '加载用户列表失败',
+          }),
+      );
+      return { data: [], total: 0, success: false };
+    }
+  };
+
+  const requestResults = async ({
+    current,
+    pageSize,
+  }: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    if (!examID) return { data: [], total: 0, success: false };
+    try {
+      const data = await fetchEnvelope<AdminExamResultPageResponse>(
+        `${API_PATHS.admin.examResults(examID)}?${buildPagedQuery(current, pageSize)}`,
+      );
+      return { data: data.items || [], total: data.total || 0, success: true };
+    } catch (error) {
+      message.error(
+        requestErrorMessage(error) ||
+          intl.formatMessage({
+            id: 'pages.examDetail.resultsLoadError',
+            defaultMessage: '加载答卷失败',
+          }),
+      );
+      return { data: [], total: 0, success: false };
+    }
+  };
+
+  const requestEvents = async ({
+    current,
+    pageSize,
+  }: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    if (!examID) return { data: [], total: 0, success: false };
+    try {
+      const data = await fetchEnvelope<AdminClientEventPageResponse>(
+        `${API_PATHS.admin.examEvents(examID)}?${buildPagedQuery(current, pageSize)}`,
+      );
+      return { data: data.items || [], total: data.total || 0, success: true };
+    } catch (error) {
+      message.error(
+        requestErrorMessage(error) ||
+          intl.formatMessage({
+            id: 'pages.examDetail.eventsLoadError',
+            defaultMessage: '加载审计事件失败',
+          }),
+      );
+      return { data: [], total: 0, success: false };
     }
   };
 
@@ -591,6 +677,8 @@ const ExamDetailContent: React.FC = () => {
     return resultDetail.questions || [];
   }, [resultDetail]);
 
+  const operationStats = examOperationStats(exam);
+
   return (
     <PageContainer
       title={
@@ -608,7 +696,107 @@ const ExamDetailContent: React.FC = () => {
       ]}
     >
       <Spin spinning={examLoading}>
+        {exam ? (
+          <div
+            style={{
+              display: 'grid',
+              gap: 16,
+              marginBottom: 16,
+              padding: 16,
+              border: '1px solid rgba(5, 5, 5, 0.08)',
+              borderRadius: 8,
+              background: 'rgba(255, 255, 255, 0.72)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 12,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Space wrap>
+                <StatusTag
+                  tone={statusToneFromAntdColor(examStatusTone(exam.status))}
+                >
+                  {exam.status}
+                </StatusTag>
+                <Text>Paper #{exam.paper_id || '-'}</Text>
+                <Text>Snapshot #{exam.exam_snapshot_id || '-'}</Text>
+                <Text>
+                  {exam.published_at
+                    ? dayjs(exam.published_at).format('YYYY-MM-DD HH:mm:ss')
+                    : '-'}
+                </Text>
+              </Space>
+              <Text type="secondary">
+                {exam.start_time
+                  ? dayjs(exam.start_time).format('YYYY-MM-DD HH:mm')
+                  : '-'}
+                {' - '}
+                {exam.end_time
+                  ? dayjs(exam.end_time).format('YYYY-MM-DD HH:mm')
+                  : '-'}
+              </Text>
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                gap: 12,
+              }}
+            >
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.examDetail.snapshotQuestions',
+                  defaultMessage: '快照题量',
+                })}
+                value={operationStats.snapshotQuestionCount}
+              />
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.examDetail.snapshotScore',
+                  defaultMessage: '快照总分',
+                })}
+                value={operationStats.snapshotTotalScore}
+                precision={1}
+              />
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.examDetail.candidateCount',
+                  defaultMessage: '用户数',
+                })}
+                value={operationStats.candidateCount}
+              />
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.examDetail.submittedCount',
+                  defaultMessage: '已交卷',
+                })}
+                value={operationStats.submittedCount}
+              />
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.examDetail.resultCount',
+                  defaultMessage: '答卷数',
+                })}
+                value={operationStats.resultCount}
+              />
+              <Statistic
+                title={intl.formatMessage({
+                  id: 'pages.examDetail.auditEventCount',
+                  defaultMessage: '审计事件',
+                })}
+                value={operationStats.auditEventCount}
+              />
+            </div>
+          </div>
+        ) : null}
         <Tabs
+          activeKey={activeTab}
+          onChange={handleTabChange}
           items={[
             {
               key: 'overview',
@@ -648,6 +836,19 @@ const ExamDetailContent: React.FC = () => {
                     })}
                   >
                     {exam.paper_id || '-'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Snapshot">
+                    {exam.exam_snapshot_id || '-'}
+                  </Descriptions.Item>
+                  <Descriptions.Item
+                    label={intl.formatMessage({
+                      id: 'pages.examDetail.publishedAt',
+                      defaultMessage: '发布时间',
+                    })}
+                  >
+                    {exam.published_at
+                      ? dayjs(exam.published_at).format('YYYY-MM-DD HH:mm:ss')
+                      : '-'}
                   </Descriptions.Item>
                   <Descriptions.Item
                     label={intl.formatMessage({
@@ -691,14 +892,14 @@ const ExamDetailContent: React.FC = () => {
               }),
               children: (
                 <ProTable<AdminExamSession>
+                  actionRef={sessionsActionRef}
                   rowKey="id"
                   columns={sessionColumns}
-                  dataSource={sessions}
-                  loading={sessionsLoading}
+                  request={requestSessions}
                   search={false}
-                  pagination={false}
+                  pagination={{ pageSize: 20 }}
                   options={{
-                    reload: loadSessions,
+                    reload: true,
                     density: true,
                     setting: true,
                   }}
@@ -726,14 +927,14 @@ const ExamDetailContent: React.FC = () => {
               }),
               children: (
                 <ProTable<AdminExamResult>
+                  actionRef={resultsActionRef}
                   rowKey="id"
                   columns={resultColumns}
-                  dataSource={results}
-                  loading={resultsLoading}
+                  request={requestResults}
                   search={false}
-                  pagination={{ total: resultsTotal, pageSize: 20 }}
+                  pagination={{ pageSize: 20 }}
                   options={{
-                    reload: loadResults,
+                    reload: true,
                     density: true,
                     setting: true,
                   }}
@@ -748,13 +949,13 @@ const ExamDetailContent: React.FC = () => {
               }),
               children: (
                 <ProTable<AdminClientEvent>
+                  actionRef={eventsActionRef}
                   rowKey="id"
                   columns={eventColumns}
-                  dataSource={events}
-                  loading={eventsLoading}
+                  request={requestEvents}
                   search={false}
-                  pagination={{ total: eventsTotal, pageSize: 20 }}
-                  options={{ reload: loadEvents, density: true, setting: true }}
+                  pagination={{ pageSize: 20 }}
+                  options={{ reload: true, density: true, setting: true }}
                 />
               ),
             },

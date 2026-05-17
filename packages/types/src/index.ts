@@ -369,6 +369,14 @@ export interface AdminExam {
   start_time: string | null;
   end_time: string | null;
   duration_minutes: number;
+  exam_snapshot_id?: number | null;
+  published_at?: string | null;
+  snapshot_question_count?: number;
+  snapshot_total_score?: number;
+  candidate_count?: number;
+  submitted_count?: number;
+  result_count?: number;
+  audit_event_count?: number;
   created_by: number;
   created_at: string;
   updated_at: string;
@@ -454,9 +462,7 @@ export interface AdminExamSession {
   remaining_seconds?: number;
 }
 
-export interface AdminExamSessionListResponse {
-  items: AdminExamSession[];
-}
+export type AdminExamSessionListResponse = PageResponse<AdminExamSession>;
 
 export interface BatchFailure {
   id: number;

@@ -1,5 +1,12 @@
 import type { AdminExamSession } from '@examora/types';
-import { canRemoveCandidate, examStatusTone, sessionStatusTone } from './model';
+import {
+  buildPagedQuery,
+  canRemoveCandidate,
+  examOperationStats,
+  examStatusTone,
+  normalizeExamDetailTab,
+  sessionStatusTone,
+} from './model';
 
 describe('ExamDetail model', () => {
   it('maps session statuses to tag tones', () => {
@@ -23,5 +30,27 @@ describe('ExamDetail model', () => {
     expect(
       canRemoveCandidate({ status: 'IN_PROGRESS' } as AdminExamSession),
     ).toBe(false);
+  });
+
+  it('normalizes detail tab query values', () => {
+    expect(normalizeExamDetailTab('results')).toBe('results');
+    expect(normalizeExamDetailTab('bad')).toBe('overview');
+    expect(normalizeExamDetailTab(null)).toBe('overview');
+  });
+
+  it('builds paged table query strings', () => {
+    expect(buildPagedQuery(2, 50)).toBe('page=2&page_size=50');
+    expect(buildPagedQuery(undefined, undefined)).toBe('page=1&page_size=20');
+  });
+
+  it('defaults missing operation stats to zero', () => {
+    expect(examOperationStats(null)).toEqual({
+      snapshotQuestionCount: 0,
+      snapshotTotalScore: 0,
+      candidateCount: 0,
+      submittedCount: 0,
+      resultCount: 0,
+      auditEventCount: 0,
+    });
   });
 });

@@ -121,12 +121,12 @@ func (s *Server) getExam(c *gin.Context) {
 	if !ok {
 		return
 	}
-	exam, err := s.exam.GetExam(c.Request.Context(), id)
+	exam, err := s.exam.GetExamDetail(c.Request.Context(), id)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, toExamResponse(*exam))
+	response.Success(c, toExamDetailResponse(*exam))
 }
 
 func (s *Server) createExam(c *gin.Context) {
@@ -189,12 +189,13 @@ func (s *Server) listExamSessions(c *gin.Context) {
 	if !ok {
 		return
 	}
-	items, err := s.exam.ListExamSessions(c.Request.Context(), id)
+	pageNum, pageSize := pageQuery(c)
+	items, total, err := s.exam.ListExamSessionsPage(c.Request.Context(), id, pageNum, pageSize)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, map[string]any{"items": sessionsToResponses(items)})
+	response.PageSuccessWith(c, items, total, pageNum, pageSize, toExamSessionResponse)
 }
 
 func (s *Server) assignExamCandidates(c *gin.Context) {

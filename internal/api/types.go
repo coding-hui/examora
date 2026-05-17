@@ -235,6 +235,18 @@ type examResponse struct {
 	UpdatedAt       time.Time  `json:"updated_at"`
 }
 
+type examDetailResponse struct {
+	examResponse
+	ExamSnapshotID        *uint64    `json:"exam_snapshot_id"`
+	PublishedAt           *time.Time `json:"published_at"`
+	SnapshotQuestionCount int        `json:"snapshot_question_count"`
+	SnapshotTotalScore    float64    `json:"snapshot_total_score"`
+	CandidateCount        int64      `json:"candidate_count"`
+	SubmittedCount        int64      `json:"submitted_count"`
+	ResultCount           int64      `json:"result_count"`
+	AuditEventCount       int64      `json:"audit_event_count"`
+}
+
 type examSnapshotResponse struct {
 	ID              uint64    `json:"id"`
 	ExamID          uint64    `json:"exam_id"`
@@ -621,6 +633,20 @@ func toExamResponse(e exam.Exam) examResponse {
 	return examResponse{ID: e.ID, Title: e.Title, Description: e.Description, PaperID: e.PaperID, Status: e.Status, StartTime: e.StartTime, EndTime: e.EndTime, DurationMinutes: e.DurationMinutes, CreatedBy: e.CreatedBy, CreatedAt: e.CreatedAt, UpdatedAt: e.UpdatedAt}
 }
 
+func toExamDetailResponse(e exam.ExamDetail) examDetailResponse {
+	return examDetailResponse{
+		examResponse:          toExamResponse(e.Exam),
+		ExamSnapshotID:        e.ExamSnapshotID,
+		PublishedAt:           e.PublishedAt,
+		SnapshotQuestionCount: e.SnapshotQuestionCount,
+		SnapshotTotalScore:    e.SnapshotTotalScore,
+		CandidateCount:        e.CandidateCount,
+		SubmittedCount:        e.SubmittedCount,
+		ResultCount:           e.ResultCount,
+		AuditEventCount:       e.AuditEventCount,
+	}
+}
+
 func toSubmissionResponse(s exam.Submission) submissionResponse {
 	return submissionResponse{ID: s.ID, ExamID: s.ExamID, UserID: s.UserID, QuestionID: s.QuestionID, Answer: s.Answer, Code: s.Code, Language: s.Language, Status: s.Status, Score: s.Score, Result: s.Result, SubmittedAt: s.SubmittedAt, JudgedAt: s.JudgedAt}
 }
@@ -746,14 +772,6 @@ func toExamSessionResponse(session exam.ExamSession) examSessionResponse {
 		SubmittedAt:      session.SubmittedAt,
 		RemainingSeconds: session.RemainingSeconds,
 	}
-}
-
-func sessionsToResponses(sessions []exam.ExamSession) []examSessionResponse {
-	items := make([]examSessionResponse, 0, len(sessions))
-	for _, session := range sessions {
-		items = append(items, toExamSessionResponse(session))
-	}
-	return items
 }
 
 func toUserGroupResponse(group exam.UserGroup) userGroupResponse {
