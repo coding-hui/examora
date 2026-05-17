@@ -84,6 +84,9 @@ const ExamDetailContent: React.FC = () => {
   const [exam, setExam] = useState<AdminExam | null>(null);
   const [examLoading, setExamLoading] = useState(false);
   const [sessions, setSessions] = useState<AdminExamSession[]>([]);
+  const [assignedCandidateUserIDs, setAssignedCandidateUserIDs] = useState<
+    Set<number>
+  >(new Set());
   const [assignments, setAssignments] = useState<AdminExamAssignment[]>([]);
   const sessionsActionRef = React.useRef<ActionType | undefined>(undefined);
   const resultsActionRef = React.useRef<ActionType | undefined>(undefined);
@@ -170,6 +173,39 @@ const ExamDetailContent: React.FC = () => {
     }
   }, [examID]);
 
+  const loadAssignedCandidateUserIDs = React.useCallback(async () => {
+    if (!examID) return;
+    const pageSize = 100;
+    const collectUserIDs = (
+      current: Set<number>,
+      page: AdminExamSessionListResponse,
+    ) => {
+      page.items?.forEach((session) => {
+        current.add(session.user_id);
+      });
+    };
+
+    try {
+      const firstPage = await fetchEnvelope<AdminExamSessionListResponse>(
+        `${API_PATHS.admin.examSessions(examID)}?${buildPagedQuery(1, pageSize)}`,
+      );
+      const nextUserIDs = new Set<number>();
+      collectUserIDs(nextUserIDs, firstPage);
+
+      const total = firstPage.total || 0;
+      const pageCount = Math.ceil(total / pageSize);
+      for (let page = 2; page <= pageCount; page += 1) {
+        const data = await fetchEnvelope<AdminExamSessionListResponse>(
+          `${API_PATHS.admin.examSessions(examID)}?${buildPagedQuery(page, pageSize)}`,
+        );
+        collectUserIDs(nextUserIDs, data);
+      }
+      setAssignedCandidateUserIDs(nextUserIDs);
+    } catch (_error) {
+      setAssignedCandidateUserIDs(new Set());
+    }
+  }, [examID]);
+
   const refreshAll = React.useCallback(() => {
     loadExam();
     loadAssignments();
@@ -195,8 +231,14 @@ const ExamDetailContent: React.FC = () => {
   }, [users]);
 
   const assignedUserIDs = useMemo(
-    () => new Set(sessions.map((session) => session.user_id)),
-    [sessions],
+    () => {
+      const ids = new Set(assignedCandidateUserIDs);
+      sessions.forEach((session) => {
+        ids.add(session.user_id);
+      });
+      return ids;
+    },
+    [assignedCandidateUserIDs, sessions],
   );
 
   const assignmentSourceByUserID = useMemo(() => {
@@ -234,7 +276,12 @@ const ExamDetailContent: React.FC = () => {
     setGroupCoverageCount(0);
     setAssignMode('users');
     setAssignOpen(true);
-    await Promise.all([loadUsers(), loadUserGroups()]);
+    await Promise.all([
+      loadUsers(),
+      loadUserGroups(),
+      loadAssignments(),
+      loadAssignedCandidateUserIDs(),
+    ]);
   };
 
   const assignCandidates = async () => {
@@ -271,6 +318,7 @@ const ExamDetailContent: React.FC = () => {
       loadExam();
       sessionsActionRef.current?.reload();
       loadAssignments();
+      loadAssignedCandidateUserIDs();
     } catch (error) {
       message.error(
         requestErrorMessage(error) ||
@@ -325,6 +373,7 @@ const ExamDetailContent: React.FC = () => {
         );
         loadExam();
         sessionsActionRef.current?.reload();
+        loadAssignedCandidateUserIDs();
       },
     });
   };
