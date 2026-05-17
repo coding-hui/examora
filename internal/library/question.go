@@ -150,15 +150,19 @@ func (s *Service) CreateQuestion(ctx context.Context, cmd SaveQuestionCommand) (
 }
 
 func (s *Service) UpdateQuestion(ctx context.Context, id uint64, cmd SaveQuestionCommand) (*Question, error) {
-	if _, err := s.store.GetQuestion(ctx, id); err != nil {
+	existing, err := s.store.GetQuestion(ctx, id)
+	if err != nil {
 		return nil, err
 	}
 	if err := normalizeAndValidateQuestionCommand(&cmd); err != nil {
 		return nil, err
 	}
+	if err := s.validateQuestionStatusTransition(ctx, existing, cmd.Status); err != nil {
+		return nil, err
+	}
 	q := fromQuestionCommand(cmd)
 	q.ID = id
-	err := s.withTx(ctx, func(ctx context.Context) error {
+	err = s.withTx(ctx, func(ctx context.Context) error {
 		if err := s.store.UpdateQuestion(ctx, q); err != nil {
 			return err
 		}
@@ -194,20 +198,29 @@ func (s *Service) PatchQuestionStatus(ctx context.Context, id uint64, status str
 		if err := ValidateQuestionForPublish(q, tcs); err != nil {
 			return nil, err
 		}
-	} else if q.Status == QuestionStatusPublished {
-		count, err := s.store.CountPublishedPaperQuestions(ctx, id)
-		if err != nil {
-			return nil, err
-		}
-		if count > 0 {
-			return nil, ErrQuestionReferenced
-		}
+	}
+	if err := s.validateQuestionStatusTransition(ctx, q, status); err != nil {
+		return nil, err
 	}
 	q.Status = status
 	if err := s.store.UpdateQuestion(ctx, q); err != nil {
 		return nil, err
 	}
 	return q, nil
+}
+
+func (s *Service) validateQuestionStatusTransition(ctx context.Context, q *Question, nextStatus string) error {
+	if q.Status != QuestionStatusPublished || nextStatus != QuestionStatusDraft {
+		return nil
+	}
+	count, err := s.store.CountPublishedPaperQuestions(ctx, q.ID)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return ErrQuestionReferenced
+	}
+	return nil
 }
 
 func (s *Service) DeleteQuestion(ctx context.Context, id uint64) error {

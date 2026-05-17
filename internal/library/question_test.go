@@ -373,6 +373,45 @@ func TestPatchQuestionStatusDraftRejectsPublishedPaperReference(t *testing.T) {
 	require.ErrorIs(t, err, library.ErrQuestionReferenced)
 }
 
+func TestUpdateQuestionDraftRejectsPublishedPaperReference(t *testing.T) {
+	service, _ := newLibraryService(t)
+	ctx := context.Background()
+
+	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Published paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = service.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: question.ID,
+		Score:      10,
+		SortOrder:  1,
+	})
+	require.NoError(t, err)
+	_, err = service.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.NoError(t, err)
+
+	_, err = service.UpdateQuestion(ctx, question.ID, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is still compiled",
+		Content: map[string]any{"text": "Go is still compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusDraft,
+	})
+	require.ErrorIs(t, err, library.ErrQuestionReferenced)
+}
+
 func TestPatchQuestionStatusDraftAllowsDraftPaperReference(t *testing.T) {
 	service, _ := newLibraryService(t)
 	ctx := context.Background()
