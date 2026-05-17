@@ -16,6 +16,7 @@ import { createStyles } from 'antd-style';
 import React, { useEffect, useState } from 'react';
 import {
   getEffectiveThemeMode,
+  getSystemPrefersDark,
   loadThemePreference,
   SYSTEM_DARK_QUERY,
   saveThemePreference,
@@ -66,11 +67,6 @@ export const SelectLang: React.FC = () => {
   );
 };
 
-function getSystemPrefersDark(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia(SYSTEM_DARK_QUERY).matches;
-}
-
 const themeModeIcons: Record<ThemeMode, React.ReactNode> = {
   light: <SunOutlined />,
   dark: <MoonOutlined />,
@@ -114,7 +110,7 @@ export const ThemeSwitcher: React.FC = () => {
       ...state,
       settings: {
         ...state?.settings,
-        ...toLayoutSettings(next),
+        ...toLayoutSettings(next, systemPrefersDark),
       },
     }));
   };

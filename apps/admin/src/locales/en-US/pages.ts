@@ -343,8 +343,16 @@ export default {
   'pages.papers.detail.saveSuccess': 'Paper saved',
   'pages.papers.detail.saveError': 'Failed to save paper',
   'pages.papers.detail.loadError': 'Failed to load paper',
+  'pages.papers.detail.publishBlockedTitle': 'Paper cannot be published',
+  'pages.papers.detail.publishBlockedContent':
+    'A paper cannot be published without questions. Add at least 1 published question, then confirm the total score is greater than 0 and no question has 0 score. Current questions: {questions}; unpublished: {unpublished}; zero-score: {zeroScore}.',
   'pages.papers.detail.basicInfo': 'Basic Info',
   'pages.papers.detail.summary': 'Paper Summary',
+  'pages.papers.detail.publishReadyShort': 'Ready',
+  'pages.papers.detail.publishNoQuestionsShort': 'No questions',
+  'pages.papers.detail.publishNotReadyShort': 'Needs work',
+  'pages.papers.detail.publishInlineSummary':
+    '{questions} questions / {score} pts · {unpublished} unpublished · {zeroScore} zero-score',
   'pages.papers.detail.paperStructure': 'Paper Content',
   'pages.papers.detail.defaultSectionTitle': 'Section 1',
   'pages.papers.detail.sectionTitleTemplate': 'Section {index}',
@@ -544,41 +552,18 @@ export default {
   'pages.dashboard.shortcuts.questions': 'Question Bank',
   'pages.dashboard.shortcuts.programming': 'Programming Bank',
   'pages.dashboard.shortcuts.submissions': 'Submissions',
-  // Coming soon
-  'pages.comingSoon.title': 'Module Under Construction',
-  'pages.comingSoon.description':
-    'This admin module is reserved in the navigation and will be connected in a future iteration.',
-  'pages.comingSoon.shortTitle': 'Coming Soon',
-  'pages.comingSoon.shortDescription':
-    'This feature is under development. Please check back later.',
-  'pages.comingSoon.backDashboard': 'Back to Dashboard',
-  'pages.comingSoon.viewExams': 'View Exam Management',
-  'pages.comingSoon.note':
-    'This entry keeps the admin information architecture stable while business pages are added.',
-  'pages.comingSoon.questions.title': 'Question Bank',
-  'pages.comingSoon.questions.description':
-    'Question lists, type settings, answers, and explanations will be connected here.',
-  'pages.comingSoon.programming.title': 'Programming Questions and Test Cases',
-  'pages.comingSoon.programming.description':
-    'Programming templates, sample cases, hidden cases, and execution limits will be managed here.',
-  'pages.comingSoon.papers.title': 'Paper Management',
-  'pages.comingSoon.papers.description':
-    'Paper composition, question ordering, score settings, and status flow will be connected here.',
-  'pages.comingSoon.examCreate.title': 'Create Exam',
-  'pages.comingSoon.examCreate.description':
-    'Exam details, paper binding, and pre-publish configuration will be connected here.',
-  'pages.comingSoon.candidates.title': 'Candidate Management',
-  'pages.comingSoon.candidates.description':
-    'Candidate accounts, exam authorization, groups, and import/export will be connected here.',
-  'pages.comingSoon.events.title': 'Proctoring Audit',
-  'pages.comingSoon.events.description':
-    'Desktop events, device binding, and abnormal behavior records will be viewed here.',
-  'pages.comingSoon.submissions.title': 'Submission Records',
-  'pages.comingSoon.submissions.description':
-    'Candidate papers, programming submissions, and scoring status will be summarized here.',
-  'pages.comingSoon.judgeTasks.title': 'Judge Tasks',
-  'pages.comingSoon.judgeTasks.description':
-    'Async judge tasks, retry status, and sandbox results will be tracked here.',
+  // Events
+  'pages.events.description':
+    'View desktop audit events and device information by exam.',
+  'pages.events.examsLoadError': 'Failed to load exams',
+  'pages.events.fetchError': 'Failed to load audit events',
+  'pages.events.columns.user': 'User ID',
+  'pages.events.columns.device': 'Device',
+  'pages.events.columns.type': 'Event Type',
+  'pages.events.columns.createdAt': 'Time',
+  'pages.events.examPlaceholder': 'Select exam',
+  'pages.events.emptyExam': 'Select an exam to view audit events',
+  'pages.events.detailTitle': 'Event Detail',
   // Exam form
   'pages.exams.createTitle': 'Create Exam',
   'pages.exams.editTitle': 'Edit Exam',

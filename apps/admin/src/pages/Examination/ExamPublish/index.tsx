@@ -92,7 +92,7 @@ const ExamPublishContent: React.FC = () => {
             defaultMessage: '考试发布成功',
           }),
         );
-        history.push('/examination/exams');
+        history.push(`/examination/exams/${examId}`);
       } else {
         message.error(
           response.message ||

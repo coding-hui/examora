@@ -39,10 +39,6 @@ import {
 } from './model';
 
 const { Text } = Typography;
-const examResultsPath = (examID: number | string) =>
-  `/api/v1/exams/${examID}/results`;
-const examResultPath = (resultID: number | string) =>
-  `/api/v1/exam-results/${resultID}`;
 
 const SubmissionsContent: React.FC = () => {
   const intl = useIntl();
@@ -90,7 +86,7 @@ const SubmissionsContent: React.FC = () => {
     setResultsLoading(true);
     try {
       const data = await fetchEnvelope<AdminExamResultPageResponse>(
-        `${examResultsPath(examID)}?page=1&page_size=100`,
+        `${API_PATHS.admin.examResults(examID)}?page=1&page_size=100`,
       );
       setResults(data.items || []);
       setResultTotal(data.total || 0);
@@ -116,7 +112,7 @@ const SubmissionsContent: React.FC = () => {
     setDetailLoading(true);
     try {
       const data = await fetchEnvelope<AdminExamResult>(
-        examResultPath(record.id),
+        API_PATHS.admin.examResult(record.id),
       );
       setDetail(data);
     } catch (error) {
@@ -226,7 +222,7 @@ const SubmissionsContent: React.FC = () => {
   return (
     <PageContainer
       title={intl.formatMessage({
-        id: 'menu.assessment.submissions',
+        id: 'menu.examination.submissions',
         defaultMessage: '提交记录',
       })}
       content={intl.formatMessage({

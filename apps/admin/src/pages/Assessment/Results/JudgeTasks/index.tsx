@@ -8,6 +8,7 @@ import type {
   AdminJudgeTask,
   AdminJudgeTaskPageResponse,
 } from '@examora/types';
+import { API_PATHS } from '@examora/types';
 import { useIntl } from '@umijs/max';
 import {
   App as AntdApp,
@@ -30,9 +31,6 @@ import {
 } from './model';
 
 const { Paragraph } = Typography;
-const JUDGE_TASKS_PATH = '/api/v1/judge/tasks';
-const judgeTaskPath = (taskID: number | string) =>
-  `/api/v1/judge/tasks/${taskID}`;
 
 const JudgeTasksContent: React.FC = () => {
   const intl = useIntl();
@@ -48,7 +46,7 @@ const JudgeTasksContent: React.FC = () => {
     setLoading(true);
     try {
       const data = await fetchEnvelope<AdminJudgeTaskPageResponse>(
-        `${JUDGE_TASKS_PATH}?page=1&page_size=100`,
+        `${API_PATHS.admin.judgeTasks}?page=1&page_size=100`,
       );
       setTasks(data.items || []);
       setTaskTotal(data.total || 0);
@@ -74,7 +72,7 @@ const JudgeTasksContent: React.FC = () => {
     setDetailLoading(true);
     try {
       const data = await fetchEnvelope<AdminJudgeTask>(
-        judgeTaskPath(record.id),
+        API_PATHS.admin.judgeTask(record.id),
       );
       setDetail(data);
     } catch (error) {
@@ -188,7 +186,7 @@ const JudgeTasksContent: React.FC = () => {
   return (
     <PageContainer
       title={intl.formatMessage({
-        id: 'menu.assessment.judgeTasks',
+        id: 'menu.examination.judgeTasks',
         defaultMessage: '判题任务',
       })}
       content={intl.formatMessage({

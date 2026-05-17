@@ -48,6 +48,11 @@ export function getEffectiveThemeMode(
   return mode;
 }
 
+export function getSystemPrefersDark(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia(SYSTEM_DARK_QUERY).matches;
+}
+
 export function loadThemePreference(): ThemePreference {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -83,10 +88,17 @@ export function notifyThemeChange(): void {
   }
 }
 
-export function toLayoutSettings(pref: ThemePreference): LayoutSettings {
+export function toLayoutSettings(
+  pref: ThemePreference,
+  systemPrefersDark = getSystemPrefersDark(),
+): LayoutSettings {
   const normalized = normalizeThemePreference(pref);
+  const effectiveThemeMode = getEffectiveThemeMode(
+    normalized.themeMode,
+    systemPrefersDark,
+  );
   return {
-    navTheme: normalized.themeMode === 'dark' ? 'realDark' : 'light',
+    navTheme: effectiveThemeMode === 'dark' ? 'realDark' : 'light',
     colorPrimary: normalized.colorPrimary,
     layout: 'mix',
     contentWidth: 'Fluid',

@@ -168,43 +168,6 @@ export default [
     component: './Examination/ExamPublish',
     access: 'canAdmin',
   },
-  // Legacy monitoring redirects
-  {
-    path: '/monitoring',
-    hideInMenu: true,
-    redirect: '/examination/events',
-  },
-  {
-    path: '/monitoring/proctoring',
-    hideInMenu: true,
-    redirect: '/examination/events',
-  },
-  {
-    path: '/monitoring/proctoring/events',
-    hideInMenu: true,
-    redirect: '/examination/events',
-  },
-  // Legacy assessment redirects
-  {
-    path: '/assessment',
-    hideInMenu: true,
-    redirect: '/examination/submissions',
-  },
-  {
-    path: '/assessment/results',
-    hideInMenu: true,
-    redirect: '/examination/submissions',
-  },
-  {
-    path: '/assessment/results/submissions',
-    hideInMenu: true,
-    redirect: '/examination/submissions',
-  },
-  {
-    path: '/assessment/results/judge-tasks',
-    hideInMenu: true,
-    redirect: '/examination/judge-tasks',
-  },
   // System section
   {
     path: '/system',
@@ -242,46 +205,9 @@ export default [
       },
     ],
   },
-  // Legacy redirects
-  {
-    path: '/examination/candidates',
-    redirect: '/system/settings/user-groups',
-  },
-  {
-    path: '/admin/exams',
-    redirect: '/examination/exams',
-  },
-  {
-    path: '/admin/exam/:id/publish',
-    redirect: '/examination/exams/:id/publish',
-  },
-  {
-    path: '/admin/exam/create',
-    redirect: '/examination/exams/create',
-  },
-  {
-    path: '/admin',
-    redirect: '/system/settings/users',
-  },
-  {
-    path: '/welcome',
-    redirect: '/overview/dashboard',
-  },
-  {
-    path: '/exams',
-    redirect: '/examination/exams',
-  },
-  {
-    path: '/exams/create',
-    redirect: '/examination/exams/create',
-  },
-  {
-    path: '/exams/:id/publish',
-    redirect: '/examination/exams/:id/publish',
-  },
   {
     component: './404',
     layout: false,
-    path: './*',
+    path: '*',
   },
 ];

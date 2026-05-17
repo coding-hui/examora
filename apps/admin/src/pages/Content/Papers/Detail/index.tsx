@@ -47,6 +47,7 @@ import {
   Popconfirm,
   Select,
   Space,
+  Tag,
   Tooltip,
 } from 'antd';
 import dayjs from 'dayjs';
@@ -55,6 +56,7 @@ import { requestErrorMessage } from '@/utils/request';
 import { SectionTitle } from './components/SectionTitle';
 import { SortableQuestionWrapper } from './components/SortableQuestionWrapper';
 import {
+  buildPaperPreviewSummary,
   moveQuestionWithinSection,
   normalizeQuestions,
   normalizeSections,
@@ -135,7 +137,7 @@ const parseQuestionDragId = (id: string) => {
 
 const PaperDetailContent: React.FC = () => {
   const intl = useIntl();
-  const { message } = AntdApp.useApp();
+  const { message, modal } = AntdApp.useApp();
   const [form] = Form.useForm<PaperFormValues>();
   const paperId = history.location.pathname.split('/').filter(Boolean).at(-1);
   const isCreate = !paperId || paperId === 'new';
@@ -263,6 +265,11 @@ const PaperDetailContent: React.FC = () => {
         (total, section) => total + sectionTotalScore(section),
         0,
       ),
+    [sections],
+  );
+
+  const previewSummary = useMemo(
+    () => buildPaperPreviewSummary(sections),
     [sections],
   );
 
@@ -588,6 +595,27 @@ const PaperDetailContent: React.FC = () => {
   const save = async () => {
     try {
       const values = await form.validateFields();
+      if (values.status === 'PUBLISHED' && !previewSummary.canPublish) {
+        modal.warning({
+          title: intl.formatMessage({
+            id: 'pages.papers.detail.publishBlockedTitle',
+            defaultMessage: '试卷暂不能发布',
+          }),
+          content: intl.formatMessage(
+            {
+              id: 'pages.papers.detail.publishBlockedContent',
+              defaultMessage:
+                '试卷没有题目时不能发布。请至少添加 1 道已发布题目，并确认总分大于 0、没有 0 分题目。当前题目 {questions} 道，未发布题 {unpublished} 道，0 分题 {zeroScore} 道。',
+            },
+            {
+              questions: previewSummary.questionCount,
+              unpublished: previewSummary.unpublishedQuestions.length,
+              zeroScore: previewSummary.zeroScoreQuestions.length,
+            },
+          ),
+        });
+        return;
+      }
       setSaving(true);
       const paperResponse = await request<{ code: number; data: Paper }>(
         isCreate ? API_PATHS.admin.papers : API_PATHS.admin.paper(paperId),
@@ -1257,17 +1285,55 @@ const PaperDetailContent: React.FC = () => {
 
         {isDirty && (
           <div className="pdetail-sticky-footer">
-            <span className="pdetail-dirty-text">
-              {isCreate
-                ? intl.formatMessage({
-                    id: 'pages.papers.unsavedNew',
-                    defaultMessage: '试卷尚未保存',
-                  })
-                : intl.formatMessage({
-                    id: 'pages.papers.unsavedEdit',
-                    defaultMessage: '有未保存修改',
-                  })}
-            </span>
+            <div className="pdetail-save-status">
+              <span className="pdetail-dirty-text">
+                {isCreate
+                  ? intl.formatMessage({
+                      id: 'pages.papers.unsavedNew',
+                      defaultMessage: '试卷尚未保存',
+                    })
+                  : intl.formatMessage({
+                      id: 'pages.papers.unsavedEdit',
+                      defaultMessage: '有未保存修改',
+                    })}
+              </span>
+              <Tag
+                color={previewSummary.canPublish ? 'success' : 'warning'}
+                variant="filled"
+              >
+                {previewSummary.canPublish
+                  ? intl.formatMessage({
+                      id: 'pages.papers.detail.publishReadyShort',
+                      defaultMessage: '可发布',
+                    })
+                  : intl.formatMessage(
+                      previewSummary.hasNoQuestions
+                        ? {
+                            id: 'pages.papers.detail.publishNoQuestionsShort',
+                            defaultMessage: '无题目',
+                          }
+                        : {
+                            id: 'pages.papers.detail.publishNotReadyShort',
+                            defaultMessage: '待完善',
+                          },
+                    )}
+              </Tag>
+              <span className="pdetail-save-summary">
+                {intl.formatMessage(
+                  {
+                    id: 'pages.papers.detail.publishInlineSummary',
+                    defaultMessage:
+                      '{questions} 题 / {score} 分 · 未发布 {unpublished} · 0 分 {zeroScore}',
+                  },
+                  {
+                    questions: previewSummary.questionCount,
+                    score: previewSummary.totalScore.toFixed(1),
+                    unpublished: previewSummary.unpublishedQuestions.length,
+                    zeroScore: previewSummary.zeroScoreQuestions.length,
+                  },
+                )}
+              </span>
+            </div>
             <Space>
               <Button
                 type="primary"

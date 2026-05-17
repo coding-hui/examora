@@ -12,6 +12,7 @@ export interface PaperQuestion {
   title?: string;
   type?: QuestionType;
   difficulty?: string;
+  status?: string;
 }
 
 export interface PaperSectionState {
@@ -79,3 +80,51 @@ export const moveQuestionWithinSection = (
       };
     }),
   );
+
+const questionStatus = (question: PaperQuestion) =>
+  question.question?.status ?? question.status;
+
+export const buildPaperPreviewSummary = (sections: PaperSectionState[]) => {
+  const sectionCount = sections.length;
+  const questionCount = sections.reduce(
+    (total, section) => total + section.questions.length,
+    0,
+  );
+  const totalScore = sections.reduce(
+    (total, section) =>
+      total +
+      section.questions.reduce(
+        (score, question) => score + Number(question.score || 0),
+        0,
+      ),
+    0,
+  );
+  const unpublishedQuestions = sections.flatMap((section) =>
+    section.questions.filter((question) => {
+      const status = questionStatus(question);
+      return status !== 'PUBLISHED';
+    }),
+  );
+  const zeroScoreQuestions = sections.flatMap((section) =>
+    section.questions.filter((question) => Number(question.score || 0) <= 0),
+  );
+  const emptySections = sections.filter(
+    (section) => section.questions.length === 0,
+  );
+  const hasNoQuestions = questionCount === 0;
+
+  return {
+    sectionCount,
+    questionCount,
+    totalScore,
+    hasNoQuestions,
+    unpublishedQuestions,
+    zeroScoreQuestions,
+    emptySections,
+    canPublish:
+      !hasNoQuestions &&
+      totalScore > 0 &&
+      unpublishedQuestions.length === 0 &&
+      zeroScoreQuestions.length === 0,
+  };
+};

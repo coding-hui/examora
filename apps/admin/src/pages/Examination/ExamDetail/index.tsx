@@ -57,23 +57,11 @@ import { fetchEnvelope } from '@/utils/apiEnvelope';
 import { requestErrorMessage } from '@/utils/request';
 import {
   canRemoveCandidate,
-  examAssignmentsPath,
-  examCandidatePath,
-  examCandidatesPath,
-  examDetailPath,
-  examEventsPath,
-  examResultPath,
-  examResultsPath,
-  examSessionsPath,
   examStatusTone,
   sessionStatusTone,
 } from './model';
 
 const { Text } = Typography;
-
-const userGroupTreePath = '/api/v1/user-groups/tree';
-const userGroupStudentsPath = (groupID: number | string) =>
-  `/api/v1/user-groups/${groupID}/students`;
 
 const toTreeData = (groups: AdminUserGroup[]): DataNode[] =>
   groups.map((group) => ({
@@ -118,7 +106,7 @@ const ExamDetailContent: React.FC = () => {
     if (!examID) return;
     setExamLoading(true);
     try {
-      setExam(await fetchEnvelope<AdminExam>(examDetailPath(examID)));
+      setExam(await fetchEnvelope<AdminExam>(API_PATHS.admin.exam(examID)));
     } catch (error) {
       message.error(
         requestErrorMessage(error) ||
@@ -137,7 +125,7 @@ const ExamDetailContent: React.FC = () => {
     setSessionsLoading(true);
     try {
       const data = await fetchEnvelope<AdminExamSessionListResponse>(
-        examSessionsPath(examID),
+        API_PATHS.admin.examSessions(examID),
       );
       setSessions(data.items || []);
     } catch (error) {
@@ -158,7 +146,7 @@ const ExamDetailContent: React.FC = () => {
     setResultsLoading(true);
     try {
       const data = await fetchEnvelope<AdminExamResultPageResponse>(
-        `${examResultsPath(examID)}?page=1&page_size=100`,
+        `${API_PATHS.admin.examResults(examID)}?page=1&page_size=100`,
       );
       setResults(data.items || []);
       setResultsTotal(data.total || 0);
@@ -180,7 +168,7 @@ const ExamDetailContent: React.FC = () => {
     setEventsLoading(true);
     try {
       const data = await fetchEnvelope<AdminClientEventPageResponse>(
-        `${examEventsPath(examID)}?page=1&page_size=100`,
+        `${API_PATHS.admin.examEvents(examID)}?page=1&page_size=100`,
       );
       setEvents(data.items || []);
       setEventsTotal(data.total || 0);
@@ -216,8 +204,9 @@ const ExamDetailContent: React.FC = () => {
 
   const loadUserGroups = React.useCallback(async () => {
     try {
-      const data =
-        await fetchEnvelope<AdminUserGroupTreeResponse>(userGroupTreePath);
+      const data = await fetchEnvelope<AdminUserGroupTreeResponse>(
+        API_PATHS.admin.userGroupTree,
+      );
       setUserGroups(data.items || []);
     } catch (error) {
       message.error(
@@ -234,7 +223,7 @@ const ExamDetailContent: React.FC = () => {
     if (!examID) return;
     try {
       const data = await fetchEnvelope<AdminExamAssignmentListResponse>(
-        examAssignmentsPath(examID),
+        API_PATHS.admin.examAssignments(examID),
       );
       setAssignments(data.items || []);
     } catch (_error) {
@@ -317,8 +306,8 @@ const ExamDetailContent: React.FC = () => {
     try {
       await fetchEnvelope<BatchResult>(
         assignMode === 'users'
-          ? examCandidatesPath(examID)
-          : examAssignmentsPath(examID),
+          ? API_PATHS.admin.examCandidates(examID)
+          : API_PATHS.admin.examAssignments(examID),
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -359,7 +348,7 @@ const ExamDetailContent: React.FC = () => {
     const responses = await Promise.all(
       groupIDs.map((groupID) =>
         fetchEnvelope<AdminUserGroupStudentsResponse>(
-          `${userGroupStudentsPath(groupID)}?include_children=true`,
+          `${API_PATHS.admin.userGroupStudents(groupID)}?include_children=true`,
         ),
       ),
     );
@@ -384,9 +373,12 @@ const ExamDetailContent: React.FC = () => {
         defaultMessage: '仅未开始考试的用户可以移除，确定继续？',
       }),
       onOk: async () => {
-        await fetchEnvelope<void>(examCandidatePath(examID, session.user_id), {
-          method: 'DELETE',
-        });
+        await fetchEnvelope<void>(
+          API_PATHS.admin.examCandidate(examID, session.user_id),
+          {
+            method: 'DELETE',
+          },
+        );
         loadSessions();
       },
     });
@@ -397,7 +389,9 @@ const ExamDetailContent: React.FC = () => {
     setResultDetailLoading(true);
     try {
       setResultDetail(
-        await fetchEnvelope<AdminExamResult>(examResultPath(record.id)),
+        await fetchEnvelope<AdminExamResult>(
+          API_PATHS.admin.examResult(record.id),
+        ),
       );
     } catch (error) {
       message.error(
