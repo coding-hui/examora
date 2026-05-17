@@ -137,6 +137,9 @@ func (s *Service) CreatePaper(ctx context.Context, cmd SavePaperCommand) (*Paper
 	if err := normalizeAndValidatePaperCommand(&cmd); err != nil {
 		return nil, err
 	}
+	if cmd.Status == PaperStatusPublished {
+		return nil, fmt.Errorf("%w: published paper must contain questions with positive score", ErrInvalidPaper)
+	}
 	p := &Paper{Title: cmd.Title, Description: cmd.Description, Status: cmd.Status, CreatedBy: cmd.CreatedBy}
 	if err := s.store.CreatePaper(ctx, p); err != nil {
 		return nil, err
@@ -151,11 +154,40 @@ func (s *Service) UpdatePaper(ctx context.Context, id uint64, cmd SavePaperComma
 	if err := normalizeAndValidatePaperCommand(&cmd); err != nil {
 		return nil, err
 	}
+	if cmd.Status == PaperStatusPublished {
+		if err := s.validatePaperReadyForPublish(ctx, id); err != nil {
+			return nil, err
+		}
+	}
 	p := &Paper{ID: id, Title: cmd.Title, Description: cmd.Description, Status: cmd.Status, CreatedBy: cmd.CreatedBy}
 	if err := s.store.UpdatePaper(ctx, p); err != nil {
 		return nil, err
 	}
 	return p, nil
+}
+
+func (s *Service) validatePaperReadyForPublish(ctx context.Context, paperID uint64) error {
+	outline, err := s.store.GetPaperOutline(ctx, paperID)
+	if err != nil {
+		return err
+	}
+	if outline.QuestionCount == 0 {
+		return fmt.Errorf("%w: published paper must contain at least one question", ErrInvalidPaper)
+	}
+	if outline.TotalScore <= 0 {
+		return fmt.Errorf("%w: published paper total score must be positive", ErrInvalidPaper)
+	}
+	for _, section := range outline.Sections {
+		for _, item := range section.Questions {
+			if item.Score <= 0 {
+				return fmt.Errorf("%w: published paper question score must be positive", ErrInvalidPaper)
+			}
+			if item.QuestionStatus != QuestionStatusPublished {
+				return fmt.Errorf("%w: published paper questions must be published", ErrInvalidPaper)
+			}
+		}
+	}
+	return nil
 }
 
 func normalizeAndValidatePaperCommand(cmd *SavePaperCommand) error {

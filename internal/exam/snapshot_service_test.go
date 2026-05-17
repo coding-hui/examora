@@ -154,6 +154,11 @@ func publishableExam(t *testing.T, fx *examFixture) *exam.Exam {
 		SortOrder:  2,
 	})
 	require.NoError(t, err)
+	_, err = fx.library.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.NoError(t, err)
 
 	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
 		Title:           "M1 exam",
@@ -249,6 +254,11 @@ func objectiveExam(t *testing.T, fx *examFixture) *exam.Exam {
 		})
 		require.NoError(t, err)
 	}
+	_, err = fx.library.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
+	})
+	require.NoError(t, err)
 
 	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
 		Title:           "Objective exam",
@@ -371,6 +381,11 @@ func TestPublishSnapshotFreezesPaperSections(t *testing.T) {
 				},
 			},
 		},
+	})
+	require.NoError(t, err)
+	_, err = fx.library.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
 	})
 	require.NoError(t, err)
 	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
@@ -629,6 +644,56 @@ func TestPublishRejectsInvalidTimeWindow(t *testing.T) {
 	require.ErrorIs(t, err, exam.ErrInvalidExamWindow)
 }
 
+func TestPublishRejectsExamWithoutPaper(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
+		Title:           "No paper exam",
+		Status:          exam.StatusDraft,
+		DurationMinutes: 60,
+	})
+	require.NoError(t, err)
+
+	_, err = fx.exams.PublishExamWithSnapshot(ctx, created.ID, time.Now(), time.Now().Add(time.Hour), 60)
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+}
+
+func TestPublishRejectsDraftPaper(t *testing.T) {
+	fx := newExamFixture(t)
+	ctx := context.Background()
+
+	question, err := fx.library.CreateQuestion(ctx, library.SaveQuestionCommand{
+		Type:    library.QuestionTypeTrueFalse,
+		Title:   "Go is compiled",
+		Content: map[string]any{"text": "Go is compiled."},
+		Answer:  map[string]any{"correct": true},
+		Status:  library.QuestionStatusPublished,
+	})
+	require.NoError(t, err)
+	paper, err := fx.library.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Draft paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	_, err = fx.library.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
+		QuestionID: question.ID,
+		Score:      10,
+		SortOrder:  1,
+	})
+	require.NoError(t, err)
+	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{
+		Title:           "Draft paper exam",
+		PaperID:         &paper.ID,
+		Status:          exam.StatusDraft,
+		DurationMinutes: 60,
+	})
+	require.NoError(t, err)
+
+	_, err = fx.exams.PublishExamWithSnapshot(ctx, created.ID, time.Now(), time.Now().Add(time.Hour), 60)
+	require.ErrorIs(t, err, exam.ErrInvalidExamStatusTransition)
+}
+
 func TestPublishRejectsEmptyPaper(t *testing.T) {
 	fx := newExamFixture(t)
 	ctx := context.Background()
@@ -672,6 +737,11 @@ func TestPublishRejectsInvalidPublishedQuestionShape(t *testing.T) {
 	_, err = fx.library.AddPaperQuestion(ctx, paper.ID, library.AddPaperQuestionCommand{
 		QuestionID: dirty.ID,
 		Score:      10,
+	})
+	require.NoError(t, err)
+	_, err = fx.library.UpdatePaper(ctx, paper.ID, library.SavePaperCommand{
+		Title:  paper.Title,
+		Status: library.PaperStatusPublished,
 	})
 	require.NoError(t, err)
 	created, err := fx.exams.CreateExam(ctx, exam.SaveExamCommand{

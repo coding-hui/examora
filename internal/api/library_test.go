@@ -309,7 +309,7 @@ func TestListPapersEndpointSupportsFiltersAndSummary(t *testing.T) {
 	_, err = service.CreatePaper(ctx, library.SavePaperCommand{
 		Title:       "Frontend basics",
 		Description: "React",
-		Status:      library.PaperStatusPublished,
+		Status:      library.PaperStatusDraft,
 	})
 	require.NoError(t, err)
 	question, err := service.CreateQuestion(ctx, library.SaveQuestionCommand{
@@ -348,6 +348,31 @@ func TestListPapersEndpointSupportsFiltersAndSummary(t *testing.T) {
 	require.Equal(t, library.PaperStatusDraft, body.Data.Items[0].Status)
 	require.Equal(t, 1, body.Data.Items[0].QuestionCount)
 	require.Equal(t, 12.5, body.Data.Items[0].TotalScore)
+}
+
+func TestUpdatePaperEndpointRejectsInvalidPublish(t *testing.T) {
+	router, service := newLibraryAPIRouter(t)
+	ctx := t.Context()
+
+	paper, err := service.CreatePaper(ctx, library.SavePaperCommand{
+		Title:  "Empty publish paper",
+		Status: library.PaperStatusDraft,
+	})
+	require.NoError(t, err)
+	bodyBytes, err := json.Marshal(map[string]any{
+		"title":  paper.Title,
+		"status": library.PaperStatusPublished,
+	})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/papers/1", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusBadRequest, resp.Code)
+	loaded, err := service.GetPaper(ctx, paper.ID)
+	require.NoError(t, err)
+	require.Equal(t, library.PaperStatusDraft, loaded.Status)
 }
 
 func TestBatchDeletePapersEndpointReturnsPartialFailures(t *testing.T) {
